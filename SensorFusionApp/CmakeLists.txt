@@ -1,0 +1,57 @@
+# PROJECT(SensorFusion)
+
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(OpenCV REQUIRED)
+
+include_directories (
+		${PROJECT_SOURCE_DIR}/PlotterLib
+		${Eigen_INCLUDE_DIRS}
+		)
+
+# Add all header and cpp files in the directory to the project
+set (HEADERS
+	BaseSystem.h
+	CorrectDep.h
+	FilterSystem.h 
+	Function2.h 
+	Function4.h 
+	FunctionMerge.h 
+	IMUSensor.h 
+	Localisation2DBaseSystem.h 
+	ScalarFunction.h 
+	Sensor.h 
+	StatisticValue.h 
+	System.h 
+	youBotSystem.h
+	pch.h
+	)
+	
+set (SOURCES
+	BaseSystem.cpp
+	CorrectDep.cpp
+	FilterSystem.cpp 
+	Function2.cpp 
+	Function4.cpp 
+	FunctionMerge.cpp 
+	IMUSensor.cpp 
+	Localisation2DBaseSystem.cpp 
+	ScalarFunction.cpp 
+	Sensor.cpp 
+	StatisticValue.cpp
+	System.cpp 
+	youBotSystem.cpp
+	pch.cpp
+	SensorFusion.cpp
+	)
+	
+
+# Add the dinamic library target to the project
+add_executable (SensorFusionApp ${SOURCES} ${HEADERS})
+
+# Link with dependency libraries
+target_link_libraries (SensorFusionApp PlotterLib Eigen3::Eigen
+		${OpenCV_LIBS}
+		)
+		
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

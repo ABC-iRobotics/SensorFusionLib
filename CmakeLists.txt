@@ -1,0 +1,130 @@
+PROJECT(SensorFusion)
+
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+INCLUDE(ExternalProject)
+
+
+#####################Minden kell ebbõl?##############################################
+# use folders in IDEs supporting it
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
+
+# on *nixes we need this to use C++11 
+if (NOT WIN32)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif ()
+
+# where to put the resulting binaries?
+set (APPLICATION Bin)
+#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
+#####################################################################################
+
+
+set (CMAKE_CONFIGURATION_TYPES Debug;Release CACHE STRING "Configuration types" FORCE)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(DEPENDENCIES_DIR ${CMAKE_BINARY_DIR})
+
+# helper function for error reporting
+function (report what and when)
+#		message ("WHEN: " ${${when}})
+	if (${${when}})
+		message (${${what}})
+	endif ()
+endfunction ()
+
+find_package(Git)
+
+if(NOT GIT_FOUND)
+	message (FATAL_ERROR "git not found. Please install git. ")
+endif()
+
+file(MAKE_DIRECTORY  ${CMAKE_BINARY_DIR}/dependencies)
+
+function (RunExternalCommand message workdir command param1 param2 param3)
+	message (STATUS "${message} ...")
+	
+	execute_process ( 
+		COMMAND ${command} ${param1} ${param2} ${param3}
+		WORKING_DIRECTORY ${workdir}
+		RESULT_VARIABLE error_code OUTPUT_VARIABLE output ERROR_VARIABLE output)
+	   MESSAGE (${output})
+	if (${error_code})
+		message ("Error: ${output}")
+	endif ()
+endfunction (RunExternalCommand)
+
+function (download_and_unzip name url destination_dir filename time)
+	# download
+	message (STATUS "*** Downloading ${name} package. ***")
+	file (DOWNLOAD ${url} ${destination_dir}/${filename} SHOW_PROGRESS)
+	# unzip
+	message (STATUS "*** Unpacking ${name}. This could take a couple of minutes. (${extracttime}m on my computer) ***")
+	execute_process ( 
+		COMMAND ${CMAKE_COMMAND} -E tar xfz ${destination_dir}/${filename}
+		WORKING_DIRECTORY ${destination_dir}
+		RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
+	if (${error})
+		message ("Error: ${output}")
+	endif ()
+endfunction ()
+
+function (build NAME WORKDIR TIME)
+foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+		message (STATUS "*** Configuring  ${NAME} (${CONF}) ***")
+		execute_process ( 
+			COMMAND ${CMAKE_COMMAND} 
+			-DCMAKE_CONFIGURATION_TYPES:STRING=${CONFIG_TYPES}
+			-DCMAKE_BUILD_TYPE:STRING=${CONF}
+			-DCMAKE_INSTALL_PREFIX:PATH=${WORKDIR}
+			-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${DEPENDENCIES_DIR}
+			-G ${CMAKE_GENERATOR}
+			.
+			WORKING_DIRECTORY ${WORKDIR}
+			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)		
+		report (output if error)
+		
+		message (STATUS "*** Building ${NAME} (${CONF}).${TIME} m on my computer) ***")
+		execute_process ( 
+			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF}
+			WORKING_DIRECTORY ${WORKDIR}
+			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)		
+		report (output if error)
+	endforeach ()	
+endfunction ()
+
+function (copy name sourcedir destinationdir)
+	# extract
+	message (STATUS "*** Copy ${name} from ${sourcedir} to ${destinationdir} ... ***")
+	file(COPY ${sourcedir} DESTINATION ${destinationdir})
+endfunction ()
+
+#file(COPY ${CMAKE_SOURCE_DIR}/3rdParty DESTINATION ${CMAKE_BINARY_DIR})
+#file(COPY ${CMAKE_SOURCE_DIR}/FunctionTester/FunctionTesterExample.bat DESTINATION ${CMAKE_BINARY_DIR}/bin/Debug)
+#file(COPY ${CMAKE_SOURCE_DIR}/FunctionTester/FunctionTesterExample.bat DESTINATION ${CMAKE_BINARY_DIR}/bin/Release)
+
+
+add_subdirectory (PlotterLib)
+add_subdirectory (SensorFusionApp)
+
+# Place target xxx into the specified folder in IDEs supporting it
+#set_property (TARGET MeshPreprocessor PROPERTY FOLDER "meshProcessor")
+
+#-DBUILD_SHARED_LIBS:BOOL="0" -DLIBRARY_SUFFIX:STRING="" 
+
+#MeshPreprocessor dependecies source
+#assimp
+#https://github.com/assimp/assimp.git
+#
+#v-hacd
+#https://github.com/kmammou/v-hacd.git
+#
+#MeshDecimation
+#https://github.com/kmammou/MeshDecimation.git
+#
+#qhull
+#windows http://www.qhull.org/download/qhull-2012.1.zip
+#linux http://www.qhull.org/download/qhull-2012.1-src.tgz
