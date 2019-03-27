@@ -1,0 +1,47 @@
+# PROJECT(SensorFusion)
+
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
+include_directories (
+		${Eigen_INCLUDE_DIRS}
+		)
+
+# Add all header and cpp files in the directory to the project
+set (HEADERS
+	BaseSystem.h
+	CorrectDep.h
+	FilterSystem.h 
+	Function2.h 
+	Function4.h 
+	FunctionMerge.h 
+	ScalarFunction.h 
+	Sensor.h 
+	StatisticValue.h 
+	System.h 
+	pch.h
+	)
+	
+set (SOURCES
+	BaseSystem.cpp
+	CorrectDep.cpp
+	FilterSystem.cpp 
+	Function2.cpp 
+	Function4.cpp 
+	FunctionMerge.cpp 
+	ScalarFunction.cpp 
+	Sensor.cpp 
+	StatisticValue.cpp
+	System.cpp 
+	pch.cpp
+	)
+	
+
+# Add the dinamic library target to the project
+add_library (SensorFusionLib STATIC ${SOURCES} ${HEADERS})
+
+# Link with dependency libraries
+target_link_libraries (SensorFusionLib Eigen3::Eigen
+		)
+		
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

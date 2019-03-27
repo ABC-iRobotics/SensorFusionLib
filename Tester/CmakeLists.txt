@@ -5,51 +5,30 @@ find_package(OpenCV REQUIRED)
 
 include_directories (
 		${PROJECT_SOURCE_DIR}/PlotterLib
+		${PROJECT_SOURCE_DIR}/SensorFusionLib
 		${Eigen_INCLUDE_DIRS}
 		)
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	BaseSystem.h
-	CorrectDep.h
-	FilterSystem.h 
-	Function2.h 
-	Function4.h 
-	FunctionMerge.h 
 	IMUSensor.h 
-	Localisation2DBaseSystem.h 
-	ScalarFunction.h 
-	Sensor.h 
-	StatisticValue.h 
-	System.h 
+	#Localisation2DBaseSystem.h 
 	youBotSystem.h
-	pch.h
 	)
 	
 set (SOURCES
-	BaseSystem.cpp
-	CorrectDep.cpp
-	FilterSystem.cpp 
-	Function2.cpp 
-	Function4.cpp 
-	FunctionMerge.cpp 
+	main.cpp
 	IMUSensor.cpp 
-	Localisation2DBaseSystem.cpp 
-	ScalarFunction.cpp 
-	Sensor.cpp 
-	StatisticValue.cpp
-	System.cpp 
+	#Localisation2DBaseSystem.cpp 
 	youBotSystem.cpp
-	pch.cpp
-	SensorFusion.cpp
 	)
 	
 
 # Add the dinamic library target to the project
-add_executable (SensorFusionApp ${SOURCES} ${HEADERS})
+add_executable (Tester ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (SensorFusionApp PlotterLib Eigen3::Eigen
+target_link_libraries (Tester PlotterLib SensorFusionLib Eigen3::Eigen
 		${OpenCV_LIBS}
 		)
 		
