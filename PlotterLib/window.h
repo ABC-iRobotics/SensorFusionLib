@@ -40,7 +40,7 @@ class View {
         frame_color_(Green),
         text_color_(Black),
         mouse_callback_(NULL),
-        mouse_param_(NULL) {}
+        mouse_param_(NULL)  {}
   View &resize(Rect rect);
   View &size(Size size);
   View &offset(Offset offset);
@@ -71,6 +71,8 @@ class View {
 
   View &operator=(const View &) = delete;
 
+  typedef std::shared_ptr<View> ViewPtr;
+
  protected:
   Rect rect_;
   std::string title_;
@@ -96,7 +98,7 @@ class Window {
   Window &cursor(bool cursor);
   void *buffer();
   void flush();
-  View &view(const std::string &name, Size size = {300, 300});
+  View::ViewPtr view(const std::string &name, Size size = {300, 300});
   void dirty();
   void tick();
   void hide(bool hidden = true);
@@ -108,12 +110,14 @@ class Window {
   static void current(Window &window);
   static Window &current(const std::string &title);
 
+  typedef std::shared_ptr<Window> WindowPtr;
+
  protected:
   Offset offset_;
   void *buffer_;
   std::string title_;
   std::string name_;
-  std::map<std::string, View> views_;
+  std::map<std::string, View::ViewPtr> views_;
   bool dirty_;
   float flush_time_;
   float fps_;

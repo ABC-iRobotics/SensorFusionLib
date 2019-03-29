@@ -15,7 +15,7 @@ int createTrackbar(const std::string &trackbarname, const std::string &winname,
 void destroyAllWindows() { cv::destroyAllWindows(); }
 
 void destroyWindow(const std::string &view) {
-  Window::current().view(view).hide();
+  Window::current().view(view)->hide();
 }
 
 int getMouseWheelDelta(int flags) {
@@ -39,13 +39,13 @@ double getWindowProperty(const std::string &winname, int prop_id) {
 }
 
 void imshow(const std::string &view, void *img) {
-  Window::current().view(view).drawImage(img);
-  Window::current().view(view).finish();
-  Window::current().view(view).flush();
+  Window::current().view(view)->drawImage(img);
+  Window::current().view(view)->finish();
+  Window::current().view(view)->flush();
 }
 
 void moveWindow(const std::string &view, int x, int y) {
-  Window::current().view(view).offset({x, y});
+  Window::current().view(view)->offset({x, y});
 }
 
 void namedWindow(const std::string &view, int flags) {
@@ -53,11 +53,11 @@ void namedWindow(const std::string &view, int flags) {
 }
 
 void resizeWindow(const std::string &view, int width, int height) {
-  Window::current().view(view).size({width, height});
+  Window::current().view(view)->size({width, height});
 }
 
 void resizeWindow(const std::string &view, const Size &size) {
-  Window::current().view(view).size({size.width, size.height});
+  Window::current().view(view)->size({size.width, size.height});
 }
 
 Rect selectROI(const std::string &windowName, void *img, bool showCrosshair,
@@ -98,7 +98,7 @@ void selectROIs(const std::string &windowName, void *img,
 
 void setMouseCallback(const std::string &view, MouseCallback onMouse,
                       void *userdata) {
-  Window::current().view(view).mouse(onMouse, userdata);
+  Window::current().view(view)->mouse(onMouse, userdata);
 }
 
 void setTrackbarMax(const std::string &trackbarname, const std::string &winname,
@@ -130,7 +130,7 @@ void setWindowProperty(const std::string &winname, int prop_id,
 }
 
 void setWindowTitle(const std::string &view, const std::string &title) {
-  Window::current().view(view).title(title);
+  Window::current().view(view)->title(title);
 }
 
 int startWindowThread() {

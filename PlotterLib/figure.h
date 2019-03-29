@@ -47,11 +47,14 @@ class Series {
         legend_(true),
         dynamic_color_(false) {}
 
+  typedef std::shared_ptr<Series> SeriesPtr;
+
   Series &type(enum Type type);
   Series &color(Color color);
   Series &dynamicColor(bool dynamic_color);
   Series &legend(bool legend);
   Series &add(const std::vector<std::pair<float, float>> &data);
+  Series &Series::add1(const std::pair<float, float> &data);
   Series &add(const std::vector<std::pair<float, Point2>> &data);
   Series &add(const std::vector<std::pair<float, Point3>> &data);
   Series &addValue(const std::vector<float> &values);
@@ -107,7 +110,7 @@ class Series {
 
 class Figure {
  public:
-  Figure(View &view)
+  Figure(View::ViewPtr view)
       : view_(view),
         border_size_(50),
         background_color_(White),
@@ -119,6 +122,8 @@ class Figure {
         aspect_square_(false),
         grid_size_(60),
         grid_padding_(20) {}
+
+  typedef std::shared_ptr<Figure> FigurePtr;
 
   Figure &clear();
   Figure &origin(bool x, bool y);
@@ -138,11 +143,11 @@ class Figure {
   void draw(void *b, float x_min, float x_max, float y_min, float y_max,
             int n_max, int p_max) const;
   void show(bool flush = true) const;
-  Series &series(const std::string &label);
+  Series::SeriesPtr series(const std::string &label);
 
  protected:
-  View &view_;
-  std::vector<Series> series_;
+  View::ViewPtr view_;
+  std::vector<Series::SeriesPtr> series_;
   int border_size_;
   Color background_color_;
   Color axis_color_;

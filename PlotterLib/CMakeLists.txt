@@ -23,6 +23,7 @@ set (HEADERS
 	highgui.h
 	internal.h
 	window.h
+	plotter.h
 	)
 	
 set (SOURCES
@@ -30,6 +31,7 @@ set (SOURCES
 	figure.cc
 	highgui.cc
 	window.cc
+	plotter.cpp
 	)
 
 

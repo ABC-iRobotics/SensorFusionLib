@@ -272,8 +272,8 @@ Window &Window::ensure(Rect rect) {
 void Window::onmouse(int event, int x, int y, int flags) {
   for (auto &pair : views_) {
     auto &view = pair.second;
-    if (view.has({x, y})) {
-      view.onmouse(event, x, y, flags);
+    if (view->has({x, y})) {
+      view->onmouse(event, x, y, flags);
       break;
     }
   }
@@ -314,10 +314,10 @@ void Window::flush() {
   flush_time_ = runtime();
 }
 
-View &Window::view(const std::string &name, Size size) {
+View::ViewPtr Window::view(const std::string &name, Size size) {
   if (views_.count(name) == 0) {
     views_.insert(
-        std::map<std::string, View>::value_type(name, View(*this, name, size)));
+        std::map<std::string, View::ViewPtr>::value_type(name, std::make_shared<View>(*this, name, size)));
   }
   return views_.at(name);
 }

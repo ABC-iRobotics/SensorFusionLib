@@ -99,6 +99,16 @@ Series &Series::add(const std::vector<std::pair<float, float>> &data) {
   return *this;
 }
 
+Series & Series::add1(const std::pair<float, float>& data) {
+	ensureDimsDepth(1, 1);
+
+	entries_.push_back(data_.size());
+	data_.push_back(data.first);
+	data_.push_back(data.second);
+
+	return *this;
+}
+
 Series &Series::add(const std::vector<std::pair<float, Point2>> &data) {
   ensureDimsDepth(1, 2);
   for (const auto &d : data) {
@@ -531,13 +541,13 @@ Color Figure::subaxisColor() { return sub_axis_color_; }
 
 Color Figure::textColor() { return text_color_; }
 
-Series &Figure::series(const std::string &label) {
+Series::SeriesPtr Figure::series(const std::string &label) {
   for (auto &s : series_) {
-    if (s.label() == label) {
+    if (s->label() == label) {
       return s;
     }
   }
-  Series s(label, Line, Color::hash(label));
+  Series::SeriesPtr s = std::make_shared<Series>(label, Line, Color::hash(label));
   series_.push_back(s);
   return series_.back();
 }
@@ -657,26 +667,25 @@ void Figure::draw(void *b, float x_min, float x_max, float y_min, float y_max,
   // draw plot
   auto index = 0;
   for (const auto &s : series_) {
-    if (s.collides()) {
+    if (s->collides()) {
       index++;
     }
   }
   std::max((int)series_.size() - 1, 1);
   for (auto s = series_.rbegin(); s != series_.rend(); ++s) {
-    if (s->collides()) {
+    if ((*s)->collides())
       index--;
-    }
-    s->draw(&trans.with(s->color()), x_min, x_max, y_min, y_max, xs, xd, ys, yd,
+    (*s)->draw(&trans.with((*s)->color()), x_min, x_max, y_min, y_max, xs, xd, ys, yd,
             x_axis, y_axis, unit, (float)index / series_.size());
   }
 
   // draw label names
   index = 0;
   for (const auto &s : series_) {
-    if (!s.legend()) {
+    if (!s->legend()) {
       continue;
     }
-    auto name = s.label();
+    auto name = s->label();
     int baseline;
     cv::Size size =
         getTextSize(name, cv::FONT_HERSHEY_SIMPLEX, 0.4f, 1.f, &baseline);
@@ -692,7 +701,7 @@ void Figure::draw(void *b, float x_min, float x_max, float y_min, float y_max,
                color2scalar(background_color_), -1, cv::LINE_AA);
     cv::putText(trans.with(text_color_), name.c_str(), org,
                 cv::FONT_HERSHEY_SIMPLEX, 0.4f, color2scalar(text_color_), 1.f);
-    s.dot(&trans.with(s.color()), buffer.cols - border_size_ - 10, org.y - 3,
+    s->dot(&trans.with(s->color()), buffer.cols - border_size_ - 10, org.y - 3,
           3);
     index++;
   }
@@ -708,18 +717,18 @@ void Figure::show(bool flush) const {
 
   // find value bounds
   for (const auto &s : series_) {
-    s.verifyParams();
-    s.bounds(x_min, x_max, y_min, y_max, n_max, p_max);
+    s->verifyParams();
+    s->bounds(x_min, x_max, y_min, y_max, n_max, p_max);
   }
 
   if (n_max) {
     Rect rect(0, 0, 0, 0);
-    auto &buffer = *(cv::Mat *)view_.buffer(rect);
+    auto &buffer = *(cv::Mat *)view_->buffer(rect);
     auto sub = buffer({rect.x, rect.y, rect.width, rect.height});
     draw(&sub, x_min, x_max, y_min, y_max, n_max, p_max);
-    view_.finish();
+    view_->finish();
     if (flush) {
-      view_.flush();
+      view_->flush();
     }
   }
 }
