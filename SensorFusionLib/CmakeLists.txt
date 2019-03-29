@@ -14,7 +14,7 @@ set (HEADERS
 	Function2.h 
 	Function4.h 
 	FunctionMerge.h 
-	ScalarFunction.h 
+	#ScalarFunction.h 
 	Sensor.h 
 	StatisticValue.h 
 	System.h 
@@ -29,7 +29,7 @@ set (SOURCES
 	Function2.cpp 
 	Function4.cpp 
 	FunctionMerge.cpp 
-	ScalarFunction.cpp 
+	#ScalarFunction.cpp 
 	Sensor.cpp 
 	StatisticValue.cpp
 	System.cpp 
