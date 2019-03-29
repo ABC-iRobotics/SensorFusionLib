@@ -2,8 +2,8 @@
 #include "FilterSystem.h"
 #include "FunctionMerge.h"
 
-void FilterSystem::_SetBaseSystemValue(StatisticValue value, System::ValueType type) {
-	if (type == System::STATE || type == System::DISTURBANCE) {
+void FilterSystem::_SetBaseSystemValue(StatisticValue value, SystemValueType type) {
+	if (type == STATE || type == DISTURBANCE) {
 		StatisticValue v = values.Get(type);
 		unsigned int n = v.Length();
 		unsigned int dn = baseSystemData.ptr->getNumOf(type);
@@ -19,18 +19,18 @@ void FilterSystem::_SetBaseSystemValue(StatisticValue value, System::ValueType t
 	}
 	// Measurement & Noise
 	switch (type) {
-	case System::NOISE:
+	case NOISE:
 		baseSystemData.noise = value;
 		return;
-	case System::OUTPUT:
+	case OUTPUT:
 		baseSystemData.measurement = value.vector;
 		baseSystemData.measurementUpToDate = true;
 		return;
 	}
 }
 
-void FilterSystem::_SetSensorValue(unsigned int ID, StatisticValue value, System::ValueType type) {
-	if (type == System::STATE || type == System::DISTURBANCE) {
+void FilterSystem::_SetSensorValue(unsigned int ID, StatisticValue value, SystemValueType type) {
+	if (type == STATE || type == DISTURBANCE) {
 		StatisticValue v = values.Get(type);
 		unsigned int n = baseSystemData.ptr->getNumOf(type);
 		for (unsigned int i = 0; i < cSensors.size(); i++) {
@@ -52,14 +52,14 @@ void FilterSystem::_SetSensorValue(unsigned int ID, StatisticValue value, System
 		std::cout << "(FilterSystem::_SetSensorValue) Unknown sensor ID\n";
 	}
 	// Measurement & Noise
-	if (type == System::NOISE || type == System::OUTPUT) {
+	if (type == NOISE || type == OUTPUT) {
 		for (unsigned int i = 0; i < cSensors.size(); i++)
 			if (cSensors[i].ptr->getID() == ID) {
 				switch (type) {
-				case System::NOISE:
+				case NOISE:
 					cSensors[i].noise = value;
 					return;
-				case System::OUTPUT:
+				case OUTPUT:
 					cSensors[i].measurement = value.vector;
 					cSensors[i].measurementUpToDate = true;
 					return;
@@ -76,7 +76,7 @@ FilterSystem::FilterSystem(BaseSystem::BaseSystemPtr baseSystem) :
 	iID = ID;
 	ID++;
 	// set callback
-	baseSystemData.ptr->AddCallback([this](StatisticValue value, System::ValueType type) {
+	baseSystemData.ptr->AddCallback([this](StatisticValue value, SystemValueType type) {
 		this->_SetBaseSystemValue(std::move(value), std::move(type)); },
 		iID);
 }
@@ -94,7 +94,7 @@ void FilterSystem::AddSensor(Sensor::SensorPtr sensor) {
 		// Get its ID
 		unsigned int sensorID = sensor->getID();
 		// Add the initial state values and variances to the state/variance matrix
-		for (const auto type : { System::STATE, System::DISTURBANCE }) {
+		for (const auto type : { STATE, DISTURBANCE }) {
 			StatisticValue v = values.Get(type);
 			int n0 = v.Length();
 			int dn = sensor->getNumOf(type);
@@ -105,7 +105,7 @@ void FilterSystem::AddSensor(Sensor::SensorPtr sensor) {
 		}
 		// Set callbacks
 		sensor->AddCallback([this, sensorID](StatisticValue value,
-			System::ValueType type) {
+			SystemValueType type) {
 			this->_SetSensorValue(sensorID, std::move(value), std::move(type)); },
 			iID);
 	}
@@ -208,23 +208,23 @@ measurementUpToDate(false), noise(ptr_->getInitializationNoises()) {}
 FilterSystem::SystemValues::SystemValues(BaseSystem::BaseSystemPtr baseptr) : state(baseptr->getInitializationStates()),
 disturbance(baseptr->getInitializationDisturbances()) {}
 
-StatisticValue FilterSystem::SystemValues::Get(System::ValueType type) const {
+StatisticValue FilterSystem::SystemValues::Get(SystemValueType type) const {
 	switch (type) {
-	case System::DISTURBANCE:
+	case DISTURBANCE:
 		return disturbance;
-	case System::STATE:
+	case STATE:
 		return state;
 	default:
 		return StatisticValue();
 	}
 }
 
-void FilterSystem::SystemValues::Set(System::ValueType type, StatisticValue value) {
+void FilterSystem::SystemValues::Set(SystemValueType type, StatisticValue value) {
 	switch (type) {
-	case System::DISTURBANCE:
+	case DISTURBANCE:
 		disturbance = value;
 		return;
-	case System::STATE:
+	case STATE:
 		state = value;
 		return;
 	}

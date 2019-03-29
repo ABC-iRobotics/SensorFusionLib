@@ -362,10 +362,7 @@ void transparency() {
 
 int main()
 {
-	//example();
-	//transparency();
-	//demo();
-	
+	/*
 	cvplot::Plotter f("States");
 	f.addPlot("vx",2); f.updatePlot(0);
 	f.addPlot("vy",3);
@@ -391,7 +388,7 @@ int main()
 
 	
 	return 0;
-
+	*/
 	
 	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.002, 0.4, 0.25, 0.05);
 
@@ -432,69 +429,17 @@ int main()
 	unsigned int i;
 	std::cin >> i;
 
-	return 0;
-
-
-	/*
-	Eigen::MatrixXd CWnl = merger.GetWSelectorNl();
-	Eigen::MatrixXd SWnl = CWnl * S * CWnl.transpose();
-	unsigned int n = Snl.cols();
-	Eigen::LLT<Eigen::MatrixXd> chol(Snl);
-	Eigen::MatrixXd sqrtSnl = chol.matrixL();
-	*/
-
-
-
-
-	//std::cout << S << std::endl << Snl << std::endl;
-
-
-
-
-	
-	
-
-	
-
-	//std::cout << sqrtSnl << std::endl << sqrtSnl* sqrtSnl.transpose() << std::endl;
-
-
-
-
-	
-
-
-
-	return 0;
-
-	/*
-	Eigen::VectorXd x = Eigen::VectorXd::Ones(12);
-	Eigen::VectorXd w = Eigen::VectorXd::Ones(4);
-
-	Eigen::VectorXd v0 = Eigen::VectorXd::Ones(2);
-
-	Eigen::MatrixXd m(2, 0);
-	Eigen::VectorXd v(0);
-
-	std::cout << (v0+m*v) << std::endl;
-
-	std::cout << merger.Eval(x,w) << std::endl;
-
-
-
-
-
-	return 0;
+	//return 0;
 
 	std::cout << sys.GetStateVector() << std::endl;
 
 	std::cout << sys.GetVarianceMatrix() << std::endl;
 	std::cout << "1\n";
 
-	youBot->SetValues(StatisticValue(4),System::ValueType::DISTURBANCE);
+	youBot->SetValues(StatisticValue(4),SystemValueType::DISTURBANCE);
 
 	imu->MeasurementDone(Eigen::VectorXd(3));
 	std::cout << "2\n";
 	imu->MeasurementDone(Eigen::VectorXd(3));
-	std::cout << "3\n";*/
+	std::cout << "3\n";
 }

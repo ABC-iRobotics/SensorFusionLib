@@ -1,11 +1,17 @@
 #pragma once
 
 #include "Sensor.h"
-
+#include "CallbackHandler.h"
 #include <iostream> // to delete
 
+typedef enum FilterValueType {
+	PREDICTED_STATE, PREDICTED_OUTPUT,
+	MEASURED_STATE, MEASURED_OUTPUT,
+	USED_DISTURBANCE, USED_NOISE
+};
 
-class FilterSystem {
+
+class FilterSystem : public CallbackHandler<StatisticValue,FilterValueType> {
 private:
 	unsigned int iID;
 
@@ -33,16 +39,16 @@ private:
 		StatisticValue state;
 		StatisticValue disturbance;
 		SystemValues(BaseSystem::BaseSystemPtr baseptr);
-		StatisticValue Get(System::ValueType type) const;
-		void Set(System::ValueType type, StatisticValue value);
+		StatisticValue Get(SystemValueType type) const;
+		void Set(SystemValueType type, StatisticValue value);
 	} values;
 
 private:
 	// Insert the state, variance, noise or measuredoutput of the basesystem into the vStateVector, mVarianceMatrix
-	void _SetBaseSystemValue(StatisticValue value, System::ValueType type);
+	void _SetBaseSystemValue(StatisticValue value, SystemValueType type);
 
 	// Insert the state, variance, noise or measuredoutput of a sensor into the vStateVector, mVarianceMatrix
-	void _SetSensorValue(unsigned int ID, StatisticValue value, System::ValueType type);
+	void _SetSensorValue(unsigned int ID, StatisticValue value, SystemValueType type);
 
 public:
 	FilterSystem(BaseSystem::BaseSystemPtr baseSystem);

@@ -2,29 +2,25 @@
 #include "System.h"
 #include <iostream>
 
-System::System() : vCallback(CallbackVector()) {
-	static unsigned int IDcounter = 0;
-	iID = IDcounter;
-	IDcounter++;
-}
+System::System() {}
 
 System::~System()
 {
 }
 
-unsigned int System::getNumOf(ValueType type) const {
+unsigned int System::getNumOf(SystemValueType type) const {
 	switch (type)
 	{
-	case System::NOISE:
+	case SystemValueType::NOISE:
 		return getNumOfNoises();
 		break;
-	case System::DISTURBANCE:
+	case SystemValueType::DISTURBANCE:
 		return getNumOfDisturbances();
 		break;
-	case System::STATE:
+	case SystemValueType::STATE:
 		return getNumOfStates();
 		break;
-	case System::OUTPUT:
+	case SystemValueType::OUTPUT:
 		return getNumOfOutputs();
 		break;
 	default:
@@ -47,16 +43,16 @@ StatisticValue System::getInitializationNoises() const {
 	return StatisticValue(a);
 }
 
-StatisticValue System::getInitValue(ValueType type) const {
+StatisticValue System::getInitValue(SystemValueType type) const {
 	switch (type)
 	{
-	case System::NOISE:
+	case SystemValueType::NOISE:
 		return getInitializationNoises();
 		break;
-	case System::DISTURBANCE:
+	case SystemValueType::DISTURBANCE:
 		return getInitializationDisturbances();
 		break;
-	case System::STATE:
+	case SystemValueType::STATE:
 		return getInitializationStates();
 		break;
 	default:
@@ -65,30 +61,12 @@ StatisticValue System::getInitValue(ValueType type) const {
 	}
 }
 
-void System::AddCallback(Callback callback, unsigned int ownerID) {
-	for (unsigned int i = 0; i < vCallback.size(); i++)
-		if (vCallback[i].ownerID == ownerID) {
-			std::cout << "Callback tried to be added more times (System.h)\n";
-			return;
-		}
-	vCallback.push_back(Call(callback, ownerID));
-}
-
-void System::DeleteCallback(unsigned int ownerID) {
-	for (unsigned int i = 0; i < vCallback.size(); i++)
-		if (vCallback[i].ownerID == ownerID) {
-			vCallback.erase(vCallback.begin() + i);
-			return;
-		}
-	std::cout << "Not contained callback tried to be deleted (System.h)\n";
-}
-
 void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
 	static Eigen::MatrixXd emptyMatrix;
-	SetValues(StatisticValue(sensor_output), ValueType::OUTPUT);
+	SetValues(StatisticValue(sensor_output), SystemValueType::OUTPUT);
 }
 
-void System::SetValues(StatisticValue value, ValueType type) const {
+void System::SetValues(StatisticValue value, SystemValueType type) const {
 	// Check input sizes
 	unsigned int n = getNumOf(type);
 	if (value.Length() != n) {
@@ -96,8 +74,7 @@ void System::SetValues(StatisticValue value, ValueType type) const {
 		return;
 	}
 	// call the registered callbacks
-	for (unsigned int i = 0; i < vCallback.size(); i++)
-		vCallback[i].callback(value, type);
+	Call(value, type);
 }
 
 

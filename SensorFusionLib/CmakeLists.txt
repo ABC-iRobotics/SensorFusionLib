@@ -19,6 +19,7 @@ set (HEADERS
 	StatisticValue.h 
 	System.h 
 	pch.h
+	CallbackHandler.h
 	)
 	
 set (SOURCES

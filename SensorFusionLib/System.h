@@ -6,14 +6,15 @@
 
 #include "StatisticValue.h"
 
-class System
+#include "CallbackHandler.h"
+
+enum SystemValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
+
+class System : public CallbackHandler<StatisticValue, SystemValueType>
 {
-	unsigned int iID;
 public:
 	System();
 	~System();
-
-	unsigned int getID() const { return iID; }
 
 	virtual unsigned int getNumOfStates() const = 0;
 
@@ -23,9 +24,7 @@ public:
 
 	virtual unsigned int getNumOfNoises() const = 0;
 
-	enum ValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
-
-	unsigned int getNumOf(ValueType type) const;
+	unsigned int getNumOf(SystemValueType type) const;
 
 	virtual StatisticValue getInitializationStates() const;
 
@@ -33,30 +32,12 @@ public:
 
 	virtual StatisticValue getInitializationNoises() const;
 
-	StatisticValue getInitValue(ValueType type) const;
-
-private:
-	typedef std::function<void(StatisticValue value, ValueType type)> Callback;
-
-	struct Call {
-		Callback callback;
-		unsigned int ownerID;
-		Call(Callback call, unsigned int ID) : callback(call), ownerID(ID) {};
-	};
-
-	typedef std::vector<Call> CallbackVector;
-
-	CallbackVector vCallback;
-
-public:
-	void AddCallback(Callback callback, unsigned int ownerID);
-
-	void DeleteCallback(unsigned int ownerID);
+	StatisticValue getInitValue(SystemValueType type) const;
 
 	// Forward the actual output via the callbacks
 	void MeasurementDone(Eigen::VectorXd sensor_output) const;
 
 	// Forward the actual disturbance/noise properties, measured output, set manually the state, 
-	void SetValues(StatisticValue value, ValueType type) const;
+	void SetValues(StatisticValue value, SystemValueType type) const;
 };
 
