@@ -35,9 +35,9 @@ public:
 
 	unsigned int getNumOfStates() const override;
 
-	StatisticValue getInitializationDisturbances() const override;
+	//StatisticValue getInitializationDisturbances() const override;
 
-	StatisticValue getInitializationStates() const;
+	//StatisticValue getInitializationStates() const;
 
 	Eigen::MatrixXd getA(double Ts) const override;
 

@@ -2,230 +2,342 @@
 #include "FilterSystem.h"
 #include "FunctionMerge.h"
 
-void FilterSystem::_SetBaseSystemValue(StatisticValue value, SystemValueType type) {
-	if (type == STATE || type == DISTURBANCE) {
-		StatisticValue v = values.Get(type);
-		unsigned int n = v.Length();
-		unsigned int dn = baseSystemData.ptr->getNumOf(type);
-		for (unsigned int i = 0; i < dn; i++) {
-			v.vector(i) = value.vector(i);
-			for (unsigned int j = 0; j < dn; j++)
-				v.variance(i, j) = value.variance(i, j);
-			for (unsigned int j = dn; j < n; j++)
-				v.variance(i, j) = v.variance(j, i) = 0.;
-		}
-		values.Set(type, v);
-		return;
-	}
-	// Measurement & Noise
-	switch (type) {
-	case NOISE:
-		baseSystemData.noise = value;
-		return;
-	case OUTPUT:
-		baseSystemData.measurement = value.vector;
-		baseSystemData.measurementUpToDate = true;
-		return;
-	}
+int FilterSystem::_GetIndexForID(unsigned int ID) const {
+	for (unsigned int i = 0; i < systemList.size(); i++)
+		if (systemList[i].ptr->getID() == ID)
+			return i;
+	assert(true);
+	return -1;
 }
 
-void FilterSystem::_SetSensorValue(unsigned int ID, StatisticValue value, SystemValueType type) {
-	if (type == STATE || type == DISTURBANCE) {
-		StatisticValue v = values.Get(type);
-		unsigned int n = baseSystemData.ptr->getNumOf(type);
-		for (unsigned int i = 0; i < cSensors.size(); i++) {
-			unsigned int dn = cSensors[i].ptr->getNumOf(type);
-			if (cSensors[i].ptr->getID() == ID) {
-				for (unsigned int j = 0; j < dn; j++) {
-					v.vector(n + j) = value.vector(j);
-					for (unsigned int j2 = 0; j2 < dn; j2++)
-						v.variance(n + j, n + j2) = value.variance(j, j2);
-					for (unsigned int j2 = 0; j2 < v.Length(); j2++)
-						if (j2 < n || j2 >= n + dn)
-							v.variance(n + j, j2) = v.variance(j2, n + j) = 0;
-				}
-				values.Set(type, v);
+void FilterSystem::_SetSystemPropertyByID(unsigned int ID, StatisticValue value, SystemValueType type) {
+	switch (type)
+	{
+	case STATE:
+	{
+		int k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++) {
+			int dk = systemList[i].ptr->getNumOfStates();
+			if (systemList[i].ptr->getID() == ID) {
+				state.Insert(k, value);
 				return;
 			}
-			else n += dn;
+			k += dk;
 		}
-		std::cout << "(FilterSystem::_SetSensorValue) Unknown sensor ID\n";
+		assert(true);
 	}
-	// Measurement & Noise
-	if (type == NOISE || type == OUTPUT) {
-		for (unsigned int i = 0; i < cSensors.size(); i++)
-			if (cSensors[i].ptr->getID() == ID) {
-				switch (type) {
-				case NOISE:
-					cSensors[i].noise = value;
-					return;
-				case OUTPUT:
-					cSensors[i].measurement = value.vector;
-					cSensors[i].measurementUpToDate = true;
-					return;
-				}
-			}
-		std::cout << "(FilterSystem::_SetSensorValue) Unknown sensor ID\n";
+	default:
+		systemList[_GetIndexForID(ID)].setProperty(value, type);
+		return;
 	}
 }
 
-FilterSystem::FilterSystem(BaseSystem::BaseSystemPtr baseSystem) :
-	baseSystemData(baseSystem), cSensors(SensorList()), values(baseSystem) {
-	// Set and step ID
-	static unsigned int ID = 0;
-	iID = ID;
-	ID++;
+StatisticValue FilterSystem::_GetSystemPropertyByID(unsigned int ID, SystemValueType type) const {
+	switch (type)
+	{
+	case STATE:
+	{
+		int k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++) {
+			int dk = systemList[i].ptr->getNumOf(type);
+			if (systemList[i].ptr->getID() == ID)
+				return state.GetPart(k, dk);
+			k += dk;
+		}
+		assert(true);
+	}
+	default:
+		return systemList[_GetIndexForID(ID)].getProperty(type);
+	}
+}
+
+void FilterSystem::_SetSystemProperty(unsigned int index, StatisticValue value, SystemValueType type) {
+	switch (type)
+	{
+	case STATE:
+	{
+		int k = 0;
+		for (unsigned int i = 0; i+1 < index; i++)
+			k += systemList[i].ptr->getNumOf(type);
+		state.Insert(k, value);
+		return;
+	}
+	default:
+		systemList[index].setProperty(value, type);
+		return;
+	}
+}
+
+StatisticValue FilterSystem::_GetSystemProperty(unsigned int index, SystemValueType type) const {
+	switch (type)
+	{
+	case STATE:
+	{
+		int k = 0;
+		for (unsigned int i = 0; i+1 < index; i++)
+			k += systemList[i].ptr->getNumOf(type);
+		int dk = systemList[index].ptr->getNumOf(type);
+		return state.GetPart(k, dk);
+	}
+	default:
+		return systemList[index].getProperty(type);
+	}
+}
+
+// Insert the state, variance, noise or measuredoutput of the basesystem into the vStateVector, mVarianceMatrix
+
+void FilterSystem::_SetBaseSystemProperty(StatisticValue value, SystemValueType type) {
+	_SetSystemProperty(0, value, type);
+}
+
+// Insert the state, variance, noise or measuredoutput of a sensor into the vStateVector, mVarianceMatrix
+
+void FilterSystem::_SetSensorPropertyByID(unsigned int ID, StatisticValue value, SystemValueType type) {
+	_SetSystemPropertyByID(ID, value, type);
+}
+
+FilterSystem::FilterSystem(SystemData data, StatisticValue state_) :
+	systemList(SystemList()), state(state_) {
+	systemList.push_back(data);
 	// set callback
-	baseSystemData.ptr->AddCallback([this](StatisticValue value, SystemValueType type) {
-		this->_SetBaseSystemValue(std::move(value), std::move(type)); },
-		iID);
+	data.ptr->AddCallback([this](Eigen::VectorXd value, EmptyClass) {
+		this->_SetBaseSystemProperty(StatisticValue(value), SystemValueType::OUTPUT); },
+		getID());
 }
 
 FilterSystem::~FilterSystem() {
-	baseSystemData.ptr->DeleteCallback(iID);
-	for (unsigned int i = 0; i < cSensors.size(); i++)
-		cSensors[i].ptr->DeleteCallback(iID);
+	for (unsigned int i = 0; i < systemList.size(); i++)
+		systemList[i].ptr->DeleteCallback(getID());
 }
 
-void FilterSystem::AddSensor(Sensor::SensorPtr sensor) {
-	if (sensor->isCompatible(baseSystemData.ptr)) {
+void FilterSystem::AddSensor(SystemData data, StatisticValue state_) {
+	if (data.getSensorPtr()->isCompatible(systemList[0].getBaseSystemPtr())) {
 		//Add to the list
-		cSensors.push_back(SensorData(sensor));
-		// Get its ID
-		unsigned int sensorID = sensor->getID();
+		systemList.push_back(data);
 		// Add the initial state values and variances to the state/variance matrix
-		for (const auto type : { STATE, DISTURBANCE }) {
-			StatisticValue v = values.Get(type);
-			int n0 = v.Length();
-			int dn = sensor->getNumOf(type);
-			v.vector.conservativeResize(n0 + dn);
-			v.variance.conservativeResize(n0 + dn, n0 + dn);
-			values.Set(type, v);
-			_SetSensorValue(sensorID, sensor->getInitValue(type), type);
-		}
+		state.Add(state_);
 		// Set callbacks
-		sensor->AddCallback([this, sensorID](StatisticValue value,
-			SystemValueType type) {
-			this->_SetSensorValue(sensorID, std::move(value), std::move(type)); },
-			iID);
+		unsigned int sensorID = data.ptr->getID();
+		data.ptr->AddCallback([this, sensorID](Eigen::VectorXd value,
+			EmptyClass) {
+			this->_SetSensorPropertyByID(sensorID, std::move(value), SystemValueType::OUTPUT); },
+			getID());
 	}
 	else std::cout << "Not compatible sensor tried to be added!\n";
 }
 
-Eigen::VectorXd FilterSystem::GetStateVector() const {
-	return values.state.vector;
+StatisticValue FilterSystem::GetDisturbance() const {
+	int k = 0;
+	for (unsigned int i = 0; i < systemList.size(); i++)
+		k += systemList[i].ptr->getNumOfDisturbances();
+	StatisticValue out(k);
+	k = 0;
+	for (unsigned int i = 0; i < systemList.size(); i++) {
+		out.Insert(k, systemList[i].disturbance);
+		k += systemList[i].ptr->getNumOfDisturbances();
+	}
+	return out;
 }
 
-Eigen::MatrixXd FilterSystem::GetVarianceMatrix() const {
-	return values.state.variance;
-}
-
+/*
 Eigen::VectorXd FilterSystem::GetBaseSystemStateVector() const {
-	return values.state.vector.segment(0, baseSystemData.ptr->getNumOfStates());
+	return state.vector.segment(0, systemList[0].ptr->getNumOfStates());
 }
 
 Eigen::VectorXd FilterSystem::GetSensorStateVector(int i) const {
-	int k = baseSystemData.ptr->getNumOfStates();
-	for (int j = 0; j < i - 1; j++)
-		k += cSensors[j].ptr->getNumOfStates();
-	return values.state.vector.segment(k, k + cSensors[i].ptr->getNumOfStates());
-}
+	int k = 0;
+	for (int j = 0; j < i; j++)
+		k += systemList[j].ptr->getNumOfStates();
+	return state.vector.segment(k, k + systemList[i].ptr->getNumOfStates());
+}*/
+
 
 Eigen::VectorXd FilterSystem::ComputeUpdate(Eigen::VectorXd state, Eigen::VectorXd dist, double Ts) const { //todo restructure / test
 	int is0, dis;
 	is0 = 0;
-	dis = baseSystemData.ptr->getNumOfStates();
+	dis = systemList[0].ptr->getNumOfStates();
 	Eigen::VectorXd systemstate = state.segment(is0, dis);
 	int id0, did;
 	id0 = 0;
-	did = baseSystemData.ptr->getNumOfDisturbances();
+	did = systemList[0].ptr->getNumOfDisturbances();
 	Eigen::VectorXd systemdist = dist.segment(id0, did);
-	Eigen::VectorXd out = baseSystemData.ptr->EvalUpdate(Ts, systemstate, systemdist);
-	for (unsigned int i = 0; i < GetNumOfSensors(); i++) {
+	Eigen::VectorXd out = systemList[0].getBaseSystemPtr()->EvalUpdate(Ts, systemstate, systemdist);
+	for (unsigned int i = 1; i <= GetNumOfSensors(); i++) {
 		is0 += dis;
-		dis = cSensors[i].ptr->getNumOfStates();
+		dis = systemList[i].ptr->getNumOfStates();
 		id0 += did;
-		did = cSensors[i].ptr->getNumOfDisturbances();
-		out << out, cSensors[i].ptr->EvalUpdate(Ts, systemstate, systemdist,
+		did = systemList[i].ptr->getNumOfDisturbances();
+		out << out, systemList[i].getSensorPtr()->EvalUpdate(Ts, systemstate, systemdist,
 			state.segment(is0, dis), dist.segment(id0, did));
 	}
 	return out;
 }
 
 StatisticValue FilterSystem::ComputeUpdate(double Ts, const StatisticValue& state, const StatisticValue& disturbance) const {
-	FunctionMerge merger(baseSystemData.ptr->getUpdateMapping(Ts));
-	for (unsigned int i = 0; i < cSensors.size(); i++)
-		merger.AddFunction(cSensors[i].ptr->getUpdateMapping(Ts));
+	FunctionMerge merger(systemList[0].getBaseSystemPtr()->getUpdateMapping(Ts));
+	for (unsigned int i = 1; i < systemList.size(); i++)
+		merger.AddFunction(systemList[i].getSensorPtr()->getUpdateMapping(Ts));
 	Eigen::MatrixXd Syx, Syz;
 	return merger.Eval(state, disturbance, Syx, Syz);
 }
 
-StatisticValue FilterSystem::ComputeOutput(double Ts, const StatisticValue& state,
-	Eigen::MatrixXd& Syx, Eigen::VectorXd& y_measured) const {
-	// Compute the number of outputs & noises
-	unsigned int x0Size = baseSystemData.ptr->getNumOfStates();
-	unsigned int v0Size = baseSystemData.ptr->getNumOfNoises();
-	unsigned int nv = v0Size;
-	unsigned int ny = baseSystemData.ptr->getNumOfOutputs();
-	for (unsigned int i = 0; i < cSensors.size(); i++)
-		if (cSensors[i].measurementUpToDate) {
-			nv += cSensors[i].noise.Length();
-			ny += cSensors[i].measurement.size();
-		}
-	// Alocate variables
-	y_measured = Eigen::VectorXd(ny);
-	StatisticValue v(nv);
-	// Fill the allocated variables and construct the merger
-	v.Insert(0, baseSystemData.noise);
-	ny = baseSystemData.ptr->getNumOfOutputs();
-	nv = v0Size;
-	FunctionMerge merger(baseSystemData.ptr->getUpdateMapping(Ts));
-	for (unsigned int i = 0; i < ny; i++)
-		y_measured(i) = baseSystemData.measurement(i);
-	for (unsigned int i = 0; i < cSensors.size(); i++)
-		if (cSensors[i].measurementUpToDate) {
-			v.Insert(nv, cSensors[i].noise);
-			nv += cSensors[i].noise.Length();
-			unsigned int dy = cSensors[i].measurement.size();
-			for (unsigned int j = 0; j < dy; j++)
-				y_measured(ny + j) = cSensors[i].measurement(j);
-			ny += dy;
-			merger.AddFunction(cSensors[i].ptr->getUpdateMapping(Ts));
-		}
-		else merger.AddFunction(Function4::Empty(x0Size, v0Size,
-			cSensors[i].ptr->getNumOfStates(), 0));
+StatisticValue FilterSystem::ComputeOutput(double Ts, const StatisticValue& state_, const StatisticValue& noise_,
+	Eigen::MatrixXd& Syx) const {
+	// Construct the merger
+	FunctionMerge merger = GetOutputDynamics(Ts);
 	// Perform computation
 	Eigen::MatrixXd Syz;
-	return merger.Eval(state, v, Syx, Syz);
+	return merger.Eval(state_, noise_, Syx, Syz);
 }
 
-FilterSystem::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_) : ptr(ptr_),
-noise(ptr->getInitializationNoises()), measurementUpToDate(false) {}
+void FilterSystem::Step(double dT) { // update, collect measurement, correction via Kalman-filtering
+	StatisticValue x_pred = ComputeUpdate(dT, state, GetDisturbance());
+	Eigen::MatrixXd Syxpred;
+	Eigen::VectorXd y_meas = GetMeasuredOutput();
+	StatisticValue y_pred = ComputeOutput(dT, x_pred, GetNoise(), Syxpred);
+	//std::cout << y_pred;
+	Eigen::MatrixXd K = Syxpred.transpose() * y_pred.variance.inverse();
+	//::cout << K;
+	Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
+	state = StatisticValue(x_pred.vector + K * (y_meas - y_pred.vector),
+		(Sxnew + Sxnew.transpose()) / 2.);
 
-FilterSystem::SensorData::SensorData(Sensor::SensorPtr ptr_) : ptr(ptr_),
-measurementUpToDate(false), noise(ptr_->getInitializationNoises()) {}
+	// downgrade measStatus
+	for (size_t i = 1; i < systemList.size(); i++)
+		if (systemList[i].measStatus == UPTODATE)
+			systemList[i].measStatus = OBSOLETHE;
 
-FilterSystem::SystemValues::SystemValues(BaseSystem::BaseSystemPtr baseptr) : state(baseptr->getInitializationStates()),
-disturbance(baseptr->getInitializationDisturbances()) {}
+	FilterData data = FilterData();
+	data[PREDICTED_STATE] = x_pred;
+	data[PREDICTED_OUTPUT] = y_pred;
+	data[FILTERED_STATE] = state;
+	data[MEASURED_OUTPUT] = y_meas;
+	data[DT] = StatisticValue(Eigen::VectorXd::Ones(1)*dT);
+	Call(data, STEP);
+}
 
-StatisticValue FilterSystem::SystemValues::Get(SystemValueType type) const {
-	switch (type) {
+std::ostream & FilterSystem::print(std::ostream & stream) const {
+	std::vector<Eigen::VectorXd> states = _PartitionateStateVector(state.vector);
+	StatisticValue output = ComputeUpdate(0.001, state, GetDisturbance());
+	std::vector<bool> active = std::vector<bool>();
+	for (unsigned int i = 0; i < systemList.size(); i++)
+		active.push_back(true);
+	std::vector<Eigen::VectorXd> outputs = _PartitionateOutputVector(output.vector, active);
+	unsigned int sys_n = systemList.size();
+	for (unsigned int sys_i = 0; sys_i < sys_n; sys_i++) {
+		if (sys_i == 0)
+			stream << "Basesystem: ";
+		else
+			stream << "Sensor " << sys_i << ": ";
+		stream << systemList[sys_i].ptr->getName() << std::endl;
+		///// STATES
+		stream << " States:";
+		std::vector<std::string>& temp = systemList[sys_i].ptr->getStateNames();
+		for (unsigned int i = 0; i < states[sys_i].size(); i++)
+			stream << " (" << temp[i] << "): " << states[sys_i](i);
+		stream << std::endl;
+		///// DISTURBANCES
+		stream << " Disturbances:";
+		temp = systemList[sys_i].ptr->getDisturbanceNames();
+		for (unsigned int i = 0; i < systemList[sys_i].disturbance.Length(); i++)
+			stream << " (" << temp[i] << "): " << systemList[sys_i].disturbance.vector(i);
+		stream << std::endl;
+		///// NOISES
+		stream << " Noises:";
+		temp = systemList[sys_i].ptr->getNoiseNames();
+		for (unsigned int i = 0; i < systemList[sys_i].noise.Length(); i++)
+			stream << " (" << temp[i] << "): " << systemList[sys_i].noise.vector(i);
+		stream << std::endl;
+		///// OUTPUTS
+		stream << " Outputs:\n";
+		stream << "   computed:";
+		temp = systemList[sys_i].ptr->getOutputNames();
+		for (unsigned int i = 0; i < outputs[sys_i].size(); i++)
+			stream << " (" << temp[i] << "): " << outputs[sys_i](i);
+		stream << std::endl;
+		if (systemList[sys_i].measStatus != OBSOLETHE) {
+			stream << "   measured:";
+			for (unsigned int i = 0; i < outputs[sys_i].size(); i++)
+				stream << " (" << temp[i] << "): " << systemList[sys_i].measurement(i);
+		}
+		stream << std::endl << std::endl;
+	}
+
+	// STATE variances
+	stream << "Variance matrix of the state:\n";
+	unsigned int a = 0, b = 0;
+	for (unsigned int i = 0; i < sys_n; i++) {
+		for (unsigned int di = 0; di < systemList[i].ptr->getNumOfStates(); di++) {
+			for (unsigned int j = 0; j < sys_n; j++) {
+				for (unsigned int dj = 0; dj < systemList[j].ptr->getNumOfStates(); dj++) {
+					stream << state.variance(a, b) << " ";
+					b++;
+				}
+				if (j + 1 < sys_n)
+					stream << "| ";
+			}
+			stream << std::endl;
+			b = 0;
+			a++;
+		}
+		if (i + 1 < sys_n)
+			for (unsigned int k = 0; k < 40; k++)
+				stream << "-";
+		stream << std::endl;
+	}
+	return stream;
+}
+
+FilterSystem::SystemData::SystemData(System::SystemPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
+	Eigen::VectorXd measurement_, MeasurementStatus measStatus_) :
+	ptr(ptr_), noise(noise_), measurement(measurement_), disturbance(disturbance_),
+	measStatus(measStatus_) {}
+
+BaseSystem::BaseSystemPtr FilterSystem::SystemData::getBaseSystemPtr() const {
+	return std::static_pointer_cast<BaseSystem>(ptr);
+}
+
+Sensor::SensorPtr FilterSystem::SystemData::getSensorPtr() const {
+	return std::static_pointer_cast<Sensor>(ptr);
+}
+
+StatisticValue FilterSystem::SystemData::getProperty(SystemValueType type) const {
+	switch (type)
+	{
+	case NOISE:
+		return noise;
 	case DISTURBANCE:
 		return disturbance;
-	case STATE:
-		return state;
+	case OUTPUT:
+		return measurement;
 	default:
-		return StatisticValue();
+		assert(true);
+		return -1;
 	}
 }
 
-void FilterSystem::SystemValues::Set(SystemValueType type, StatisticValue value) {
-	switch (type) {
+void FilterSystem::SystemData::setProperty(StatisticValue value, SystemValueType type) {
+	switch (type)
+	{
+	case NOISE:
+		noise = value;
+		return;
 	case DISTURBANCE:
 		disturbance = value;
 		return;
-	case STATE:
-		state = value;
+	case OUTPUT:
+		measurement = value.vector;
+		if (measStatus == OBSOLETHE)
+			measStatus = UPTODATE;
+		if (!value.variance.isZero())
+			assert(true);
 		return;
+	default:
+		assert(true);
 	}
+}
+
+std::ostream& operator<< (std::ostream& stream, const FilterSystem& filter) {
+	filter.print(stream);
+	return stream;
 }

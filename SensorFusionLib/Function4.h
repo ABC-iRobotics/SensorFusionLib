@@ -18,15 +18,15 @@ struct Function4 {
 		Eigen::VectorXi x0Dep_, Eigen::VectorXi w0Dep_, Eigen::VectorXi xiDep_,
 		Eigen::VectorXi wiDep_, nonlinPart f_);
 
-	unsigned int GetOutputSize() const;
+	Eigen::Index GetOutputSize() const;
 
-	unsigned int GetX0Size() const;
+	Eigen::Index GetX0Size() const;
 
-	unsigned int GetW0Size() const;
+	Eigen::Index GetW0Size() const;
 
-	unsigned int GetXiSize() const;
+	Eigen::Index GetXiSize() const;
 
-	unsigned int GetWiSize() const;
+	Eigen::Index GetWiSize() const;
 
 	Eigen::VectorXd EvalNl(const Eigen::VectorXd& x0, const Eigen::VectorXd& w0,
 		const Eigen::VectorXd& xi, const Eigen::VectorXd& wi) const;

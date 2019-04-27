@@ -2,18 +2,6 @@
 #include "IMUSensor.h"
 #include "youBotSystem.h"
 
-StatisticValue IMUSensor::getInitializationStates() const {
-	Eigen::VectorXd initState(getNumOfStates());
-	initState << 0, 0, 1., 1., 1.;
-	Eigen::MatrixXd initVariance(Eigen::MatrixXd::Zero(getNumOfStates(), getNumOfStates()));
-	initVariance(0, 0) = 2.;
-	initVariance(1, 1) = 2.;
-	initVariance(2, 2) = 0.1;
-	initVariance(3, 3) = 0.1;
-	initVariance(4, 4) = 0.1;
-	return StatisticValue(initState,initVariance);
-}
-
 Eigen::MatrixXd IMUSensor::getA0(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(5, 7);
 	out(0, 0) = 1;
@@ -90,4 +78,17 @@ Eigen::VectorXd IMUSensor::OutputNonlinearPart(double Ts, const Eigen::VectorXd 
 
 bool IMUSensor::isCompatible(BaseSystem::BaseSystemPtr ptr) const {
 	return _isCompatible<youBotSystem>(ptr);
+}
+
+std::vector<std::string> IMUSensor::getStateNames() const {
+	return {"vxold","vyold","sx","sy","sphi"};
+}
+std::vector<std::string> IMUSensor::getNoiseNames() const {
+	return {"vax","vay","vomega"};
+}
+std::vector<std::string> IMUSensor::getDisturbanceNames() const {
+	return {};
+}
+std::vector<std::string> IMUSensor::getOutputNames() const {
+	return {"yax","yay","yomega"};
 }

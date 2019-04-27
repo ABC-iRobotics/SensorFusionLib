@@ -61,6 +61,8 @@ namespace cvplot {
 		void addValue(unsigned int plotindex, unsigned int seriesindex, float t, float value);
 
 		void updatePlot(unsigned int plotindex);
+
+		unsigned int getNumOfPlots() const { return numOfPlots; }
 	};
 
 }

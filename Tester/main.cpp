@@ -4,16 +4,6 @@
 #include "pch.h"
 #include <iostream>
 
-#include "youBotSystem.h"
-
-#include "IMUSensor.h"
-
-#include <vector>
-
-#include "FilterSystem.h"
-
-#include "FunctionMerge.h"
-
 #include "cvplot.h"
 
 #include <windows.h>
@@ -358,52 +348,79 @@ void transparency() {
 }
 */
 #include <string>
-#include "plotter.h"
+#include "FilterPlotter.h"
 
-int main()
-{
-	/*
-	cvplot::Plotter f("States");
-	f.addPlot("vx",2); f.updatePlot(0);
-	f.addPlot("vy",3);
-	f.addPlot("vz", 4, {"a","b","c"});
+#include "init.h"
 
-	f.addValue(0, 1, 20, 10000);
-	f.addValue(0, 1, 21, 10020);
-
-	f.addValue(2, 1, 20, 10000);
-	f.addValue(2, 1, 21, 10020);
-
-	f.updatePlot(2);
-
-	f.setLineType(2, 1, cvplot::Type::Dots);
-
-	f.addValue(2, 1, 25, 800);
-	f.addValue(2, 1, 21, 10020);
-
-	f.updatePlot(2);
-
-	unsigned int ifff;
-	std::cin >> ifff;
-
-	
-	return 0;
-	*/
-	
+int main() {
+	// Init FilterSystem
 	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.002, 0.4, 0.25, 0.05);
+	Sensor::SensorPtr imu = std::make_shared<IMUSensor>(youBot);
 
-	// TODO: now different Ts can be in the systems - include into the update/output functions, set centrally??
-	// what happens if it is uncertain?
+	StatisticValue initState;
+	FilterSystem::SystemData data = InitYouBotSystem(youBot, initState);
 
-	FilterSystem sys(youBot);
+	FilterSystem sys(data, initState);
 
-	Sensor::SensorPtr  imu = std::make_shared<IMUSensor>();
-	sys.AddSensor(imu);
-
-	FunctionMerge merger(youBot->getUpdateMapping(0.001));
-	merger.AddFunction(imu->getUpdateMapping(0.001));
+	data = InitIMUSensor(imu, initState);
+	sys.AddSensor(data, initState);
 	
+	// Usage
+	std::cout << sys;
 
+	sys.Step(0.001);
+
+	std::cout << sys;
+
+	Eigen::VectorXd a = Eigen::VectorXd(3);
+	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
+	imu->MeasurementDone(a);
+
+	std::cout << sys;
+
+	sys.Step(0.001);
+
+	std::cout << sys;
+
+	return 0;
+
+	//std::cout << "New state:\n" << sys.ComputeOutput(0.001, state,) << std::endl;
+
+
+	imu->MeasurementDone(Eigen::VectorXd(3));
+
+
+	std::cout << "2\n";
+	imu->MeasurementDone(Eigen::VectorXd(3));
+	std::cout << "3\n";
+
+	FilterPlotter plotter(sys, FilterPlotter::STATE);
+	sys.Step(0.01);
+
+
+	/*
+
+	imu->MeasurementDone(Eigen::VectorXd(3));
+	std::cout << "2\n";
+	imu->MeasurementDone(Eigen::VectorXd(3));
+	std::cout << "3\n";
+
+	//FunctionMerge merger(youBot->getUpdateMapping(0.001));
+	//merger.AddFunction(imu->getUpdateMapping(0.001));
+	
+	FilterPlotter plotter(sys, FilterPlotter::STATE);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+	sys.Step(0.01);
+
+	/*
 	bool exit = false;
 
 
@@ -431,15 +448,12 @@ int main()
 
 	//return 0;
 
-	std::cout << sys.GetStateVector() << std::endl;
+	//std::cout << sys.GetStateVector() << std::endl;
 
-	std::cout << sys.GetVarianceMatrix() << std::endl;
+	//std::cout << sys.GetVarianceMatrix() << std::endl;
 	std::cout << "1\n";
 
-	youBot->SetValues(StatisticValue(4),SystemValueType::DISTURBANCE);
+	//youBot->SetValues(StatisticValue(4),SystemValueType::DISTURBANCE);
 
-	imu->MeasurementDone(Eigen::VectorXd(3));
-	std::cout << "2\n";
-	imu->MeasurementDone(Eigen::VectorXd(3));
-	std::cout << "3\n";
+	
 }

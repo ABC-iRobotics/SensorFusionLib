@@ -17,11 +17,11 @@ public:
 
 	void AddFunction(const Function4& f);
 
-	unsigned int GetOutputSize() const;
+	Eigen::Index GetOutputSize() const;
 
-	unsigned int GetXInputSize() const;
+	Eigen::Index GetXInputSize() const;
 
-	unsigned int GetWInputSize() const;
+	Eigen::Index GetWInputSize() const;
 
 	Eigen::VectorXd Eval(const Eigen::VectorXd& x, const Eigen::VectorXd& w) const;
 

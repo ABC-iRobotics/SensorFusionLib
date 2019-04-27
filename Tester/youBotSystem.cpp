@@ -12,16 +12,6 @@ unsigned int youBotSystem::getNumOfNoises() const { return 0; }
 
 unsigned int youBotSystem::getNumOfStates() const { return 7; }
 
-StatisticValue youBotSystem::getInitializationDisturbances() const {
-	return StatisticValue(Eigen::VectorXd::Zero(getNumOfDisturbances()),
-		Eigen::MatrixXd::Identity(getNumOfDisturbances(), getNumOfDisturbances())*0.01);
-}
-
-StatisticValue youBotSystem::getInitializationStates() const {
-	return StatisticValue(Eigen::VectorXd::Zero(7),
-		Eigen::MatrixXd::Identity(7, 7));
-}
-
 Eigen::MatrixXd youBotSystem::getA(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Identity(7, 7);
 	for (unsigned int i = 0; i < 3; i++)

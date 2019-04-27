@@ -1,18 +1,33 @@
 #pragma once
 
-#include "Eigen/Dense"
-#include <vector>
-
-
 #include "StatisticValue.h"
-
 #include "CallbackHandler.h"
+#include <string>
 
 enum SystemValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
 
-class System : public CallbackHandler<StatisticValue, SystemValueType>
+class EmptyClass {
+public:
+	EmptyClass() {}
+};
+
+class System : public CallbackHandler <Eigen::VectorXd, EmptyClass>
 {
 public:
+/*	struct SystemState {
+		StatisticValue state;
+		StatisticValue noise;
+		StatisticValue disturbance;
+
+		SystemState(const System& sys_) : state(sys_.getNumOfStates()),
+			noise(sys_.getNumOfNoises()), disturbance(sys_.getNumOfDisturbances()) {}
+
+		SystemState(StatisticValue state_, StatisticValue noise_, 
+			StatisticValue disturbance_) : state(state_),
+			noise(noise_), disturbance(disturbance_) {}
+	};*/
+
+
 	System();
 	~System();
 
@@ -26,18 +41,21 @@ public:
 
 	unsigned int getNumOf(SystemValueType type) const;
 
-	virtual StatisticValue getInitializationStates() const;
-
-	virtual StatisticValue getInitializationDisturbances() const;
-
-	virtual StatisticValue getInitializationNoises() const;
-
-	StatisticValue getInitValue(SystemValueType type) const;
-
 	// Forward the actual output via the callbacks
 	void MeasurementDone(Eigen::VectorXd sensor_output) const;
 
 	// Forward the actual disturbance/noise properties, measured output, set manually the state, 
-	void SetValues(StatisticValue value, SystemValueType type) const;
-};
+	//void SetValues(StatisticValue value, SystemValueType type) const;
 
+	virtual std::vector<std::string> getStateNames() const;
+
+	virtual std::vector<std::string> getNoiseNames() const;
+
+	virtual std::vector<std::string> getDisturbanceNames() const;
+
+	virtual std::vector<std::string> getOutputNames() const;
+
+	virtual std::string getName() const;
+
+	typedef std::shared_ptr<System> SystemPtr;
+};

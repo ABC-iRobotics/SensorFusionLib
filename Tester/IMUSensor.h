@@ -22,7 +22,7 @@
 class IMUSensor : public Sensor
 {
 public:
-	IMUSensor() {};
+	IMUSensor(BaseSystem::BaseSystemPtr ptr) : Sensor(ptr) {};
 
 	unsigned int getNumOfStates() const;
 
@@ -32,7 +32,7 @@ public:
 
 	unsigned int getNumOfNoises() const;
 
-	StatisticValue getInitializationStates() const override;
+	//StatisticValue getInitializationStates() const override;
 
 	Eigen::MatrixXd getA0(double Ts) const;
 
@@ -60,5 +60,17 @@ public:
 	bool isCompatible(BaseSystem::BaseSystemPtr ptr) const override;
 
 	typedef std::shared_ptr<IMUSensor> IMUSensorPtr;
+
+	std::vector<std::string> getStateNames() const override;
+
+	std::vector<std::string> getNoiseNames() const override;
+
+	std::vector<std::string> getDisturbanceNames() const override;
+
+	std::vector<std::string> getOutputNames() const override;
+
+	std::string getName() const override {
+		return "IMU";
+	}
 };
 

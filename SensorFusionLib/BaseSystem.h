@@ -46,7 +46,7 @@ public:
 
 	Function2 getUpdateMapping(double Ts) const;
 
-	Function2 getOutputMapping(double Ts) const;
+	Function2 getOutputMapping(double Ts, bool empty = false) const;
 
 	typedef std::shared_ptr<BaseSystem> BaseSystemPtr;
 };

@@ -29,7 +29,7 @@ unsigned int System::getNumOf(SystemValueType type) const {
 		break;
 	}
 }
-
+/*
 StatisticValue System::getInitializationStates() const {
 	return StatisticValue(getNumOfStates());
 }
@@ -60,12 +60,37 @@ StatisticValue System::getInitValue(SystemValueType type) const {
 		break;
 	}
 }
-
+*/
 void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
-	static Eigen::MatrixXd emptyMatrix;
-	SetValues(StatisticValue(sensor_output), SystemValueType::OUTPUT);
+	if (sensor_output.size() != getNumOfOutputs()) {
+		std::cout << "(System::MeasurementDone) Wrong value size! Returned without setting...\n";
+		return;
+	}
+	// call the registered callbacks
+	Call(sensor_output, EmptyClass());
 }
-
+std::vector<std::string> list(std::string fp, unsigned int n) {
+	std::vector<std::string> out = std::vector<std::string>();
+	for (unsigned int i = 0; i < n; i++)
+		out.push_back(fp + "_" + std::to_string(i+1));
+	return out;
+}
+std::vector<std::string> System::getStateNames() const {
+	return list("x", getNumOfStates());
+}
+std::vector<std::string> System::getNoiseNames() const {
+	return list("v", getNumOfNoises());
+}
+std::vector<std::string> System::getDisturbanceNames() const {
+	return list("w", getNumOfDisturbances());
+}
+std::vector<std::string> System::getOutputNames() const {
+	return list("y", getNumOfOutputs());
+}
+std::string System::getName() const {
+	return "System";
+}
+/*
 void System::SetValues(StatisticValue value, SystemValueType type) const {
 	// Check input sizes
 	unsigned int n = getNumOf(type);
@@ -75,7 +100,7 @@ void System::SetValues(StatisticValue value, SystemValueType type) const {
 	}
 	// call the registered callbacks
 	Call(value, type);
-}
+}*/
 
 
 

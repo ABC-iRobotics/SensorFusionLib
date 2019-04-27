@@ -5,12 +5,22 @@
 
 class Sensor : public System
 {
+private:
+	unsigned int numOfBaseSystemStates;
+	unsigned int numOfBaseSystemDisturbances;
+	unsigned int numOfBaseSystemNoises;
+
 protected:
 	template <class BaseSystemType>
 	bool _isCompatible(BaseSystem::BaseSystemPtr ptr) const;
 
 public:
-	Sensor() {};
+	Sensor(BaseSystem::BaseSystemPtr ptr) : numOfBaseSystemStates(ptr->getNumOfStates()),
+	numOfBaseSystemDisturbances(ptr->getNumOfDisturbances()), numOfBaseSystemNoises(ptr->getNumOfNoises()) {};
+
+	unsigned int getNumOfBaseSystemStates() const;
+	unsigned int getNumOfBaseSystemNoises() const;
+	unsigned int getNumOfBaseSystemDisturbances() const;
 
 	// The dynamics can be defined by the linear coefficient matrices and the nonlinearpart
 	// x(k) = A0*xbase(k-1) + Ai*xsensor(k-1) + B0*wbase(k) + Bi*wsensor(k) + UpdateNonlinPart(xbase,xsensor,wbase,wsensor);
@@ -31,19 +41,13 @@ public:
 
 	// The nonlinear parts and the dependencies are by default zeros - the missing elements will be guessed zero
 	virtual Eigen::VectorXi getUpdateNonlinearX0Dependencies() const;
-
 	virtual Eigen::VectorXi getUpdateNonlinearXiDependencies() const;
-
 	virtual Eigen::VectorXi getUpdateNonlinearW0Dependencies() const;
-
 	virtual Eigen::VectorXi getUpdateNonlinearWiDependencies() const;
 
 	virtual Eigen::VectorXi getOutputNonlinearX0Dependencies() const;
-
 	virtual Eigen::VectorXi getOutputNonlinearXiDependencies() const;
-
 	virtual Eigen::VectorXi getOutputNonlinearV0Dependencies() const;
-
 	virtual Eigen::VectorXi getOutputNonlinearViDependencies() const;
 
 	virtual Eigen::VectorXd UpdateNonlinearPart(double Ts, const Eigen::VectorXd& baseSystemState,
@@ -56,7 +60,7 @@ public:
 
 	Function4 getUpdateMapping(double Ts) const;
 
-	Function4 getOutputMapping(double Ts) const;
+	Function4 getOutputMapping(double Ts, bool empty=false) const;
 
 	// The Eval functions execute the prediction/output computation with the given values and defined coefficients/functions
 	Eigen::VectorXd EvalUpdate(double Ts, Eigen::VectorXd baseSystemState, Eigen::VectorXd baseSystemDisturbance,

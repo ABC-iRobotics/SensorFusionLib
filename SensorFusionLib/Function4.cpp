@@ -8,15 +8,15 @@ Function4::Function4(Eigen::MatrixXd A0_, Eigen::MatrixXd B0_, Eigen::MatrixXd A
 	x0Dep(CorrectLength(A0_.cols(),x0Dep_)), xiDep(CorrectLength(Ai_.cols(), xiDep_)),
 	w0Dep(CorrectLength(B0_.cols(), w0Dep_)), wiDep(CorrectLength(Bi_.cols(), wiDep_)), f_nl(f_) {}
 
-unsigned int Function4::GetOutputSize() const { return A0.rows(); }
+Eigen::Index Function4::GetOutputSize() const { return A0.rows(); }
 
-unsigned int Function4::GetX0Size() const { return A0.cols(); }
+Eigen::Index Function4::GetX0Size() const { return A0.cols(); }
 
-unsigned int Function4::GetW0Size() const { return B0.cols(); }
+Eigen::Index Function4::GetW0Size() const { return B0.cols(); }
 
-unsigned int Function4::GetXiSize() const { return Ai.cols(); }
+Eigen::Index Function4::GetXiSize() const { return Ai.cols(); }
 
-unsigned int Function4::GetWiSize() const { return Bi.cols(); }
+Eigen::Index Function4::GetWiSize() const { return Bi.cols(); }
 
 Eigen::VectorXd Function4::EvalNl(const Eigen::VectorXd & x0, const Eigen::VectorXd & w0, const Eigen::VectorXd & xi, const Eigen::VectorXd & wi) const {
 	return f_nl(x0, w0, xi, wi);

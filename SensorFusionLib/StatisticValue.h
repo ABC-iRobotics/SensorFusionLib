@@ -2,6 +2,8 @@
 
 #include "Eigen/Dense"
 
+#include <iostream>
+
 struct StatisticValue {
 	Eigen::VectorXd vector;
 
@@ -17,8 +19,14 @@ struct StatisticValue {
 
 	StatisticValue();
 
-	unsigned int Length() const;
+	Eigen::Index Length() const;
 
-	void Insert(unsigned int StartIndex, StatisticValue value);
+	void Insert(Eigen::Index StartIndex, StatisticValue value);
+
+	StatisticValue GetPart(Eigen::Index StartIndex, Eigen::Index Length) const;
+
+	void Add(StatisticValue value);
+
 };
 
+std::ostream &operator<<(std::ostream &os, StatisticValue const &m);

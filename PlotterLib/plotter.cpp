@@ -33,11 +33,11 @@ cvplot::Plotter::Plotter(std::string name_, Offset o, Size plotsize) :
 	viewMap(std::map<unsigned int, View::ViewPtr>()),
 	seriesMap(std::map<SeriesID, Series::SeriesPtr>()) {
 	W.offset(o);
-	W.size(Size(plotsize.height, plotsize.width * 0));
+	W.size(Size(plotsize.width, plotsize.height * 0));
 }
 
 void cvplot::Plotter::addPlot(std::string plotName, unsigned int numofsignals, std::vector<std::string> names) {
-	W.resize(Rect(offset.x, offset.y, plotSize.height, plotSize.width*(numOfPlots + 1)));
+	W.resize(Rect(offset.x, offset.y, plotSize.width, plotSize.height*(numOfPlots + 1)));
 	cvplot::View::ViewPtr view = W.view(name + "_" + std::to_string(numOfPlots), plotSize);
 	_setNthView(numOfPlots, view);
 	view->offset(cvplot::Offset(0, numOfPlots * plotSize.height));

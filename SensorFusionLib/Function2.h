@@ -13,16 +13,16 @@ struct Function2 {
 	Function2(Eigen::MatrixXd A0_, Eigen::MatrixXd B0_, Eigen::VectorXi x0Dep_,
 		Eigen::VectorXi w0Dep_, nonlinPart f_);
 
-	unsigned int GetOutputSize() const;
+	Eigen::Index GetOutputSize() const;
 
-	unsigned int GetX0Size() const;
+	Eigen::Index GetX0Size() const;
 
-	unsigned int GetW0Size() const;
+	Eigen::Index GetW0Size() const;
 
 	Eigen::VectorXd EvalNl(const Eigen::VectorXd& x0, const Eigen::VectorXd& w0) const;
 
 	Eigen::VectorXd Eval(const Eigen::VectorXd& x0, const Eigen::VectorXd& w0) const;
 
-	static Function2 Empty(unsigned int xSize, unsigned int wSize);
+	static Function2 Empty(Eigen::Index xSize, Eigen::Index wSize);
 };
 

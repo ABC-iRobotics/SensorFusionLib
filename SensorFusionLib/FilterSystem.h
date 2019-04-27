@@ -2,90 +2,173 @@
 
 #include "Sensor.h"
 #include "CallbackHandler.h"
+#include "StatisticValue.h"
 #include <iostream> // to delete
+#include <map>
 
-typedef enum FilterValueType {
+#include "FunctionMerge.h"
+
+enum FilterValueType {
 	PREDICTED_STATE, PREDICTED_OUTPUT,
-	MEASURED_STATE, MEASURED_OUTPUT,
-	USED_DISTURBANCE, USED_NOISE
+	USED_DISTURBANCE, USED_NOISE,
+	FILTERED_STATE, FILTERED_OUTPUT,
+	MEASURED_OUTPUT, DT,
+	GROUND_TRUTH_STATE, T
 };
 
+typedef std::map<FilterValueType, StatisticValue> FilterData;
 
-class FilterSystem : public CallbackHandler<StatisticValue,FilterValueType> {
-private:
-	unsigned int iID;
+enum FilterEvents { STEP, MEASUREMENT };
 
-	struct BaseSystemData {
-		BaseSystem::BaseSystemPtr ptr;
+class FilterSystem : public CallbackHandler<const FilterData&, FilterEvents> {
+	
+public:
+	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
+
+	struct SystemData {
+		System::SystemPtr ptr;
 		StatisticValue noise;
+		StatisticValue disturbance;
 		Eigen::VectorXd measurement;
-		bool measurementUpToDate;
-		BaseSystemData(BaseSystem::BaseSystemPtr ptr_);
-	} baseSystemData;
+		MeasurementStatus measStatus;
 
-	struct SensorData {
-		Sensor::SensorPtr ptr;
-		StatisticValue noise;
-		Eigen::VectorXd measurement;
-		bool measurementUpToDate;
-		SensorData(Sensor::SensorPtr ptr_);
+		SystemData(System::SystemPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
+			Eigen::VectorXd measurement_=Eigen::VectorXd(), MeasurementStatus measStatus_=OBSOLETHE);
+		BaseSystem::BaseSystemPtr getBaseSystemPtr() const;
+		Sensor::SensorPtr getSensorPtr() const;
+		StatisticValue getProperty(SystemValueType type) const;
+		void setProperty(StatisticValue value, SystemValueType type);
 	};
 
-	typedef std::vector<SensorData> SensorList;
-
-	SensorList cSensors;
-
-	struct SystemValues {
-		StatisticValue state;
-		StatisticValue disturbance;
-		SystemValues(BaseSystem::BaseSystemPtr baseptr);
-		StatisticValue Get(SystemValueType type) const;
-		void Set(SystemValueType type, StatisticValue value);
-	} values;
-
 private:
-	// Insert the state, variance, noise or measuredoutput of the basesystem into the vStateVector, mVarianceMatrix
-	void _SetBaseSystemValue(StatisticValue value, SystemValueType type);
+	typedef std::vector<SystemData> SystemList;
 
-	// Insert the state, variance, noise or measuredoutput of a sensor into the vStateVector, mVarianceMatrix
-	void _SetSensorValue(unsigned int ID, StatisticValue value, SystemValueType type);
+	SystemList systemList;
 
+	StatisticValue state;
+
+	int _GetIndexForID(unsigned int ID) const;
+
+	StatisticValue _GetSystemPropertyByID(unsigned int ID, SystemValueType type) const;
+	StatisticValue _GetSystemProperty(unsigned int index, SystemValueType type) const;
+
+	void _SetSystemProperty(unsigned int index, StatisticValue value, SystemValueType type);
+	void _SetBaseSystemProperty(StatisticValue value, SystemValueType type);
+	void _SetSystemPropertyByID(unsigned int ID, StatisticValue value, SystemValueType type);
+	void _SetSensorPropertyByID(unsigned int ID, StatisticValue value, SystemValueType type);
+
+	StatisticValue _PartitionateState(StatisticValue in, unsigned int systemindex) const {
+		int k = 0;
+		for (unsigned int i = 0; i + 1 < systemindex; i++)
+			k += systemList[i].ptr->getNumOf(STATE);
+		int dk = systemList[systemindex].ptr->getNumOf(STATE);
+		return in.GetPart(k, dk);
+	}
+
+	std::vector<Eigen::VectorXd> _PartitionateStateVector(Eigen::VectorXd stateVector) const {
+		std::vector<Eigen::VectorXd> out = std::vector<Eigen::VectorXd>();
+		int k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++) {
+			int dk = systemList[i].ptr->getNumOf(STATE);
+			out.push_back(stateVector.segment(k, dk));
+			k += dk;
+		}
+		return out;
+	}
+
+	std::vector<Eigen::VectorXd> _PartitionateOutputVector(Eigen::VectorXd outputVector, std::vector<bool> activeSystems) const {
+		std::vector<Eigen::VectorXd> out = std::vector<Eigen::VectorXd>();
+		int k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++)
+			if (activeSystems[i]) {
+				int dk = systemList[i].ptr->getNumOf(OUTPUT);
+				out.push_back(outputVector.segment(k, dk));
+				k += dk;
+			}
+			else
+				out.push_back(Eigen::VectorXd(0));
+		return out;
+	}
+
+	/*
+	Eigen::VectorXd _Partitionate(SystemValueType type, Eigen::VectorXd in) const {
+
+	}*/
+	
 public:
-	FilterSystem(BaseSystem::BaseSystemPtr baseSystem);
+	FilterSystem(SystemData baseSystemData, StatisticValue baseSystemState);
 
 	~FilterSystem();
 
-	void AddSensor(Sensor::SensorPtr sensor); // options!
+	void AddSensor(SystemData sensorData, StatisticValue sensorState); // options!
 
-	Eigen::VectorXd GetStateVector() const;
+	StatisticValue GetDisturbance() const;
 
-	Eigen::MatrixXd GetVarianceMatrix() const;
-
-	Eigen::VectorXd GetBaseSystemStateVector() const;
-
-	Eigen::VectorXd GetSensorStateVector(int i) const;
-
-	unsigned int GetNumOfSensors() const { return cSensors.size(); }
-
-	Eigen::VectorXd ComputeUpdate(Eigen::VectorXd state, Eigen::VectorXd dist, double Ts) const;
-
-	StatisticValue ComputeUpdate(double Ts, const StatisticValue& state, const StatisticValue& disturbance) const;
-
-	StatisticValue ComputeOutput(double Ts, const StatisticValue& state, Eigen::MatrixXd& Syx, Eigen::VectorXd& y_measured) const;
-
-	void Step(double dT) { // update, collect measurement, correction via Kalman-filtering
-		StatisticValue x_pred = ComputeUpdate(dT, values.state, values.disturbance);
-		Eigen::MatrixXd Syxpred;
-		Eigen::VectorXd y_meas;
-		StatisticValue y_pred = ComputeOutput(dT, x_pred, Syxpred, y_meas);
-
-		Eigen::MatrixXd K = Syxpred.transpose() * y_pred.variance.inverse();
-
-		Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
-		values.state = StatisticValue(x_pred.vector + K * (y_meas - y_pred.vector),
-			(Sxnew + Sxnew.transpose()) / 2.);
+	StatisticValue GetState() const { return state; }
+	
+	Eigen::VectorXd GetMeasuredOutput() const {
+		int k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++)
+			if (systemList[i].measStatus != OBSOLETHE)
+				k += systemList[i].ptr->getNumOfOutputs();
+		Eigen::VectorXd out = Eigen::VectorXd(k);
+		k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++)
+			if (systemList[i].measStatus != OBSOLETHE) {
+				int dk = systemList[i].ptr->getNumOfOutputs();
+				out.segment(k, dk) = systemList[i].measurement;
+				k += dk;
+			}
+		return out;
 	}
 
+	StatisticValue GetNoise() const {
+		int k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++)
+			if (i == 0 || systemList[i].measStatus != OBSOLETHE)
+				k += systemList[i].ptr->getNumOfNoises();
+		StatisticValue out(k);
+		k = 0;
+		for (unsigned int i = 0; i < systemList.size(); i++)
+			if (i == 0 || systemList[i].measStatus != OBSOLETHE) {
+				out.Insert(k, systemList[i].noise);
+				k += systemList[i].ptr->getNumOfNoises();
+			}
+		return out;
+	}
+
+	// Outputdynamics:
+	/* y = [ y_bs' y_s1' ... y_sn' ]' y_i = [] if there is not uptodate measurement
+	   x = [ x_bs' x_s1' ... y_sn' ]'
+	   v = [ v_bs' v_s1' ... y_sn' ]' v_si = [] if there is not updtodate measurement
+	   y = C*x + f(x,v) + D*v;
+	*/
+	const FunctionMerge GetOutputDynamics(double Ts) const {
+		// 
+		FunctionMerge merger(systemList[0].getBaseSystemPtr()->getOutputMapping(Ts,
+			systemList[0].measStatus == OBSOLETHE));
+		for (size_t i = 1; i < systemList.size(); i++)
+			merger.AddFunction(systemList[i].getSensorPtr()->getOutputMapping(Ts,
+				systemList[i].measStatus == OBSOLETHE));
+		return merger;
+	}
+
+	Eigen::Index GetNumOfSensors() const { return systemList.size()-1; }
+
+	// Compute new state from exactly known state and disturbance
+	Eigen::VectorXd ComputeUpdate(Eigen::VectorXd state, Eigen::VectorXd dist, double Ts) const;
+
+	// Compute new statistical state from statistical state and disturbance
+	StatisticValue ComputeUpdate(double Ts, const StatisticValue& state, const StatisticValue& disturbance) const;
+
+	// Compute statistical output from statistical state and disturbance
+	StatisticValue ComputeOutput(double Ts, const StatisticValue& state, const StatisticValue& noise_, Eigen::MatrixXd& Syx) const;
+
+	void Step(double dT);
+
 	// how to structure kalman filtering / wrwaukf ?
+
+	std::ostream& print(std::ostream& stream) const;
 };
 
+std::ostream& operator<< (std::ostream& stream, const FilterSystem& filter);

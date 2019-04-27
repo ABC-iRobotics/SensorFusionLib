@@ -2,4 +2,4 @@
 
 #include "Eigen/Dense"
 
-Eigen::VectorXi CorrectLength(unsigned int newsize, const Eigen::RowVectorXi& in);
+Eigen::VectorXi CorrectLength(Eigen::Index newsize, const Eigen::RowVectorXi& in);
