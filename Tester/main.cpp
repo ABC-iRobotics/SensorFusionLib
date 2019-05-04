@@ -352,29 +352,79 @@ void transparency() {
 
 #include "init.h"
 
+#include "SystemManager.h"
+
 int main() {
+
 	// Init FilterSystem
 	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.002, 0.4, 0.25, 0.05);
 	Sensor::SensorPtr imu = std::make_shared<IMUSensor>(youBot);
 
 	StatisticValue initState;
-	FilterSystem::SystemData data = InitYouBotSystem(youBot, initState);
+	
+	SystemManager::SystemData data2 = InitYouBotSystem2(youBot, initState);
+	SystemManager man(data2, initState);
+	SystemManager::SystemData data3 = InitIMUSensor2(imu, initState);
+	man.AddSensor(data3, initState);
 
+	Sensor::SensorPtr imu5 = std::make_shared<IMUSensor>(youBot);
+	SystemManager::SystemData data5 = InitIMUSensor2(imu5, initState);
+
+	man.AddSensor(data5,initState);
+
+	Eigen::MatrixXd A,B;
+	man.getMatrices(System::TIMEUPDATE, 0.001, A, B);
+
+	Eigen::VectorXd a = Eigen::VectorXd(3);
+	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
+	imu->MeasurementDone(a);
+
+	std::cout << man.EvalNonLinPart(0.001, System::TIMEUPDATE, man(STATE).vector, man(DISTURBANCE).vector) << std::endl << std::endl;
+
+	std::cout << man.EvalNonLinPart(0.001, System::MEASUREMENTUPDATE, man(STATE).vector, man(NOISE).vector) << std::endl << std::endl;
+
+	return 0;
+
+	//imu5->MeasurementDone(a);
+
+	std::cout << man.num(DISTURBANCE) << std::endl;
+	std::cout << man.num(STATE) << std::endl;
+	std::cout << man.num(NOISE) << std::endl;
+	std::cout << man.num(OUTPUT) << std::endl;
+
+
+
+
+	SystemValueType type = OUTPUT;
+	std::cout << man(type).vector << std::endl << std::endl;
+	std::vector<Eigen::VectorXd> temp = man.partitionate(type, man(type).vector);
+	for (int i = 0; i < temp.size(); i++)
+		std::cout << temp[i] << std::endl << std::endl;
+
+	return 0;
+	std::cout << man(STATE) << std::endl << std::endl;
+
+	std::cout << A << std::endl << std::endl;
+
+	std::cout << B << std::endl << std::endl;
+
+	return 0;
+
+
+	FilterSystem::SystemData data = InitYouBotSystem(youBot, initState);
 	FilterSystem sys(data, initState);
 
 	data = InitIMUSensor(imu, initState);
 	sys.AddSensor(data, initState);
+
 	
+
 	// Usage
 	std::cout << sys;
 
 	sys.Step(0.001);
 
 	std::cout << sys;
-
-	Eigen::VectorXd a = Eigen::VectorXd(3);
-	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
-	imu->MeasurementDone(a);
 
 	std::cout << sys;
 

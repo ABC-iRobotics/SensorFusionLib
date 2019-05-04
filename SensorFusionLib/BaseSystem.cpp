@@ -59,3 +59,31 @@ Function2 BaseSystem::getOutputMapping(double Ts, bool empty) const {
 			[this, Ts](const Eigen::VectorXd& state, const Eigen::VectorXd& noise) {
 			return this->OutputNonlinearPart(Ts, std::move(state), std::move(noise)); });
 }
+
+Eigen::VectorXd BaseSystem::genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd & state, const Eigen::VectorXd & in) const {
+	switch (type) {
+	case TIMEUPDATE:
+		return UpdateNonlinearPart(Ts, state, in);
+	case MEASUREMENTUPDATE:
+		return OutputNonlinearPart(Ts, state, in);
+	}
+}
+
+Eigen::VectorXi BaseSystem::genNonlinearDependency(UpdateType outType, InputType inType) {
+	switch (outType) {
+	case TIMEUPDATE:
+		switch (inType) {
+		case STATE:
+			return getUpdateNonlinearXDependencies();
+		case INPUT:
+			return getUpdateNonlinearWDependencies();
+		}
+	case MEASUREMENTUPDATE:
+		switch (inType) {
+		case STATE:
+			return getOutputNonlinearXDependencies();
+		case INPUT:
+			return getOutputNonlinearVDependencies();
+		}
+	}
+}

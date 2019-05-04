@@ -58,4 +58,12 @@ public:
 	virtual std::string getName() const;
 
 	typedef std::shared_ptr<System> SystemPtr;
+
+	enum UpdateType { TIMEUPDATE, MEASUREMENTUPDATE };
+
+	enum InputType { STATE, INPUT };
+
+	static SystemValueType getInputValueType(System::UpdateType outType, System::InputType inType);
+
+	static SystemValueType getOutputValueType(System::UpdateType outType);
 };

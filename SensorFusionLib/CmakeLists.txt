@@ -20,6 +20,8 @@ set (HEADERS
 	System.h 
 	pch.h
 	CallbackHandler.h
+	SystemManager.h
+	PartialCholevski.h
 	)
 	
 set (SOURCES
@@ -34,6 +36,8 @@ set (SOURCES
 	StatisticValue.cpp
 	System.cpp 
 	pch.cpp
+	SystemManager.cpp
+	PartialCholevski.cpp
 	)
 	
 

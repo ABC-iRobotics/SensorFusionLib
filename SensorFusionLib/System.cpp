@@ -90,6 +90,25 @@ std::vector<std::string> System::getOutputNames() const {
 std::string System::getName() const {
 	return "System";
 }
+SystemValueType System::getInputValueType(System::UpdateType outType, System::InputType inType) {
+	if (inType == STATE)
+		return SystemValueType::STATE;
+	switch (outType) {
+	case UpdateType::MEASUREMENTUPDATE:
+		return SystemValueType::NOISE;
+	case UpdateType::TIMEUPDATE:
+		return SystemValueType::DISTURBANCE;
+
+	}
+}
+SystemValueType System::getOutputValueType(System::UpdateType outType) {
+	switch (outType) {
+	case TIMEUPDATE:
+		return SystemValueType::STATE;
+	case MEASUREMENTUPDATE:
+		return SystemValueType::OUTPUT;
+	}
+}
 /*
 void System::SetValues(StatisticValue value, SystemValueType type) const {
 	// Check input sizes

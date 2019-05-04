@@ -71,6 +71,32 @@ public:
 
 	virtual bool isCompatible(BaseSystem::BaseSystemPtr ptr) const = 0;
 
+
+/*	void getMatrices(OutType type, double Ts, Eigen::MatrixXd& A0, Eigen::MatrixXd& B0, Eigen::MatrixXd& Ai, Eigen::MatrixXd& Bi) const {
+		switch (type) {
+		case System::UPDATE:
+			A0 = getA0(Ts);
+			B0 = getB0(Ts);
+			Ai = getAi(Ts);
+			Bi = getBi(Ts);
+			return;
+		case System::OUT:
+			A0 = getC0(Ts);
+			B0 = getD0(Ts);
+			Ai = getCi(Ts);
+			Bi = getDi(Ts);
+			return;
+		}
+	}*/
+
+	Eigen::VectorXd genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd& baseSystemState,
+		const Eigen::VectorXd& baseSystemIn, const Eigen::VectorXd& sensorState,
+		const Eigen::VectorXd& sensorIn) const;
+
+	Eigen::VectorXi genNonlinearBaseSystemDependency(UpdateType outType, InputType inType);
+
+	Eigen::VectorXi genNonlinearSensorDependency(UpdateType outType, InputType inType);
+
 	typedef std::shared_ptr<Sensor> SensorPtr;
 };
 

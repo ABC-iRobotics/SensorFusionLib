@@ -2,6 +2,11 @@
 #include <vector>
 #include <functional>
 
+inline unsigned int getUID() {
+	static unsigned int ID = 0;
+	return ID++;
+}
+
 template <class ValueType,class CallType>
 class CallbackHandler {
 	unsigned int iID;
@@ -55,9 +60,7 @@ void CallbackHandler<ValueType, CallType>::DeleteCallback(unsigned int ownerID) 
 
 template<class ValueType, class CallType>
 CallbackHandler<ValueType, CallType>::CallbackHandler() : vCallback(CallbackVector()) {
-	static unsigned int IDcounter = 0;
-	iID = IDcounter;
-	IDcounter++;
+	iID = getUID();
 }
 
 template<class ValueType, class CallType>
