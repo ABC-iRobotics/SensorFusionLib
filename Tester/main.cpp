@@ -362,13 +362,13 @@ int main() {
 
 	StatisticValue initState;
 	
-	SystemManager::SystemData data2 = InitYouBotSystem2(youBot, initState);
+	SystemManager::BaseSystemData data2 = InitYouBotSystem2(youBot, initState);
 	SystemManager man(data2, initState);
-	SystemManager::SystemData data3 = InitIMUSensor2(imu, initState);
+	SystemManager::SensorData data3 = InitIMUSensor2(imu, initState);
 	man.AddSensor(data3, initState);
 
 	Sensor::SensorPtr imu5 = std::make_shared<IMUSensor>(youBot);
-	SystemManager::SystemData data5 = InitIMUSensor2(imu5, initState);
+	SystemManager::SensorData data5 = InitIMUSensor2(imu5, initState);
 
 	man.AddSensor(data5,initState);
 
@@ -379,11 +379,13 @@ int main() {
 	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
 	imu->MeasurementDone(a);
 
+	/*
 	std::cout << man.EvalNonLinPart(0.001, System::TIMEUPDATE, man(STATE).vector, man(DISTURBANCE).vector) << std::endl << std::endl;
 
 	std::cout << man.EvalNonLinPart(0.001, System::MEASUREMENTUPDATE, man(STATE).vector, man(NOISE).vector) << std::endl << std::endl;
 
 	return 0;
+	*/
 
 	//imu5->MeasurementDone(a);
 
@@ -401,7 +403,7 @@ int main() {
 	for (int i = 0; i < temp.size(); i++)
 		std::cout << temp[i] << std::endl << std::endl;
 
-	return 0;
+	//return 0;
 	std::cout << man(STATE) << std::endl << std::endl;
 
 	std::cout << A << std::endl << std::endl;

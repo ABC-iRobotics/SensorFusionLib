@@ -1,19 +1,8 @@
 #include "SystemManager.h"
 
-SystemManager::SystemData::SystemData(System::SystemPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
+SystemManager::SystemData::SystemData(StatisticValue noise_, StatisticValue disturbance_,
 	Eigen::VectorXd measurement_, MeasurementStatus measStatus_) :
-	ptr(ptr_), noise(noise_), measurement(measurement_), disturbance(disturbance_),
-	measStatus(measStatus_), isBaseSystem(dynamic_cast<BaseSystem*>(ptr_.get())) {}
-
-BaseSystem::BaseSystemPtr SystemManager::SystemData::getBaseSystemPtr() const {
-	return std::static_pointer_cast<BaseSystem>(ptr);
-}
-
-Sensor::SensorPtr SystemManager::SystemData::getSensorPtr() const {
-	return std::static_pointer_cast<Sensor>(ptr);
-}
-
-System::SystemPtr SystemManager::SystemData::getPtr() const { return ptr; }
+	noise(noise_), measurement(measurement_), disturbance(disturbance_), measStatus(measStatus_) {}
 
 StatisticValue SystemManager::SystemData::operator()(SystemValueType type) const {
 	switch (type)
@@ -32,28 +21,14 @@ StatisticValue SystemManager::SystemData::operator()(SystemValueType type) const
 
 size_t SystemManager::SystemData::num(SystemValueType type) const
 {
-	if (available() || type==STATE || type==DISTURBANCE || (isBaseSystem && type==NOISE))
-		return ptr->getNumOf(type);
+	if (available() || type==STATE || type==DISTURBANCE || (isBaseSystem() && type==NOISE))
+		return getPtr()->getNumOf(type);
 	else return 0;
 }
 
-size_t SystemManager::SystemData::num0(SystemValueType type) const { return ptr->getNumOf(type); }
+size_t SystemManager::SystemData::num0(SystemValueType type) const { return getPtr()->getNumOf(type); }
 
 // return length of the given value
-
-Eigen::VectorXi SystemManager::SystemData::depBaseSystem(System::UpdateType outType, System::InputType type) const {
-	if (outType == System::TIMEUPDATE || available()) {
-		if (isBaseSystem) return getBaseSystemPtr()->genNonlinearDependency(outType, type);
-		else return getSensorPtr()->genNonlinearBaseSystemDependency(outType, type);
-	}
-	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
-}
-
-Eigen::VectorXi SystemManager::SystemData::depSensor(System::UpdateType outType, System::InputType type) const {
-	if (outType == System::TIMEUPDATE || available())
-		return getSensorPtr()->genNonlinearSensorDependency(outType, type);
-	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
-}
 
 void SystemManager::SystemData::set(StatisticValue value, SystemValueType type) {
 	switch (type)
@@ -85,88 +60,54 @@ bool SystemManager::SystemData::available() const { return measStatus != OBSOLET
 
 // returns if is measurement available
 
-Eigen::MatrixXd SystemManager::SystemData::getMatrixBaseSystem(double Ts, System::UpdateType type, System::InputType inType) const {
-	if (type == System::MEASUREMENTUPDATE && !available()) {
-		switch (inType) {
-		case System::STATE:
-			return Eigen::MatrixXd(0, getSensorPtr()->getNumOfBaseSystemStates());
-		case System::INPUT:
-			return Eigen::MatrixXd(0, getSensorPtr()->getNumOfBaseSystemNoises());
-		}
-	}
-	switch (type) {
-	case System::TIMEUPDATE:
-		switch (inType) {
-		case System::STATE:
-			if (isBaseSystem) return getBaseSystemPtr()->getA(Ts);
-			else return getSensorPtr()->getA0(Ts);
-		case System::INPUT:
-			if (isBaseSystem) return getBaseSystemPtr()->getB(Ts);
-			else return getSensorPtr()->getB0(Ts);
-		}
-	case System::MEASUREMENTUPDATE:
-		switch (inType) {
-		case System::STATE:
-			if (isBaseSystem) return getBaseSystemPtr()->getC(Ts);
-			else return getSensorPtr()->getC0(Ts);
-		case System::INPUT:
-			if (isBaseSystem) return getBaseSystemPtr()->getD(Ts);
-			else return getSensorPtr()->getD0(Ts);
-		}
-	}
-}
-
-Eigen::MatrixXd SystemManager::SystemData::getMatrixSensor(double Ts, System::UpdateType type, System::InputType inType) const {
-	if (type == System::MEASUREMENTUPDATE && !available())
-		return Eigen::MatrixXd(0, num(System::getInputValueType(System::MEASUREMENTUPDATE, inType)));
-	switch (type) {
-	case System::TIMEUPDATE:
-		switch (inType) {
-		case System::STATE:
-			return getSensorPtr()->getAi(Ts);
-		case System::INPUT:
-			return getSensorPtr()->getBi(Ts);
-		}
-	case System::MEASUREMENTUPDATE:
-		switch (inType) {
-		case System::STATE:
-			return getSensorPtr()->getCi(Ts);
-		case System::INPUT:
-			return getSensorPtr()->getDi(Ts);
-		}
-	}
-}
-
-unsigned int SystemManager::_GetIndex(unsigned int ID) const {
-	for (unsigned int i = 0; i < nSystems(); i++)
-		if (systemList[i].getPtr()->getID() == ID)
+int SystemManager::_GetIndex(unsigned int ID) const {
+	if (ID == baseSystem.getPtr()->getID())
+		return -1;
+	for (unsigned int i = 0; i < nSensors(); i++)
+		if (sensorList[i].getPtr()->getID() == ID)
 			return i;
 	throw std::runtime_error(std::string("Component not available."));
 }
 
-size_t SystemManager::nSystems() const { return systemList.size(); }
+size_t SystemManager::nSensors() const { return sensorList.size(); }
 
 size_t SystemManager::num(SystemValueType type) const {
 	if (type == STATE) return state.Length();
-	size_t out = 0;
-	for (size_t i = 0; i < nSystems(); i++)
-		out += systemList[i].num(type);
+	size_t out = baseSystem.num(type);
+	for (size_t i = 0; i < nSensors(); i++)
+		out += sensorList[i].num(type);
 	return out;
+}
+
+SystemManager::SensorData SystemManager::Sensor(size_t index) const { return sensorList[index]; }
+
+SystemManager::SensorData & SystemManager::Sensor(size_t index) { return sensorList[index]; }
+
+const SystemManager::SystemData * SystemManager::SystemByID(unsigned int ID) const {
+	int index = _GetIndex(ID);
+	if (index == -1) return &baseSystem;
+	return &(sensorList[index]);
+}
+
+SystemManager::SystemData * SystemManager::SystemByID(unsigned int ID) {
+	int index = _GetIndex(ID);
+	if (index == -1) return &baseSystem;
+	return &(sensorList[index]);
 }
 
 StatisticValue SystemManager::operator()(SystemValueType type) const {
 	if (type == STATE)
 		return state;
-
-	size_t k = 0;
-	for (unsigned int i = 0; i < nSystems(); i++)
-		k += systemList[i].num(type);
+	size_t k = baseSystem.num(type);
+	for (unsigned int i = 0; i < nSensors(); i++)
+		k += sensorList[i].num(type);
 	StatisticValue out(k);
-	k = 0;
-	for (unsigned int i = 0; i < nSystems(); i++) {
-		size_t dk = systemList[i].num(type);
+	out.Insert(0, baseSystem(type));
+	k = baseSystem.num(type);
+	for (unsigned int i = 0; i < nSensors(); i++) {
+		size_t dk = sensorList[i].num(type);
 		if (dk>0)
-			out.Insert(k, systemList[i](type));
+			out.Insert(k, sensorList[i](type));
 		k += dk;
 	}
 	return out;
@@ -183,9 +124,10 @@ StatisticValue SystemManager::operator()(SystemValueType type) const {
 
 std::vector<Eigen::VectorXd> SystemManager::partitionate(SystemValueType type, Eigen::VectorXd value) const {
 	std::vector<Eigen::VectorXd> out = std::vector<Eigen::VectorXd>();
-	size_t n = 0;
-	for (size_t i = 0; i<nSystems(); i++) {
-		size_t d = systemList[i].num(type);
+	size_t n = baseSystem.num(type);
+	out.push_back(value.segment(0, n));
+	for (size_t i = 0; i<nSensors(); i++) {
+		size_t d = sensorList[i].num(type);
 		out.push_back(value.segment(n, d));
 		n += d;
 	}
@@ -196,42 +138,69 @@ void SystemManager::getMatrices(System::UpdateType out_, double Ts, Eigen::Matri
 	SystemValueType outValueType = System::getOutputValueType(out_);
 	SystemValueType inValueType = System::getInputValueType(out_, System::INPUT);
 	Eigen::Index nx = state.Length();
-	size_t n_in = 0, n_out = 0;
-	for (size_t i = 0; i < nSystems(); i++) {
-		n_in += systemList[i].num(inValueType);
-		n_out += systemList[i].num(outValueType);
+	size_t n_in = baseSystem.num(inValueType);
+	size_t n_out = baseSystem.num(outValueType);
+	for (size_t i = 0; i < nSensors(); i++) {
+		n_in += sensorList[i].num(inValueType);
+		n_out += sensorList[i].num(outValueType);
 	}
 	// init matrices az zero
 	A = Eigen::MatrixXd::Zero(n_out, nx);
 	B = Eigen::MatrixXd::Zero(n_out, n_in);
 	// fill them
 	// basesystem:
-	size_t nx0 = systemList[0].num(STATE);
-	size_t nin0 = systemList[0].num(inValueType);
-	size_t nout0 = systemList[0].num(outValueType);
-	A.block(0, 0, nout0, nx0) = systemList[0].getMatrixBaseSystem(Ts, out_, System::STATE);
-	B.block(0, 0, nout0, nin0) = systemList[0].getMatrixBaseSystem(Ts, out_, System::INPUT);
+	size_t nx0 = baseSystem.num(STATE);
+	size_t nin0 = baseSystem.num(inValueType);
+	size_t nout0 = baseSystem.num(outValueType);
+	A.block(0, 0, nout0, nx0) = baseSystem.getMatrix(Ts, out_, System::STATE);
+	B.block(0, 0, nout0, nin0) = baseSystem.getMatrix(Ts, out_, System::INPUT);
 	// sensors:
 	size_t iin = nin0, iout = nout0, ix = nx0;
-	for (size_t i = 1; i < nSystems(); i++) {
-		size_t dx = systemList[i].num(STATE);
-		size_t din = systemList[i].num(inValueType);
-		size_t dout = systemList[i].num(outValueType);
-		A.block(iout, 0, dout, nx0) = systemList[i].getMatrixBaseSystem(Ts, out_, System::STATE);
-		B.block(iout, 0, dout, nin0) = systemList[i].getMatrixBaseSystem(Ts, out_, System::INPUT);
-		A.block(iout, ix, dout, dx) = systemList[i].getMatrixSensor(Ts, out_, System::STATE);
-		B.block(iout, iin, dout, din) = systemList[i].getMatrixSensor(Ts, out_, System::INPUT);
+	for (size_t i = 0; i < nSensors(); i++) {
+		size_t dx = sensorList[i].num(STATE);
+		size_t din = sensorList[i].num(inValueType);
+		size_t dout = sensorList[i].num(outValueType);
+		A.block(iout, 0, dout, nx0) = sensorList[i].getMatrixBaseSystem(Ts, out_, System::STATE);
+		B.block(iout, 0, dout, nin0) = sensorList[i].getMatrixBaseSystem(Ts, out_, System::INPUT);
+		A.block(iout, ix, dout, dx) = sensorList[i].getMatrixSensor(Ts, out_, System::STATE);
+		B.block(iout, iin, dout, din) = sensorList[i].getMatrixSensor(Ts, out_, System::INPUT);
 		iout += dout;
 		iin += din;
 		ix += dx;
 	}
 }
 
-void SystemManager::saveMeasurement(unsigned int ID, Eigen::VectorXd value) { SystemByID(ID).set(value,SystemValueType::OUTPUT); }
+// could be faster....
 
-SystemManager::SystemManager(SystemData data, StatisticValue state_) :
-	systemList(SystemList()), state(state_), ID(getUID()) {
-		systemList.push_back(data);
+Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts, System::UpdateType outType, Eigen::VectorXd state, Eigen::VectorXd in) const {
+	SystemValueType intype = System::getInputValueType(outType, System::INPUT);
+	SystemValueType outtype = System::getOutputValueType(outType);
+	unsigned int n_out = num(outtype);
+	// Partitionate vectors
+	std::vector<Eigen::VectorXd> states = partitionate(STATE, state);
+	std::vector<Eigen::VectorXd> ins = partitionate(intype, in);
+	// Return value
+	Eigen::VectorXd out = Eigen::VectorXd(n_out);
+	// Call the functions
+	size_t n;
+	if (outType == System::TIMEUPDATE || baseSystem.available()) {
+		n = baseSystem.num(outtype);
+		out.segment(0, n) = baseSystem.getBaseSystemPtr()->genNonlinearPart(outType, Ts, states[0], ins[0]);
+	}
+	else n = 0;
+	for (size_t i = 0; i < nSensors(); i++)
+		if (outType == System::TIMEUPDATE || sensorList[i].available()) {
+			size_t d = sensorList[i].num(outtype);
+			out.segment(n, d) = sensorList[i].getSensorPtr()->genNonlinearPart(outType, Ts, states[0], ins[0], states[i], ins[i]);
+			n += d;
+		}
+	return out;
+}
+
+void SystemManager::saveMeasurement(unsigned int ID, Eigen::VectorXd value) { SystemByID(ID)->set(value,SystemValueType::OUTPUT); }
+
+SystemManager::SystemManager(BaseSystemData data, StatisticValue state_) :
+	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data) {
 		unsigned int systemID = data.getPtr()->getID();
 		// set callback
 		data.getPtr()->AddCallback([this, systemID](Eigen::VectorXd value, EmptyClass) {
@@ -239,14 +208,15 @@ SystemManager::SystemManager(SystemData data, StatisticValue state_) :
 }
 
 SystemManager::~SystemManager() {
-	for (unsigned int i = 0; i < systemList.size(); i++)
-		systemList[i].getPtr()->DeleteCallback(ID);
+	baseSystem.getPtr()->DeleteCallback(ID);
+	for (unsigned int i = 0; i < sensorList.size(); i++)
+		sensorList[i].getPtr()->DeleteCallback(ID);
 }
 
-void SystemManager::AddSensor(SystemData sensorData, StatisticValue sensorState) {
-	if (sensorData.getSensorPtr()->isCompatible(systemList[0].getBaseSystemPtr())) {
+void SystemManager::AddSensor(SensorData sensorData, StatisticValue sensorState) {
+	if (sensorData.getSensorPtr()->isCompatible(baseSystem.getBaseSystemPtr())) {
 		//Add to the list
-		systemList.push_back(sensorData);
+		sensorList.push_back(sensorData);
 		// Add the initial state values and variances to the state/variance matrix
 		state.Add(sensorState);
 		// Set callbacks
@@ -256,3 +226,116 @@ void SystemManager::AddSensor(SystemData sensorData, StatisticValue sensorState)
 	}
 	else throw std::runtime_error(std::string("Not compatible sensor tried to be added!\n"));
 }
+
+SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_, StatisticValue noise_,
+	StatisticValue disturbance_, Eigen::VectorXd measurement_, MeasurementStatus measStatus_) : ptr(ptr_),
+	SystemData(noise_, disturbance_, measurement_, measStatus_) {}
+
+Eigen::VectorXi SystemManager::BaseSystemData::dep(System::UpdateType outType, System::InputType type) const {
+	if (outType == System::TIMEUPDATE || available())
+		return ptr->genNonlinearDependency(outType, type);
+	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
+}
+
+Eigen::MatrixXd SystemManager::BaseSystemData::getMatrix(double Ts, System::UpdateType type, System::InputType inType) const {
+	if (type == System::MEASUREMENTUPDATE && !available()) {
+		switch (inType) {
+		case System::STATE:
+			return Eigen::MatrixXd(0, ptr->getNumOfStates());
+		case System::INPUT:
+			return Eigen::MatrixXd(0, ptr->getNumOfNoises());
+		}
+	}
+	switch (type) {
+	case System::TIMEUPDATE:
+		switch (inType) {
+		case System::STATE:
+			return ptr->getA(Ts);
+		case System::INPUT:
+			return ptr->getB(Ts);
+		}
+	case System::MEASUREMENTUPDATE:
+		switch (inType) {
+		case System::STATE:
+			return ptr->getC(Ts);
+		case System::INPUT:
+			return ptr->getD(Ts);
+		}
+	}
+}
+
+BaseSystem::BaseSystemPtr SystemManager::BaseSystemData::getBaseSystemPtr() const { return ptr; }
+
+System::SystemPtr SystemManager::BaseSystemData::getPtr() const { return ptr; }
+
+bool SystemManager::BaseSystemData::isBaseSystem() const { return true; }
+
+SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, StatisticValue noise_,
+	StatisticValue disturbance_, Eigen::VectorXd measurement_, MeasurementStatus measStatus_) : ptr(ptr_),
+	SystemData(noise_, disturbance_, measurement_, measStatus_) {}
+
+Eigen::VectorXi SystemManager::SensorData::depSensor(System::UpdateType outType, System::InputType type) const {
+	if (outType == System::TIMEUPDATE || available())
+		return ptr->genNonlinearSensorDependency(outType, type);
+	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
+}
+
+Eigen::VectorXi SystemManager::SensorData::depBaseSystem(System::UpdateType outType, System::InputType type) const {
+	if (outType == System::TIMEUPDATE || available())
+		return ptr->genNonlinearBaseSystemDependency(outType, type);
+	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
+}
+
+Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, System::UpdateType type, System::InputType inType) const {
+	if (type == System::MEASUREMENTUPDATE && !available()) {
+		switch (inType) {
+		case System::STATE:
+			return Eigen::MatrixXd(0, ptr->getNumOfBaseSystemStates());
+		case System::INPUT:
+			return Eigen::MatrixXd(0, ptr->getNumOfBaseSystemNoises());
+		}
+	}
+	switch (type) {
+	case System::TIMEUPDATE:
+		switch (inType) {
+		case System::STATE:
+			return ptr->getA0(Ts);
+		case System::INPUT:
+			return ptr->getB0(Ts);
+		}
+	case System::MEASUREMENTUPDATE:
+		switch (inType) {
+		case System::STATE:
+			return ptr->getC0(Ts);
+		case System::INPUT:
+			return ptr->getD0(Ts);
+		}
+	}
+}
+
+Eigen::MatrixXd SystemManager::SensorData::getMatrixSensor(double Ts, System::UpdateType type, System::InputType inType) const {
+	if (type == System::MEASUREMENTUPDATE && !available())
+		return Eigen::MatrixXd(0, num(System::getInputValueType(System::MEASUREMENTUPDATE, inType)));
+	switch (type) {
+	case System::TIMEUPDATE:
+		switch (inType) {
+		case System::STATE:
+			return ptr->getAi(Ts);
+		case System::INPUT:
+			return ptr->getBi(Ts);
+		}
+	case System::MEASUREMENTUPDATE:
+		switch (inType) {
+		case System::STATE:
+			return ptr->getCi(Ts);
+		case System::INPUT:
+			return ptr->getDi(Ts);
+		}
+	}
+}
+
+Sensor::SensorPtr SystemManager::SensorData::getSensorPtr() const { return ptr; }
+
+System::SystemPtr SystemManager::SensorData::getPtr() const { return ptr; }
+
+bool SystemManager::SensorData::isBaseSystem() const { return false; }

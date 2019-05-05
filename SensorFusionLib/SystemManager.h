@@ -13,52 +13,71 @@ public:
 	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
 
 	class SystemData {
-		bool isBaseSystem;
-		System::SystemPtr ptr;
 		MeasurementStatus measStatus;
 		StatisticValue noise;
 		StatisticValue disturbance;
 		Eigen::VectorXd measurement;
 	public:
-		SystemData(System::SystemPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
+		SystemData(StatisticValue noise_, StatisticValue disturbance_,
 			Eigen::VectorXd measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
-		BaseSystem::BaseSystemPtr getBaseSystemPtr() const;
-		Sensor::SensorPtr getSensorPtr() const;
-		System::SystemPtr getPtr() const;
+		virtual System::SystemPtr getPtr() const = 0;
 		StatisticValue operator()(SystemValueType type) const; // returns th given value
 		size_t num(SystemValueType type) const; // return length of the given value accroding to the measStatus
 		size_t num0(SystemValueType type) const; // return length of the given value
-		Eigen::VectorXi depBaseSystem(System::UpdateType outType, System::InputType type) const;
-		Eigen::VectorXi depSensor(System::UpdateType outType, System::InputType type) const;
 		void set(StatisticValue value, SystemValueType type); // set the given value
 		void resetMeasurement();
 		bool available() const; // returns if is measurement available
+		virtual bool isBaseSystem() const = 0;
+	};
+
+	class BaseSystemData : public SystemData {
+		BaseSystem::BaseSystemPtr ptr;
+	public:
+		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
+			Eigen::VectorXd measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
+		Eigen::VectorXi dep(System::UpdateType outType, System::InputType type) const;
+		Eigen::MatrixXd getMatrix(double Ts, System::UpdateType type, System::InputType inType) const;
+		BaseSystem::BaseSystemPtr getBaseSystemPtr() const;
+		System::SystemPtr getPtr() const override;
+		bool isBaseSystem() const override;
+	};
+
+	class SensorData : public SystemData {
+		Sensor::SensorPtr ptr;
+	public:
+		SensorData(Sensor::SensorPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
+			Eigen::VectorXd measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
+		Eigen::VectorXi depSensor(System::UpdateType outType, System::InputType type) const;
+		Eigen::VectorXi depBaseSystem(System::UpdateType outType, System::InputType type) const;
 		Eigen::MatrixXd getMatrixBaseSystem(double Ts, System::UpdateType type, System::InputType inType) const;
 		Eigen::MatrixXd getMatrixSensor(double Ts, System::UpdateType type, System::InputType inType) const;
+		Sensor::SensorPtr getSensorPtr() const;
+		System::SystemPtr getPtr() const override;;
+		bool isBaseSystem() const override;
 	};
 
 private:
 	unsigned int ID; // unique ID for identifying callbacks
 
-	typedef std::vector<SystemData> SystemList;
-
-	SystemList systemList;
+	typedef std::vector<SensorData> SensorList;
+	SensorList sensorList;
+	BaseSystemData baseSystem;
 
 	StatisticValue state;
 //protected:
 public:
 
-	unsigned int _GetIndex(unsigned int ID) const;
+	int _GetIndex(unsigned int ID) const;
 
-	size_t nSystems() const;
+	size_t nSensors() const;
 
 	size_t num(SystemValueType type) const;
 
-	SystemData System(size_t index) const { return systemList[index]; }
-	SystemData & System(size_t index) { return systemList[index]; }
+	SensorData Sensor(size_t index) const;
+	SensorData & Sensor(size_t index);
 
-	SystemData SystemByID(unsigned int ID) const { return systemList[_GetIndex(ID)]; }
-	SystemData & SystemByID(unsigned int ID) { return systemList[_GetIndex(ID)]; }
+	const SystemData* SystemByID(unsigned int ID) const;
+	SystemData* SystemByID(unsigned int ID);
 
 	// Get the whole STATE, DISTURBANCE values as a StatisticValue instance
 	// OR
@@ -89,33 +108,9 @@ public:
 	void getMatrices(System::UpdateType out_, double Ts, Eigen::MatrixXd& A, Eigen::MatrixXd& B) const;
 
 	// could be faster....
-	Eigen::VectorXd EvalNonLinPart(double Ts, System::UpdateType outType, Eigen::VectorXd state, Eigen::VectorXd in) const {
-		SystemValueType intype = System::getInputValueType(outType,System::INPUT);
-		SystemValueType outtype = System::getOutputValueType(outType);
-		unsigned int n_out = num(outtype);
-		// Partitionate vectors
-		std::vector<Eigen::VectorXd> states = partitionate(STATE, state);
-		std::vector<Eigen::VectorXd> ins = partitionate(intype, in);
-		// Return value
-		Eigen::VectorXd out = Eigen::VectorXd(n_out);
-		// Call the functions
-		size_t n;
-		if (outType == System::TIMEUPDATE || systemList[0].available()) {
-			n = systemList[0].num(outtype);
-			out.segment(0, n) = systemList[0].getBaseSystemPtr()->genNonlinearPart(outType, Ts, states[0], ins[0]);
-		}
-		else n = 0;
-		for (size_t i = 1; i < nSystems(); i++)
-			if (outType == System::TIMEUPDATE || systemList[i].available()) {
-				size_t d = systemList[i].num(outtype);
-				out.segment(n, d) = systemList[i].getSensorPtr()->genNonlinearPart(outType, Ts, states[0], ins[0], states[i], ins[i]);
-				n += d;
-			}
-		return out;
-	}
+	Eigen::VectorXd EvalNonLinPart(double Ts, System::UpdateType outType, Eigen::VectorXd state, Eigen::VectorXd in) const;
 
-
-	Eigen::MatrixXd GetSelector_(const Eigen::VectorXi& nonlinDep, bool nonlin) {
+	/*Eigen::MatrixXd GetSelector_(const Eigen::VectorXi& nonlinDep, bool nonlin) {
 		Eigen::Index outRows = nonlinDep.sum();
 		if (!nonlin) outRows = nonlinDep.size() - outRows;
 		Eigen::MatrixXd out = Eigen::MatrixXd::Zero(outRows, nonlinDep.size());
@@ -126,7 +121,7 @@ public:
 				i++;
 			}
 		return out;
-	}
+	}*/
 
 	StatisticValue Eval(System::UpdateType outType, StatisticValue state, StatisticValue in, Eigen::MatrixXd& S_out_, Eigen::MatrixXd S_out_in) {
 		// Concatenate dep vectors
@@ -260,11 +255,11 @@ public:
 
 	void saveMeasurement(unsigned int ID, Eigen::VectorXd value);
 
-	SystemManager(SystemData data, StatisticValue state_);
+	SystemManager(BaseSystemData data, StatisticValue state_);
 
 	~SystemManager();
 
-	void AddSensor(SystemData sensorData, StatisticValue sensorState);
+	void AddSensor(SensorData sensorData, StatisticValue sensorState);
 };
 
 
