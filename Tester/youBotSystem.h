@@ -3,11 +3,11 @@
 #include "BaseSystem.h"
 
 /* Update
-	| vx    | = | 1-Td/Ts 0  0   0 0 0 0 | | vx   | + | a*Td/Ts a*Td/Ts a*Td/Ts a*Td/Ts   | w + | 0                            |
-	| vy    |   | 0 1-Td/Ts  0   0 0 0 0 | | vy   |   | -a*Td/Ts a*Td/Ts a*Td/Ts -a*Td/Ts |     | 0                            |
-	| om    |   | 0  0  1-Td/Ts  0 0 0 0 | | om   |   | -b*Td/Ts b*Td/Ts -b*Td/Ts b*Td/Ts |     | 0                            |
+	| vx    | = | 1-Ts/Td 0  0   0 0 0 0 | | vx   | + | a*Ts/Td  a*Ts/Td a*Ts/Td  a*Ts/Td | w + | 0                            |
+	| vy    |   | 0 1-Ts/Td  0   0 0 0 0 | | vy   |   | -a*Ts/Td a*Ts/Td a*Ts/Td -a*Ts/Td |     | 0                            |
+	| om    |   | 0  0  1-Ts/Td  0 0 0 0 | | om   |   | -b*Ts/Td b*Ts/Td -b*Ts/Td b*Ts/Td |     | 0                            |
 	| x     |   | 0    0     0   1 0 0 0 | | x    |   | 0         0        0         0    |     | Ts*(vx*cos(phi)-vy*sin(phi)) |
-	| y     |   | 0    0     0   0 1 0 0 | | y    |   | 0         0        0         0    |     | Ts*(vy*sin(phi)+vy*cos(phi)) |
+	| y     |   | 0    0     0   0 1 0 0 | | y    |   | 0         0        0         0    |     | Ts*(vx*sin(phi)+vy*cos(phi)) |
 	| phi   |   | 0    0     Ts  0 0 1 0 | | phi  |   | 0         0        0         0    |	    | 0                            |
 	| null  |   | 0    0     0   0 0 0 0 | | null |   | -b        -b       b         b    |	    | 0                            |
 */

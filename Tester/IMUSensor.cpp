@@ -64,8 +64,10 @@ Eigen::VectorXi IMUSensor::getOutputNonlinearXiDependencies() const {
 	return Eigen::VectorXi::Ones(5);
 }
 
-Eigen::VectorXd IMUSensor::OutputNonlinearPart(double Ts, const Eigen::VectorXd & baseSystemState, const Eigen::VectorXd & baseSystemNoise, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorNoise) const {
+Eigen::VectorXd IMUSensor::OutputNonlinearPart(double Ts, const Eigen::VectorXd & baseSystemState,
+	const Eigen::VectorXd & baseSystemNoise, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorNoise) const {
 	Eigen::VectorXd out(3);
+	//std::cout << "x0:\n" << baseSystemState << "\nv0:\n" << baseSystemNoise << "\nxi:\n" << sensorState << "\nvi:\n" << sensorNoise << "\n";
 	out(0) = ((baseSystemState(0) - sensorState(0)) / Ts - baseSystemState(2)*baseSystemState(1))*
 		sensorState(2);
 	// ax_imu = ((vy-vyold)/Ts + omega*vx) * sx + dist_vy
@@ -73,6 +75,7 @@ Eigen::VectorXd IMUSensor::OutputNonlinearPart(double Ts, const Eigen::VectorXd 
 		sensorState(3);
 	// omega_imu = omega * s_omega + dist_omega
 	out(2) = baseSystemState(2) * sensorState(4);
+	//std::cout << "x0:\n" << out << "\n";
 	return out;
 }
 

@@ -367,23 +367,32 @@ int main() {
 	SystemManager::SensorData data3 = InitIMUSensor2(imu, initState);
 	man.AddSensor(data3, initState);
 
+	/*
 	Sensor::SensorPtr imu5 = std::make_shared<IMUSensor>(youBot);
 	SystemManager::SensorData data5 = InitIMUSensor2(imu5, initState);
 
 	man.AddSensor(data5,initState);
-
-	Eigen::MatrixXd A,B;
-	man.getMatrices(System::TIMEUPDATE, 0.001, A, B);
+	*/
+	
 
 	Eigen::VectorXd a = Eigen::VectorXd(3);
 	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
 	imu->MeasurementDone(a);
 
-	man.print(std::cout);
+	Eigen::MatrixXd A, B;
+	man.getMatrices(System::TIMEUPDATE, 0.001, A, B);
+
+	//std::cout << A << std::endl << std::endl << B << std::endl << std::endl;
+
+	std::cout << man(STATE) << std::endl << std::endl << man(NOISE) << std::endl << std::endl;
+
+	Eigen::MatrixXd S1, S2;
+	std::cout << man.Eval(System::MEASUREMENTUPDATE, 0.001, man(STATE), man(NOISE), S1, S2);
+
 	return 0;
 
 
-	Eigen::MatrixXd S1, S2;
+	//Eigen::MatrixXd S1, S2;
 	std::cout << man.Eval(System::TIMEUPDATE, 0.001, man(STATE), man(DISTURBANCE), S1, S2) << std::endl;
 
 	std::cout << man.Eval(System::MEASUREMENTUPDATE, 0.001, man(STATE), man(NOISE), S1, S2) << std::endl;
@@ -399,7 +408,7 @@ int main() {
 	*/
 
 	//imu5->MeasurementDone(a);
-
+	/*
 	std::cout << man.num(DISTURBANCE) << std::endl;
 	std::cout << man.num(STATE) << std::endl;
 	std::cout << man.num(NOISE) << std::endl;
