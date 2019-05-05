@@ -15,7 +15,7 @@ struct StatisticValue {
 
 	StatisticValue(Eigen::VectorXd vector_);
 
-	StatisticValue(unsigned int n);
+	StatisticValue(size_t n);
 
 	StatisticValue();
 

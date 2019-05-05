@@ -1,4 +1,5 @@
 #include "SystemManager.h"
+#include "PartialCholevski.h"
 
 SystemManager::SystemData::SystemData(StatisticValue noise_, StatisticValue disturbance_,
 	Eigen::VectorXd measurement_, MeasurementStatus measStatus_) :
@@ -175,7 +176,7 @@ void SystemManager::getMatrices(System::UpdateType out_, double Ts, Eigen::Matri
 Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts, System::UpdateType outType, Eigen::VectorXd state, Eigen::VectorXd in) const {
 	SystemValueType intype = System::getInputValueType(outType, System::INPUT);
 	SystemValueType outtype = System::getOutputValueType(outType);
-	unsigned int n_out = num(outtype);
+	size_t n_out = num(outtype);
 	// Partitionate vectors
 	std::vector<Eigen::VectorXd> states = partitionate(STATE, state);
 	std::vector<Eigen::VectorXd> ins = partitionate(intype, in);
@@ -195,6 +196,133 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts, System::UpdateType outT
 			n += d;
 		}
 	return out;
+}
+
+StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, StatisticValue state_, StatisticValue in, Eigen::MatrixXd & S_out_x, Eigen::MatrixXd S_out_in) const {
+	SystemValueType inType = System::getInputValueType(outType, System::INPUT);
+	Eigen::Index nX = num(STATE);
+	Eigen::Index nIn = num(inType);
+	// Get nonlinear dependencies	
+	Eigen::VectorXi stateDep = Eigen::VectorXi(nX);
+	Eigen::VectorXi inDep = Eigen::VectorXi(nIn);
+	// Sum dependencies from basesystem properties
+	{
+		Eigen::VectorXi baseSystemStateDep = baseSystem.dep(outType, System::STATE);
+		Eigen::VectorXi baseSystemInputDep = baseSystem.dep(outType, System::INPUT);
+		for (size_t i = 0; i < nSensors(); i++) {
+			Eigen::VectorXi temp = sensorList[i].depBaseSystem(outType, System::STATE);
+			for (Eigen::Index j = 0; j < temp.size(); j++)
+				if (temp[j] == 1) baseSystemStateDep[i] = 1;
+			temp = sensorList[i].depBaseSystem(outType, System::INPUT);
+			for (Eigen::Index j = 0; j < temp.size(); j++)
+				if (temp[j] == 1) baseSystemInputDep[i] = 1;
+		}
+		// Concatenate dep vectors
+		Eigen::Index ix = baseSystemStateDep.size();
+		stateDep.segment(0, ix) = baseSystemStateDep;
+		Eigen::Index iin = baseSystemInputDep.size();
+		inDep.segment(0, iin) = baseSystemInputDep;
+		for (size_t i = 0; i < nSensors(); i++) {
+			Eigen::VectorXi temp = sensorList[i].depSensor(outType, System::STATE);
+			Eigen::Index d = temp.size();
+			stateDep.segment(ix, d) = temp;
+			ix += d;
+			temp = sensorList[i].depSensor(outType, System::INPUT);
+			d = temp.size();
+			inDep.segment(iin, d) = temp;
+			iin += d;
+		}
+	}
+	// 
+	Eigen::Index nNL_X = stateDep.sum();
+	Eigen::Index nNL_In = inDep.sum();
+	Eigen::Index nNL = nNL_X + nNL_In;
+	size_t nOut = num(System::getOutputValueType(outType));
+	// 
+	Eigen::VectorXd z;
+	Eigen::MatrixXd Sz;
+	Eigen::MatrixXd Szx;
+	Eigen::MatrixXd Szw;
+	if (nNL == 0) {
+		z = Eigen::VectorXd::Zero(nOut);
+		Sz = Eigen::MatrixXd::Zero(nOut, nOut);
+		Szx = Eigen::MatrixXd::Zero(nOut, nX);
+		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
+	}
+	else {
+		// Constants for UT
+		double alpha = 0.7;
+		double beta = 2.;
+		double kappa = 0.;
+		double tau2 = alpha * alpha * (kappa + (double)nNL);
+		double tau = sqrt(tau2);
+		// Sigma values by applying partial chol
+		Eigen::MatrixXd dX = tau * PartialChol(state_.variance, stateDep);
+		Eigen::MatrixXd dIn = Eigen::MatrixXd::Zero(nIn, nNL_In);
+		{
+			unsigned int j = 0;
+			for (unsigned int i = 0; i < nIn; i++)
+				if (inDep[i] == 1) {
+					dIn(i, j) = tau * sqrt(in.variance(i, i));
+					j++;
+				}
+		}
+		// Mean value
+		Eigen::VectorXd z0 = EvalNonLinPart(Ts, outType, state_.vector, in.vector);
+		std::vector<Eigen::VectorXd> z_x = std::vector<Eigen::VectorXd>();
+
+		/*
+		std::cout << "dx" << dx << std::endl;
+		for (unsigned int i = 0; i < dx.cols(); i++)
+		std::cout << "dx" << i << ": " << dx.col(i) << std::endl;*/
+
+		for (Eigen::Index i = 0; i < nNL_X; i++) {
+			z_x.push_back(EvalNonLinPart(Ts, outType, state_.vector + dX.col(i), in.vector));
+			//std::cout << zx[i * 2] << std::endl;
+			z_x.push_back(EvalNonLinPart(Ts, outType, state_.vector - dX.col(i), in.vector));
+			//std::cout << zx[i * 2 + 1] << std::endl;
+		}
+		std::vector<Eigen::VectorXd> z_w = std::vector<Eigen::VectorXd>();
+		for (Eigen::Index i = 0; i < nNL_In; i++) {
+			z_w.push_back(EvalNonLinPart(Ts, outType, state_.vector, in.vector + dIn.col(i)));
+			z_w.push_back(EvalNonLinPart(Ts, outType, state_.vector, in.vector - dIn.col(i)));
+		}
+		z = (tau2 - (double)nNL) / tau2 * z0;
+		for (int i = 0; i < 2 * nNL_X; i++)
+			z += z_x[i] / 2. / tau2;
+		for (int i = 0; i < 2 * nNL_In; i++)
+			z += z_w[i] / 2. / tau2;
+
+		//std::cout << "z" << z << std::endl;
+		//std::cout << "z0" << z0 << std::endl;
+
+		Sz = (tau2 - nNL) / (tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
+		Szx = Eigen::MatrixXd::Zero(nOut, nX);
+		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
+		for (unsigned int i = 0; i < nNL_X; i++) {
+			Sz += (z_x[i] - z) * (z_x[i] - z).transpose() / 2. / tau2;
+			Sz += (z_x[i + nNL_X] - z) * (z_x[i + nNL_X] - z).transpose() / 2. / tau2;
+			Szx += (z_x[2 * i] - z_x[2 * i + 1])*dX.col(i).transpose() / 2. / tau2;
+		}
+		for (int i = 0; i < nNL_In; i++) {
+			Sz += (z_w[i] - z) * (z_w[i] - z).transpose() / 2. / tau2;
+			Sz += (z_w[i + nNL_In] - z) * (z_w[i + nNL_In] - z).transpose() / 2. / tau2;
+			Szw += (z_w[2 * i] - z_w[2 * i + 1])*dIn.col(i).transpose() / 2. / tau2;
+		}
+	}
+	// Get coefficient matrices
+	Eigen::MatrixXd A, B;
+	getMatrices(outType, Ts, A, B);
+
+	Eigen::VectorXd y = A * state_.vector + B * in.vector + z;
+	Eigen::MatrixXd temp = Szx * A.transpose() + Szw * B.transpose();
+	Eigen::MatrixXd Sy = A * state_.variance * A.transpose() + B * in.variance*B.transpose() +
+		Sz + temp + temp.transpose();
+	S_out_x = A * state_.variance + Szx;
+	S_out_in = B * in.variance + Szw;
+	//std::cout << "y: " << y << "\n Syy: " << Sy << "\n Syx: " << Syx << "\n Syw: " << Syw << std::endl;
+
+	return StatisticValue(y, Sy);
 }
 
 void SystemManager::saveMeasurement(unsigned int ID, Eigen::VectorXd value) { SystemByID(ID)->set(value,SystemValueType::OUTPUT); }
@@ -262,6 +390,7 @@ Eigen::MatrixXd SystemManager::BaseSystemData::getMatrix(double Ts, System::Upda
 			return ptr->getD(Ts);
 		}
 	}
+	throw std::runtime_error(std::string("Not compatible sensor tried to be added!\n"));
 }
 
 BaseSystem::BaseSystemPtr SystemManager::BaseSystemData::getBaseSystemPtr() const { return ptr; }
@@ -277,13 +406,13 @@ SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, StatisticValue noi
 Eigen::VectorXi SystemManager::SensorData::depSensor(System::UpdateType outType, System::InputType type) const {
 	if (outType == System::TIMEUPDATE || available())
 		return ptr->genNonlinearSensorDependency(outType, type);
-	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
+	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type)));
 }
 
 Eigen::VectorXi SystemManager::SensorData::depBaseSystem(System::UpdateType outType, System::InputType type) const {
 	if (outType == System::TIMEUPDATE || available())
 		return ptr->genNonlinearBaseSystemDependency(outType, type);
-	else return Eigen::VectorXi::Zero(num0(System::getInputValueType(outType, type)));
+	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type)));
 }
 
 Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, System::UpdateType type, System::InputType inType) const {
@@ -311,6 +440,7 @@ Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, System
 			return ptr->getD0(Ts);
 		}
 	}
+	throw std::runtime_error(std::string("Not compatible sensor tried to be added!\n"));
 }
 
 Eigen::MatrixXd SystemManager::SensorData::getMatrixSensor(double Ts, System::UpdateType type, System::InputType inType) const {
@@ -332,6 +462,7 @@ Eigen::MatrixXd SystemManager::SensorData::getMatrixSensor(double Ts, System::Up
 			return ptr->getDi(Ts);
 		}
 	}
+	throw std::runtime_error(std::string("Not compatible sensor tried to be added!\n"));
 }
 
 Sensor::SensorPtr SystemManager::SensorData::getSensorPtr() const { return ptr; }

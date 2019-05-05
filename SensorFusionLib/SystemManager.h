@@ -2,9 +2,6 @@
 
 #include "Sensor.h"
 
-#include "PartialCholevski.h"
-
-
 /* Only to store/describe the system and provide an interface to their interface -> it does not perform filtering
 */
 class SystemManager
@@ -110,146 +107,8 @@ public:
 	// could be faster....
 	Eigen::VectorXd EvalNonLinPart(double Ts, System::UpdateType outType, Eigen::VectorXd state, Eigen::VectorXd in) const;
 
-	/*Eigen::MatrixXd GetSelector_(const Eigen::VectorXi& nonlinDep, bool nonlin) {
-		Eigen::Index outRows = nonlinDep.sum();
-		if (!nonlin) outRows = nonlinDep.size() - outRows;
-		Eigen::MatrixXd out = Eigen::MatrixXd::Zero(outRows, nonlinDep.size());
-		unsigned int i = 0;
-		for (unsigned int n = 0; n < nonlinDep.size(); n++)
-			if ((nonlinDep[n] == 0) ^ nonlin) {
-				out(i, n) = 1;
-				i++;
-			}
-		return out;
-	}*/
-
-	StatisticValue Eval(System::UpdateType outType, StatisticValue state, StatisticValue in, Eigen::MatrixXd& S_out_, Eigen::MatrixXd S_out_in) {
-		// Concatenate dep vectors
-
-		// Apply partial chol on the considered columns
-
-		// 
-
-		// Get selector matrices ?
-
-		// 
-		/*
-		int nNL_state = 0, nNL_in = 0;
-		Eigen::VectorXi = systemList
-		for (size_t i = 1; i < nSystems(); i++)
-			if (outType == System::UPDATE || (outType == System::OUT && systemList[i].available())) {
-			nNL_state
-		}
-
-
-		Eigen::MatrixXd CXnl = GetXSelectorNl();
-		Eigen::VectorXi wdep = GetWDep();
-		Eigen::Index n = CXnl.rows();
-		int m = wdep.sum();
-		Eigen::Index l = n + m;
-
-		Eigen::VectorXd z;
-		Eigen::MatrixXd Sz;
-		Eigen::MatrixXd Szx;
-		Eigen::MatrixXd Szw;
-		if (l == 0) {
-			int ny = GetOutputSize(), nx = GetXInputSize(), nw = GetWInputSize();
-			z = Eigen::VectorXd::Zero(ny);
-			Sz = Eigen::MatrixXd::Zero(ny, ny);
-			Szx = Eigen::MatrixXd::Zero(ny, nx);
-			Szw = Eigen::MatrixXd::Zero(ny, nw);
-		}
-		else {
-			Eigen::MatrixXd Snl = CXnl * x.variance * CXnl.transpose();
-			Eigen::LLT<Eigen::MatrixXd> chol(Snl);
-			Eigen::MatrixXd sqrtSnl = chol.matrixL();
-
-			double alpha = 0.7;
-			double beta = 2.;
-			double kappa = 0.;
-			double tau2 = alpha * alpha * (kappa + (double)l);
-			double tau = sqrt(tau2);
-
-			Eigen::MatrixXd dx = tau * x.variance * CXnl.transpose() * sqrtSnl.inverse().transpose();
-			Eigen::MatrixXd dw = Eigen::MatrixXd::Zero(wdep.size(), m);
-			unsigned int j = 0;
-			for (Eigen::Index i = 0; i < wdep.size(); i++)
-				if (wdep(i) == 1) {
-					dw(i, j) = tau * sqrt(w.variance.diagonal()(i));
-					j++;
-				}
-
-			Eigen::VectorXd z0 = EvalNl(x.vector, w.vector);
-			std::vector<Eigen::VectorXd> zx = std::vector<Eigen::VectorXd>();
-			*/
-			/*
-			std::cout << "dx" << dx << std::endl;
-			for (unsigned int i = 0; i < dx.cols(); i++)
-				std::cout << "dx" << i << ": " << dx.col(i) << std::endl;*/
-		/*
-			for (Eigen::Index i = 0; i < n; i++) {
-				zx.push_back(EvalNl(x.vector + dx.col(i), w.vector));
-				//std::cout << zx[i * 2] << std::endl;
-				zx.push_back(EvalNl(x.vector - dx.col(i), w.vector));
-				//std::cout << zx[i * 2 + 1] << std::endl;
-			}
-			std::vector<Eigen::VectorXd> zw = std::vector<Eigen::VectorXd>();
-			for (Eigen::Index i = 0; i < m; i++) {
-				zw.push_back(EvalNl(x.vector, w.vector + dw.col(i)));
-				zw.push_back(EvalNl(x.vector, w.vector - dw.col(i)));
-			}
-			z = (tau2 - (double)l) / tau2 * z0;
-			for (int i = 0; i < 2 * n; i++)
-				z += zx[i] / 2. / tau2;
-			for (int i = 0; i < 2 * m; i++)
-				z += zw[i] / 2. / tau2;
-				*/
-			/*
-			std::cout << "z" << z << std::endl;
-			std::cout << "z0" << z0 << std::endl;*/
-		/*
-			Sz = (tau2 - l) / (tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
-			Szx = Eigen::MatrixXd::Zero(z.size(), x.Length());
-			Szw = Eigen::MatrixXd::Zero(z.size(), w.Length());
-			for (unsigned int i = 0; i < n; i++) {
-				Sz += (zx[i] - z) * (zx[i] - z).transpose() / 2. / tau2;
-				Sz += (zx[i + n] - z) * (zx[i + n] - z).transpose() / 2. / tau2;
-				Szx += (zx[2 * i] - zx[2 * i + 1])*dx.col(i).transpose() / 2. / tau2;
-			}
-			for (int i = 0; i < m; i++) {
-				Sz += (zw[i] - z) * (zw[i] - z).transpose() / 2. / tau2;
-				Sz += (zw[i + m] - z) * (zw[i + m] - z).transpose() / 2. / tau2;
-				Szw += (zw[2 * i] - zw[2 * i + 1])*dw.col(i).transpose() / 2. / tau2;
-			}
-		}
-
-		Eigen::MatrixXd A = GetA();
-		Eigen::MatrixXd B = GetB();
-
-		Eigen::VectorXd y = A * x.vector + B * w.vector + z;
-		Eigen::MatrixXd temp = Szx * A.transpose() + Szw * B.transpose();
-		Eigen::MatrixXd Sy = A * x.variance * A.transpose() + B * w.variance*B.transpose() +
-			Sz + temp + temp.transpose();
-		Syx = A * x.variance + Szx;
-		Syw = B * w.variance + Szw;
-		//std::cout << "y: " << y << "\n Syy: " << Sy << "\n Syx: " << Syx << "\n Syw: " << Syw << std::endl;
-
-		return StatisticValue(y, Sy);
-		
-		
-		// Get number of nonlin dependencies and selector matrices
-
-		// Chol on nonlinparts
-
-		// Get nonline result
-
-		// Get coeff matrices
-
-		
-
-		*/
-return StatisticValue();
-	}
+	StatisticValue Eval(System::UpdateType outType, double Ts, StatisticValue state_, StatisticValue in,
+		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd S_out_in) const;
 
 public:
 
@@ -260,6 +119,80 @@ public:
 	~SystemManager();
 
 	void AddSensor(SensorData sensorData, StatisticValue sensorState);
+
+	std::ostream & print(std::ostream & stream) const {
+		std::vector<Eigen::VectorXd> states = partitionate(STATE, state.vector);
+		Eigen::MatrixXd S1, S2;
+		StatisticValue output = Eval(System::MEASUREMENTUPDATE, 0.001, state, (*this)(NOISE), S1, S2);
+		/*std::vector<bool> active = std::vector<bool>();
+		for (unsigned int i = 0; i < systemList.size(); i++)
+			active.push_back(true);*/
+		std::vector<Eigen::VectorXd> outputs = partitionate(OUTPUT, output.vector);
+		
+
+		
+
+		auto printSystem = [](std::ostream& stream, const SystemData* sys,
+			const Eigen::VectorXd& state, const Eigen::VectorXd& output) {
+			auto printRowVector = [](std::ostream& stream, const Eigen::VectorXd& v, const std::vector<std::string>& names) {
+				for (unsigned int i = 0; i < v.size(); i++)
+					stream << " (" << names[i] << "): " << v(i);
+				stream << std::endl;
+			};
+			stream << sys->getPtr()->getName() << std::endl;
+			///// STATES
+			stream << " States:";
+			printRowVector(stream, state, sys->getPtr()->getStateNames());
+			///// DISTURBANCES
+			stream << " Disturbances:";
+			printRowVector(stream, (*sys)(DISTURBANCE).vector, sys->getPtr()->getDisturbanceNames());
+			///// NOISES
+			stream << " Noises:";
+			printRowVector(stream, (*sys)(NOISE).vector, sys->getPtr()->getNoiseNames());
+			///// OUTPUTS
+			stream << " Outputs:\n";
+			stream << "   computed:";
+			printRowVector(stream, output, sys->getPtr()->getOutputNames());
+			if (sys->available()) {
+				stream << "   measured:";
+				printRowVector(stream, (*sys)(OUTPUT).vector, sys->getPtr()->getOutputNames());
+			}
+			stream << std::endl;
+		};
+
+		stream << "Basesystem: ";
+		printSystem(stream, &baseSystem, states[0], outputs[0]);
+		for (unsigned int sensor_i = 0; sensor_i < nSensors(); sensor_i++) {
+			stream << "Sensor " << sensor_i << ": ";
+			printSystem(stream, &sensorList[sensor_i], states[sensor_i+1], outputs[sensor_i+1]);
+		}
+
+		/*
+		// STATE variances
+		stream << "Variance matrix of the state:\n";
+		unsigned int a = 0, b = 0;
+		for (unsigned int i = 0; i < sys_n; i++) {
+			for (unsigned int di = 0; di < systemList[i].ptr->getNumOfStates(); di++) {
+				for (unsigned int j = 0; j < sys_n; j++) {
+					for (unsigned int dj = 0; dj < systemList[j].ptr->getNumOfStates(); dj++) {
+						stream << state.variance(a, b) << " ";
+						b++;
+					}
+					if (j + 1 < sys_n)
+						stream << "| ";
+				}
+				stream << std::endl;
+				b = 0;
+				a++;
+			}
+			if (i + 1 < sys_n)
+				for (unsigned int k = 0; k < 40; k++)
+					stream << "-";
+			stream << std::endl;
+		}
+		*/
+		return stream;
+	}
 };
 
 

@@ -23,7 +23,7 @@ StatisticValue::StatisticValue(Eigen::VectorXd vector_) :
 StatisticValue::StatisticValue() : vector(Eigen::VectorXd(0)),
 variance(Eigen::MatrixXd(0, 0)) {}
 
-StatisticValue::StatisticValue(unsigned int n) :
+StatisticValue::StatisticValue(size_t n) :
 	vector(Eigen::VectorXd::Zero(n)), variance(Eigen::MatrixXd::Zero(n, n)) {}
 
 Eigen::Index StatisticValue::Length() const { return vector.size(); }

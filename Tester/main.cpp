@@ -379,6 +379,17 @@ int main() {
 	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
 	imu->MeasurementDone(a);
 
+	man.print(std::cout);
+	return 0;
+
+
+	Eigen::MatrixXd S1, S2;
+	std::cout << man.Eval(System::TIMEUPDATE, 0.001, man(STATE), man(DISTURBANCE), S1, S2) << std::endl;
+
+	std::cout << man.Eval(System::MEASUREMENTUPDATE, 0.001, man(STATE), man(NOISE), S1, S2) << std::endl;
+	return 0;
+
+
 	/*
 	std::cout << man.EvalNonLinPart(0.001, System::TIMEUPDATE, man(STATE).vector, man(DISTURBANCE).vector) << std::endl << std::endl;
 
