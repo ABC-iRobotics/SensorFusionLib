@@ -9,21 +9,9 @@ inline unsigned int getUID() {
 
 template <class ValueType,class CallType>
 class CallbackHandler {
-	unsigned int iID;
-
+public:
 	typedef std::function<void(ValueType value, CallType type)> Callback;
 
-	struct CallInfo {
-		Callback callback;
-		unsigned int ownerID;
-		CallInfo(Callback call, unsigned int ID) : callback(call), ownerID(ID) {};
-	};
-
-	typedef std::vector<CallInfo> CallbackVector;
-
-	CallbackVector vCallback;
-
-public:
 	unsigned int getID() const { return iID; }
 
 	void AddCallback(Callback callback, unsigned int ownerID);
@@ -36,6 +24,19 @@ public:
 
 protected:
 	void Call(ValueType value, CallType type) const;
+
+private:
+	unsigned int iID;
+
+	struct CallInfo {
+		Callback callback;
+		unsigned int ownerID;
+		CallInfo(Callback call, unsigned int ID) : callback(call), ownerID(ID) {};
+	};
+
+	typedef std::vector<CallInfo> CallbackVector;
+
+	CallbackVector vCallback;
 };
 
 template<class ValueType, class CallType>

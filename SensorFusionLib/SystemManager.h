@@ -187,9 +187,11 @@ protected:
 
 	void resetMeasurement();
 
-	void PredictionDone(StatisticValue state, StatisticValue output, double t) const;
+	void PredictionDone(StatisticValue state, StatisticValue output) const;
 
-	void FilteringDone(StatisticValue state, double t) const;
+	void FilteringDone(StatisticValue state) const;
+
+	void StepClock(double dt);
 
 private:
 	unsigned int ID; // unique ID for identifying callbacks
@@ -199,6 +201,8 @@ private:
 	BaseSystemData baseSystem;
 
 	StatisticValue state;
+
+	double t; // clock
 };
 
 

@@ -352,7 +352,14 @@ void transparency() {
 
 #include "init.h"
 
-#include "SystemManager.h"
+#include "KalmanFilter.h"
+
+void FilterCallback(FilterCallData data, FilterCallType type) {
+	if (type == FILTERING && data.type == STATE) {
+		std::cout << data.value.vector.transpose() << std::endl;
+	}
+}
+
 
 int main() {
 
@@ -363,39 +370,17 @@ int main() {
 	StatisticValue initState;
 	
 	SystemManager::BaseSystemData data2 = InitYouBotSystem2(youBot, initState);
-	SystemManager man(data2, initState);
+	KalmanFilter man(data2, initState);
+	man.AddCallback(FilterCallback, 0);
 	SystemManager::SensorData data3 = InitIMUSensor2(imu, initState);
 	man.AddSensor(data3, initState);
-
-	/*
-	Sensor::SensorPtr imu5 = std::make_shared<IMUSensor>(youBot);
-	SystemManager::SensorData data5 = InitIMUSensor2(imu5, initState);
-
-	man.AddSensor(data5,initState);
-	*/
-	
 
 	Eigen::VectorXd a = Eigen::VectorXd(3);
 	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
 	imu->MeasurementDone(a);
 
-	Eigen::MatrixXd A, B;
-	man.getMatrices(System::TIMEUPDATE, 0.001, A, B);
-
-	//std::cout << A << std::endl << std::endl << B << std::endl << std::endl;
-
-	std::cout << man(STATE) << std::endl << std::endl << man(NOISE) << std::endl << std::endl;
-
-	Eigen::MatrixXd S1, S2;
-	std::cout << man.Eval(System::MEASUREMENTUPDATE, 0.001, man(STATE), man(NOISE), S1, S2);
-
-	return 0;
-
-
-	//Eigen::MatrixXd S1, S2;
-	std::cout << man.Eval(System::TIMEUPDATE, 0.001, man(STATE), man(DISTURBANCE), S1, S2) << std::endl;
-
-	std::cout << man.Eval(System::MEASUREMENTUPDATE, 0.001, man(STATE), man(NOISE), S1, S2) << std::endl;
+	man.Step(0.001);
+	
 	return 0;
 
 
