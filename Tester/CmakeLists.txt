@@ -14,7 +14,7 @@ set (HEADERS
 	IMUSensor.h 
 	#Localisation2DBaseSystem.h 
 	youBotSystem.h
-	FilterPlotter.h
+	#FilterPlotter.h
 	Init.h
 	)
 	
@@ -23,7 +23,7 @@ set (SOURCES
 	IMUSensor.cpp 
 	#Localisation2DBaseSystem.cpp 
 	youBotSystem.cpp
-	FilterPlotter.cpp
+	#FilterPlotter.cpp
 	Init.cpp
 	)
 	

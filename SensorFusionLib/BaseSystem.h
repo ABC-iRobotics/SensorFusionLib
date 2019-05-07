@@ -6,7 +6,6 @@
 // the corresponding  disturbances and measurement noises
 
 #include "System.h"
-#include "Function2.h"
 
 class BaseSystem : public System {
 public:
@@ -43,25 +42,6 @@ public:
 	Eigen::VectorXd EvalUpdate(double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& BaseSystemDisturbance) const;
 
 	Eigen::VectorXd EvalOutput(double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& BaseSystemNoise) const;
-
-	Function2 getUpdateMapping(double Ts) const;
-
-	Function2 getOutputMapping(double Ts, bool empty = false) const;
-
-	/*
-	void getMatrices(OutType type, double Ts, Eigen::MatrixXd& A, Eigen::MatrixXd& B) const {
-		switch (type)
-		{
-		case System::UPDATE:
-			A = getA(Ts);
-			B = getB(Ts);
-			return;
-		case System::OUT:
-			A = getC(Ts);
-			B = getD(Ts);
-			return;
-		}
-	}*/
 
 	Eigen::VectorXd genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& in) const;
 

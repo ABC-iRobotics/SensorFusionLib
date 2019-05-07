@@ -9,12 +9,6 @@ include_directories (
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	BaseSystem.h
-	CorrectDep.h
-	FilterSystem.h 
-	Function2.h 
-	Function4.h 
-	FunctionMerge.h 
-	#ScalarFunction.h 
 	Sensor.h 
 	StatisticValue.h 
 	System.h 
@@ -26,12 +20,6 @@ set (HEADERS
 	
 set (SOURCES
 	BaseSystem.cpp
-	CorrectDep.cpp
-	FilterSystem.cpp 
-	Function2.cpp 
-	Function4.cpp 
-	FunctionMerge.cpp 
-	#ScalarFunction.cpp 
 	Sensor.cpp 
 	StatisticValue.cpp
 	System.cpp 

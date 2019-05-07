@@ -14,20 +14,6 @@ public:
 class System : public CallbackHandler <Eigen::VectorXd, EmptyClass>
 {
 public:
-/*	struct SystemState {
-		StatisticValue state;
-		StatisticValue noise;
-		StatisticValue disturbance;
-
-		SystemState(const System& sys_) : state(sys_.getNumOfStates()),
-			noise(sys_.getNumOfNoises()), disturbance(sys_.getNumOfDisturbances()) {}
-
-		SystemState(StatisticValue state_, StatisticValue noise_, 
-			StatisticValue disturbance_) : state(state_),
-			noise(noise_), disturbance(disturbance_) {}
-	};*/
-
-
 	System();
 	~System();
 

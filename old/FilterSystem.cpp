@@ -11,8 +11,7 @@ int FilterSystem::_GetIndexForID(unsigned int ID) const {
 }
 
 void FilterSystem::_SetSystemPropertyByID(unsigned int ID, StatisticValue value, SystemValueType type) {
-	switch (type)
-	{
+	switch (type) {
 	case STATE:
 	{
 		int k = 0;

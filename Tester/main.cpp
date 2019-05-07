@@ -348,7 +348,7 @@ void transparency() {
 }
 */
 #include <string>
-#include "FilterPlotter.h"
+//#include "FilterPlotter.h"
 
 #include "init.h"
 
