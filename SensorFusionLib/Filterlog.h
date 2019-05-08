@@ -6,7 +6,7 @@ class FilterLog {
 public:
 	FilterLog(SystemManager& filter);
 
-	virtual void Callback(const FilterCallData& data, FilterCallType type) = 0;
+	virtual void Callback(const FilterCallData& data) = 0;
 
 	~FilterLog();
 

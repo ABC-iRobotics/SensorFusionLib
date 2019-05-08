@@ -76,13 +76,14 @@ struct FilterCallData {
 	System::SystemPtr ptr;
 	double t;
 	SystemValueType type;
-	FilterCallData(StatisticValue value_, System::SystemPtr ptr_, double t_, SystemValueType type_) :
-		value(value_), ptr(ptr_), t(t_), type(type_) {};
+	enum FilterCallType { PREDICTION, FILTERING, MEASUREMENT, ESTIMATION, GROUNDTRUTH } callType;
+	FilterCallData(StatisticValue value_, System::SystemPtr ptr_, double t_, SystemValueType type_, FilterCallType event_) :
+		value(value_), ptr(ptr_), t(t_), type(type_), callType(event_) {};
 };
 
-enum FilterCallType { PREDICTION, FILTERING, MEASUREMENT, ESTIMATION, GROUNDTRUTH };
 
-class SystemManager : public CallbackHandler<const FilterCallData&, FilterCallType> {
+
+class SystemManager : public CallbackHandler<const FilterCallData&> {
 public:
 	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
 

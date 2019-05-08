@@ -67,7 +67,7 @@ void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(sensor_output, EmptyClass());
+	Call(sensor_output);
 }
 std::vector<std::string> list(std::string fp, unsigned int n) {
 	std::vector<std::string> out = std::vector<std::string>();

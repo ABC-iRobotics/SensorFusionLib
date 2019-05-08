@@ -7,10 +7,10 @@ inline unsigned int getUID() {
 	return ID++;
 }
 
-template <class ValueType,class CallType>
+template <class CallbackData>
 class CallbackHandler {
 public:
-	typedef std::function<void(ValueType value, CallType type)> Callback;
+	typedef std::function<void(CallbackData data)> Callback;
 
 	unsigned int getID() const { return iID; }
 
@@ -23,7 +23,7 @@ public:
 	~CallbackHandler() {}
 
 protected:
-	void Call(ValueType value, CallType type) const;
+	void Call(CallbackData data) const;
 
 private:
 	unsigned int iID;
@@ -39,8 +39,8 @@ private:
 	CallbackVector vCallback;
 };
 
-template<class ValueType, class CallType>
-void CallbackHandler<ValueType, CallType>::AddCallback(Callback callback, unsigned int ownerID) {
+template<class CallbackData>
+void CallbackHandler<CallbackData>::AddCallback(Callback callback, unsigned int ownerID) {
 	for (unsigned int i = 0; i < vCallback.size(); i++)
 		if (vCallback[i].ownerID == ownerID) {
 			std::cout << "Callback tried to be added more times (System.h)\n";
@@ -49,8 +49,8 @@ void CallbackHandler<ValueType, CallType>::AddCallback(Callback callback, unsign
 	vCallback.push_back(CallInfo(callback, ownerID));
 }
 
-template<class ValueType, class CallType>
-void CallbackHandler<ValueType, CallType>::DeleteCallback(unsigned int ownerID) {
+template<class CallbackData>
+void CallbackHandler<CallbackData>::DeleteCallback(unsigned int ownerID) {
 	for (unsigned int i = 0; i < vCallback.size(); i++)
 		if (vCallback[i].ownerID == ownerID) {
 			vCallback.erase(vCallback.begin() + i);
@@ -59,14 +59,14 @@ void CallbackHandler<ValueType, CallType>::DeleteCallback(unsigned int ownerID) 
 	std::cout << "Not contained callback tried to be deleted (System.h)\n";
 }
 
-template<class ValueType, class CallType>
-CallbackHandler<ValueType, CallType>::CallbackHandler() : vCallback(CallbackVector()) {
+template<class CallbackData>
+CallbackHandler<CallbackData>::CallbackHandler() : vCallback(CallbackVector()) {
 	iID = getUID();
 }
 
-template<class ValueType, class CallType>
-void CallbackHandler<ValueType, CallType>::Call(ValueType value, CallType type) const {
+template<class CallbackData>
+void CallbackHandler<CallbackData>::Call(CallbackData data) const {
 	// call the registered callbacks
 	for (unsigned int i = 0; i < vCallback.size(); i++)
-		vCallback[i].callback(value, type);
+		vCallback[i].callback(data);
 }

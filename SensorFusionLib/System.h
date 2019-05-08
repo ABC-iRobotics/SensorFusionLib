@@ -6,12 +6,7 @@
 
 enum SystemValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
 
-class EmptyClass {
-public:
-	EmptyClass() {}
-};
-
-class System : public CallbackHandler <Eigen::VectorXd, EmptyClass>
+class System : public CallbackHandler <Eigen::VectorXd>
 {
 public:
 	System();

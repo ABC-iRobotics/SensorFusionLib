@@ -351,10 +351,10 @@ SystemManager::SystemManager(BaseSystemData data, StatisticValue state_) :
 	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data) {
 		unsigned int systemID = data.getPtr()->getID();
 		// set callback
-		data.getPtr()->AddCallback([this, systemID](Eigen::VectorXd value, EmptyClass) {
+		data.getPtr()->AddCallback([this, systemID](Eigen::VectorXd value) {
 			SystemData* ptr = this->SystemByID(systemID);
 			ptr->set(std::move(value), SystemValueType::OUTPUT);
-			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT), MEASUREMENT);
+			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
 		}, ID);
 }
 
@@ -372,11 +372,10 @@ void SystemManager::AddSensor(SensorData sensorData, StatisticValue sensorState)
 		state.Add(sensorState);
 		// Set callbacks
 		unsigned int sensorID = sensorData.getPtr()->getID();
-		sensorData.getPtr()->AddCallback([this, sensorID](Eigen::VectorXd value,
-			EmptyClass) {
+		sensorData.getPtr()->AddCallback([this, sensorID](Eigen::VectorXd value) {
 			SystemData* ptr = this->SystemByID(sensorID);
 			ptr->set(std::move(value), SystemValueType::OUTPUT);
-			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT), MEASUREMENT);
+			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
 		}, ID);		
 	}
 	else throw std::runtime_error(std::string("SystemManager::AddSensor(): Not compatible sensor tried to be added!\n"));
@@ -463,19 +462,19 @@ void SystemManager::resetMeasurement() {
 void SystemManager::PredictionDone(StatisticValue state, StatisticValue output) const {
 	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
 	std::vector<StatisticValue> vOutput = partitionateWithStatistic(OUTPUT, output);
-	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE), PREDICTION);
-	Call(FilterCallData(vOutput[0], baseSystem.getPtr(), t, OUTPUT), PREDICTION);
+	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE, FilterCallData::PREDICTION));
+	Call(FilterCallData(vOutput[0], baseSystem.getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
 	for (int i = 0; i < nSensors(); i++) {
-		Call(FilterCallData(vState[i + 1], sensorList[i].getPtr(), t, STATE), PREDICTION);
-		Call(FilterCallData(vOutput[i + 1], sensorList[i].getPtr(), t, OUTPUT), PREDICTION);
+		Call(FilterCallData(vState[i + 1], sensorList[i].getPtr(), t, STATE, FilterCallData::PREDICTION));
+		Call(FilterCallData(vOutput[i + 1], sensorList[i].getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
 	}
 }
 
 void SystemManager::FilteringDone(StatisticValue state) const {
 	std::vector<Eigen::VectorXd> vState = partitionate(STATE, state.vector);
-	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE), FILTERING);
+	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE, FilterCallData::FILTERING));
 	for (int i = 0; i < nSensors(); i++)
-		Call(FilterCallData(vState[i + 1], sensorList[i].getPtr(), t, STATE), FILTERING);
+		Call(FilterCallData(vState[i + 1], sensorList[i].getPtr(), t, STATE, FilterCallData::FILTERING));
 }
 
 void SystemManager::StepClock(double dt) { t += dt; }
