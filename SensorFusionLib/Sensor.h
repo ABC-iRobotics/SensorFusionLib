@@ -70,9 +70,9 @@ public:
 		const Eigen::VectorXd& baseSystemIn, const Eigen::VectorXd& sensorState,
 		const Eigen::VectorXd& sensorIn) const;
 
-	Eigen::VectorXi genNonlinearBaseSystemDependency(UpdateType outType, InputType inType);
+	Eigen::VectorXi genNonlinearBaseSystemDependency(UpdateType outType, InputType inType) const;
 
-	Eigen::VectorXi genNonlinearSensorDependency(UpdateType outType, InputType inType);
+	Eigen::VectorXi genNonlinearSensorDependency(UpdateType outType, InputType inType) const;
 
 	typedef std::shared_ptr<Sensor> SensorPtr;
 };

@@ -15,7 +15,6 @@ StatisticValue SystemManager::SystemData::operator()(SystemValueType type, bool 
 		return measurement;
 	default:
 		throw std::runtime_error(std::string("SystemManager::SystemData::operator() Only NOISE, DISTURBANCE and OUTPUT are available!"));
-		return -1;
 	}
 }
 

@@ -97,8 +97,8 @@ SystemValueType System::getInputValueType(System::UpdateType outType, System::In
 		return SystemValueType::NOISE;
 	case UpdateType::TIMEUPDATE:
 		return SystemValueType::DISTURBANCE;
-
 	}
+	throw std::runtime_error(std::string("System::getInputValueType(): Unknown input!"));
 }
 SystemValueType System::getOutputValueType(System::UpdateType outType) {
 	switch (outType) {
@@ -107,6 +107,7 @@ SystemValueType System::getOutputValueType(System::UpdateType outType) {
 	case MEASUREMENTUPDATE:
 		return SystemValueType::OUTPUT;
 	}
+	throw std::runtime_error(std::string("System::getOutputValueType(): Unknown input!"));
 }
 /*
 void System::SetValues(StatisticValue value, SystemValueType type) const {

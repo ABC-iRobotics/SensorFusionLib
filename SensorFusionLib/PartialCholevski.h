@@ -4,4 +4,4 @@
 
 Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v);
 
-void test();
+//void test();

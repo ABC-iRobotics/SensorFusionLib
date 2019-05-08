@@ -29,7 +29,7 @@ static cv::Scalar color2scalar(const Color &color) {
 }
 
 static float value2snap(float value) {
-  return std::max({pow(10, floor(log10(value))),
+  return (float)std::max({pow(10, floor(log10(value))),
                    pow(10, floor(log10(value / 2))) * 2,
                    pow(10, floor(log10(value / 5))) * 5});
 }

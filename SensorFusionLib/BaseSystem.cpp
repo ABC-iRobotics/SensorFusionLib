@@ -44,6 +44,7 @@ Eigen::VectorXd BaseSystem::genNonlinearPart(UpdateType type, double Ts, const E
 	case MEASUREMENTUPDATE:
 		return OutputNonlinearPart(Ts, state, in);
 	}
+	throw std::runtime_error(std::string("BaseSystem::genNonlinearPart(): Unknown input!"));
 }
 
 Eigen::VectorXi BaseSystem::genNonlinearDependency(UpdateType outType, InputType inType) {
@@ -63,4 +64,5 @@ Eigen::VectorXi BaseSystem::genNonlinearDependency(UpdateType outType, InputType
 			return getOutputNonlinearVDependencies();
 		}
 	}
+	throw std::runtime_error(std::string("BaseSystem::genNonlinearDependency(): Unknown input!"));
 }

@@ -1,13 +1,12 @@
 
 #include "PartialCholevski.h"
 #include <vector>
-#include <iostream>
 
 Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {
 	const Eigen::Index size = a.rows();
 	enum Status { NO_DECOMP, TO_BE_DECOMP, DECOMPOSED };
 	std::vector<Status> status = std::vector<Status>();
-	for (size_t i = 0; i < size; i++)
+	for (Eigen::Index i = 0; i < size; i++)
 		status.push_back(v[i] == 1 ? TO_BE_DECOMP : NO_DECOMP);
 	Eigen::MatrixXd out = Eigen::MatrixXd(size, v.sum());
 	// Compute matrix L1 norm = max abs column sum.
@@ -54,7 +53,9 @@ Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {
 		}
 	return out;
 }
+/*
 
+#include <iostream>
 void test() {
 	Eigen::MatrixXd mi = Eigen::MatrixXd::Identity(3, 3) * 4;
 	mi(0, 1) = 1; mi(1, 0) = 1;

@@ -54,22 +54,25 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 		 UpdateNonlinearPart(Ts, baseSystemState, baseSystemDisturbance, sensorState, sensorDisturbance);
  }
 
- Eigen::VectorXd Sensor::EvalOutput(double Ts, Eigen::VectorXd baseSystemState, Eigen::VectorXd baseSystemNoise, Eigen::VectorXd sensorState, Eigen::VectorXd sensorNoise) const {
+ Eigen::VectorXd Sensor::EvalOutput(double Ts, Eigen::VectorXd baseSystemState, Eigen::VectorXd baseSystemNoise,
+	 Eigen::VectorXd sensorState, Eigen::VectorXd sensorNoise) const {
 	 return getC0(Ts)*baseSystemState + getCi(Ts)*sensorState +
 		 getD0(Ts)*baseSystemNoise + getDi(Ts)*sensorNoise +
 		 OutputNonlinearPart(Ts, baseSystemState, baseSystemNoise, sensorState, sensorNoise);
  }
 
- Eigen::VectorXd Sensor::genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd & baseSystemState, const Eigen::VectorXd & baseSystemIn, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorIn) const {
+ Eigen::VectorXd Sensor::genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd & baseSystemState,
+	 const Eigen::VectorXd & baseSystemIn, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorIn) const {
 	 switch (type) {
 	 case TIMEUPDATE:
 		 return UpdateNonlinearPart(Ts, baseSystemState, baseSystemIn, sensorState, sensorIn);
 	 case MEASUREMENTUPDATE:
 		 return OutputNonlinearPart(Ts, baseSystemState, baseSystemIn, sensorState, sensorIn);
 	 }
+	 throw std::runtime_error(std::string("Sensor::genNonlinearPart(): Unknown input!"));
  }
 
- Eigen::VectorXi Sensor::genNonlinearBaseSystemDependency(UpdateType outType, InputType inType) {
+ Eigen::VectorXi Sensor::genNonlinearBaseSystemDependency(UpdateType outType, InputType inType) const {
 	 switch (outType) {
 	 case TIMEUPDATE:
 		 switch (inType) {
@@ -86,9 +89,10 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 			 return getOutputNonlinearV0Dependencies();
 		 }
 	 }
+	 throw std::runtime_error(std::string("Sensor::genNonlinearBaseSystemDependency(): Unknown input!"));
  }
 
- Eigen::VectorXi Sensor::genNonlinearSensorDependency(UpdateType outType, InputType inType) {
+ Eigen::VectorXi Sensor::genNonlinearSensorDependency(UpdateType outType, InputType inType) const {
 	 switch (outType) {
 	 case TIMEUPDATE:
 		 switch (inType) {
@@ -105,6 +109,7 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 			 return getOutputNonlinearViDependencies();
 		 }
 	 }
+	 throw std::runtime_error(std::string("Sensor::genNonlinearSensorDependency(): Unknown input!"));
  }
 
  unsigned int Sensor::getNumOfBaseSystemStates() const { return numOfBaseSystemStates; }

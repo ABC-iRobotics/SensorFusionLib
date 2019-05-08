@@ -1,4 +1,4 @@
-#include "Filterlog.h"
+#include "FilterLog.h"
 
 FilterLog::FilterLog(SystemManager & filter) : iID(getUID()) {
 	// set callback to the filter

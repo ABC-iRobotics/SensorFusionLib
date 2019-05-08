@@ -105,11 +105,11 @@ void View::drawText(const std::string &text, Offset offset, Color color) const {
   auto scale = 0.4f;
   auto thickness = 1.f;
   int baseline;
-  cv::Size size = getTextSize(text, face, scale, thickness, &baseline);
+  cv::Size size = getTextSize(text, face, scale, (int)thickness, &baseline);
   cv::Point org(rect_.x + offset.x, rect_.y + size.height + offset.y);
   Trans trans(window_.buffer());
   cv::putText(trans.with(color), text.c_str(), org, face, scale,
-              color2scalar(color), thickness);
+              color2scalar(color), (int)thickness);
   window_.dirty();
 }
 
@@ -126,10 +126,10 @@ void View::drawFrame(const std::string &title) const {
                 color2scalar(frame_color_), -1);
   int baseline;
   cv::Size size =
-      getTextSize(title.c_str(), cv::FONT_HERSHEY_PLAIN, 1.f, 1.f, &baseline);
+      getTextSize(title.c_str(), cv::FONT_HERSHEY_PLAIN, 1.f, 1, &baseline);
   cv::putText(trans.with(text_color_), title.c_str(),
               {rect_.x + 2 + (rect_.width - size.width) / 2, rect_.y + 14},
-              cv::FONT_HERSHEY_PLAIN, 1.f, color2scalar(text_color_), 1.f);
+              cv::FONT_HERSHEY_PLAIN, 1.f, color2scalar(text_color_), 1);
   window_.dirty();
 }
 
