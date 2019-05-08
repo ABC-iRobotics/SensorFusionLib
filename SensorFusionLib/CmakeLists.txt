@@ -17,6 +17,7 @@ set (HEADERS
 	SystemManager.h
 	PartialCholevski.h
 	KalmanFilter.h
+	FilterLog.h
 	)
 	
 set (SOURCES
@@ -28,6 +29,7 @@ set (SOURCES
 	SystemManager.cpp
 	PartialCholevski.cpp
 	KalmanFilter.cpp
+	FilterLog.cpp
 	)
 	
 
