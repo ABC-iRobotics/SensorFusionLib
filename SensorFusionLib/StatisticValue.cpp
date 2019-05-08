@@ -1,6 +1,4 @@
-#include "pch.h"
 #include "StatisticValue.h"
-
 #include <exception>
 
 class WrongVarianceSizes : public std::exception {

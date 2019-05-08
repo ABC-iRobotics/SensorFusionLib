@@ -16,6 +16,7 @@ set (HEADERS
 	youBotSystem.h
 	#FilterPlotter.h
 	Init.h
+	pch.h
 	)
 	
 set (SOURCES
@@ -25,6 +26,7 @@ set (SOURCES
 	youBotSystem.cpp
 	#FilterPlotter.cpp
 	Init.cpp
+	pch.cpp
 	)
 	
 

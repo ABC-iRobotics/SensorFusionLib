@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "BaseSystem.h"
 
 // The nonlinear parts and the dependencies are by default zeros

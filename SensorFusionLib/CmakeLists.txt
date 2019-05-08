@@ -12,7 +12,6 @@ set (HEADERS
 	Sensor.h 
 	StatisticValue.h 
 	System.h 
-	pch.h
 	CallbackHandler.h
 	SystemManager.h
 	PartialCholevski.h
@@ -24,8 +23,7 @@ set (SOURCES
 	BaseSystem.cpp
 	Sensor.cpp 
 	StatisticValue.cpp
-	System.cpp 
-	pch.cpp
+	System.cpp
 	SystemManager.cpp
 	PartialCholevski.cpp
 	KalmanFilter.cpp
