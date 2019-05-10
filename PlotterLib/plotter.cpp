@@ -36,7 +36,7 @@ cvplot::Plotter::Plotter(std::string name_, Offset o, Size plotsize) :
 	W.size(Size(plotsize.width, plotsize.height * 0));
 }
 
-void cvplot::Plotter::addPlot(std::string plotName, unsigned int numofsignals, std::vector<std::string> names) {
+void cvplot::Plotter::addPlot(std::string plotName, unsigned int numofsignals, std::vector<std::string> names, bool showLegend) {
 	W.resize(Rect(offset.x, offset.y, plotSize.width, plotSize.height*(numOfPlots + 1)));
 	cvplot::View::ViewPtr view = W.view(name + "_" + std::to_string(numOfPlots), plotSize);
 	_setNthView(numOfPlots, view);
@@ -54,6 +54,7 @@ void cvplot::Plotter::addPlot(std::string plotName, unsigned int numofsignals, s
 		else
 			seriesname = name + "_" + std::to_string(numOfPlots) + "_" + std::to_string(i);
 		_setNthSeries(numOfPlots, i, figure->series(seriesname));
+		figure->series(seriesname)->legend(showLegend);
 	}
 
 	figure->show(false);
@@ -64,13 +65,15 @@ void cvplot::Plotter::addPlot(std::string plotName, unsigned int numofsignals, s
 }
 
 void cvplot::Plotter::setLineType(unsigned int plotindex, unsigned int seriesindex, Type type) {
-	Series::SeriesPtr s = _getNthSeries(plotindex, seriesindex);
-	s->type(type);
+	_getNthSeries(plotindex, seriesindex)->type(type);
+}
+
+void cvplot::Plotter::setLineColor(unsigned int plotindex, unsigned int seriesindex, Color color) {
+	_getNthSeries(plotindex, seriesindex)->color(color);
 }
 
 void cvplot::Plotter::addValue(unsigned int plotindex, unsigned int seriesindex, float t, float value) {
-	Series::SeriesPtr s = _getNthSeries(plotindex, seriesindex);
-	s->add1({ t,value });
+	 _getNthSeries(plotindex, seriesindex)->add1({ t,value });
 }
 
 void cvplot::Plotter::updatePlot(unsigned int plotindex) {
@@ -79,4 +82,9 @@ void cvplot::Plotter::updatePlot(unsigned int plotindex) {
 	figure->show(false);
 	view->finish();
 	view->flush();
+}
+
+void cvplot::Plotter::updateWindow() {
+	W.dirty();
+	W.flush();
 }

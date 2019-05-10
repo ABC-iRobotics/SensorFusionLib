@@ -54,13 +54,18 @@ namespace cvplot {
 
 		Plotter(std::string name_, Offset o = Offset(60, 0), Size plotsize = Size(600, 200));
 
-		void addPlot(std::string plotName, unsigned int numofsignals, std::vector<std::string> names = std::vector<std::string>());
+		void addPlot(std::string plotName, unsigned int numofsignals,
+			std::vector<std::string> names = std::vector<std::string>(), bool showLegend=false);
 
 		void setLineType(unsigned int plotindex, unsigned int seriesindex, Type type);
+
+		void setLineColor(unsigned int plotindex, unsigned int seriesindex, Color color);
 
 		void addValue(unsigned int plotindex, unsigned int seriesindex, float t, float value);
 
 		void updatePlot(unsigned int plotindex);
+
+		void updateWindow();
 
 		unsigned int getNumOfPlots() const { return numOfPlots; }
 	};
