@@ -347,13 +347,13 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, Statis
 }
 
 SystemManager::SystemManager(BaseSystemData data, StatisticValue state_) :
-	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data) {
+	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data), t(0) {
 		unsigned int systemID = data.getPtr()->getID();
 		// set callback
 		data.getPtr()->AddCallback([this, systemID](Eigen::VectorXd value) {
 			SystemData* ptr = this->SystemByID(systemID);
 			ptr->set(std::move(value), SystemValueType::OUTPUT);
-			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
+			Call(FilterCallData(std::move(value), ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
 		}, ID);
 }
 
@@ -373,7 +373,7 @@ void SystemManager::AddSensor(SensorData sensorData, StatisticValue sensorState)
 		unsigned int sensorID = sensorData.getPtr()->getID();
 		sensorData.getPtr()->AddCallback([this, sensorID](Eigen::VectorXd value) {
 			SystemData* ptr = this->SystemByID(sensorID);
-			ptr->set(std::move(value), SystemValueType::OUTPUT);
+			ptr->set(value, SystemValueType::OUTPUT);
 			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
 		}, ID);		
 	}
@@ -462,10 +462,12 @@ void SystemManager::PredictionDone(StatisticValue state, StatisticValue output) 
 	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
 	std::vector<StatisticValue> vOutput = partitionateWithStatistic(OUTPUT, output);
 	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE, FilterCallData::PREDICTION));
-	Call(FilterCallData(vOutput[0], baseSystem.getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
+	if (baseSystem.available())
+		Call(FilterCallData(vOutput[0], baseSystem.getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
 	for (int i = 0; i < nSensors(); i++) {
 		Call(FilterCallData(vState[i + 1], sensorList[i].getPtr(), t, STATE, FilterCallData::PREDICTION));
-		Call(FilterCallData(vOutput[i + 1], sensorList[i].getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
+		if (sensorList[i].available())
+			Call(FilterCallData(vOutput[i + 1], sensorList[i].getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
 	}
 }
 
