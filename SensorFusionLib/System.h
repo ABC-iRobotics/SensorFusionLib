@@ -36,6 +36,8 @@ public:
 
 	virtual std::vector<std::string> getOutputNames() const;
 
+	std::vector<std::string> getNames(SystemValueType type) const;
+
 	virtual std::string getName() const;
 
 	typedef std::shared_ptr<System> SystemPtr;

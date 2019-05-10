@@ -86,6 +86,21 @@ std::vector<std::string> System::getDisturbanceNames() const {
 std::vector<std::string> System::getOutputNames() const {
 	return list("y", getNumOfOutputs());
 }
+
+std::vector<std::string> System::getNames(SystemValueType type) const {
+	switch (type)
+	{
+	case SystemValueType::NOISE:
+		return getNoiseNames();
+	case SystemValueType::DISTURBANCE:
+		return getDisturbanceNames();
+	case SystemValueType::STATE:
+		return getStateNames();
+	case SystemValueType::OUTPUT:
+		return getOutputNames();
+	}
+	throw std::runtime_error(std::string("System::getNames(): Unhandled argument!\n"));
+}
 std::string System::getName() const {
 	return "System";
 }

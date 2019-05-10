@@ -3,6 +3,7 @@
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(OpenCV REQUIRED)
 
+
 include_directories (
 		${PROJECT_SOURCE_DIR}/PlotterLib
 		${PROJECT_SOURCE_DIR}/SensorFusionLib
@@ -11,21 +12,17 @@ include_directories (
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	IMUSensor.h 
-	#Localisation2DBaseSystem.h 
+	IMUSensor.h
 	youBotSystem.h
-	#FilterPlotter.h
-	Init.h
+	FilterPlot.h
 	pch.h
 	)
 	
 set (SOURCES
 	main.cpp
-	IMUSensor.cpp 
-	#Localisation2DBaseSystem.cpp 
+	IMUSensor.cpp
 	youBotSystem.cpp
-	#FilterPlotter.cpp
-	Init.cpp
+	FilterPlot.cpp
 	pch.cpp
 	)
 	
