@@ -92,7 +92,7 @@ Series &Series::legend(bool legend) {
 Series &Series::add(const std::vector<std::pair<float, float>> &data) {
   ensureDimsDepth(1, 1);
   for (const auto &d : data) {
-    entries_.push_back(data_.size());
+    entries_.push_back((int)data_.size());
     data_.push_back(d.first);
     data_.push_back(d.second);
   }
@@ -102,7 +102,7 @@ Series &Series::add(const std::vector<std::pair<float, float>> &data) {
 Series & Series::add1(const std::pair<float, float>& data) {
 	ensureDimsDepth(1, 1);
 
-	entries_.push_back(data_.size());
+	entries_.push_back((int)data_.size());
 	data_.push_back(data.first);
 	data_.push_back(data.second);
 
@@ -112,7 +112,7 @@ Series & Series::add1(const std::pair<float, float>& data) {
 Series &Series::add(const std::vector<std::pair<float, Point2>> &data) {
   ensureDimsDepth(1, 2);
   for (const auto &d : data) {
-    entries_.push_back(data_.size());
+    entries_.push_back((int)data_.size());
     data_.push_back(d.first);
     data_.push_back(d.second.x);
     data_.push_back(d.second.y);
@@ -123,7 +123,7 @@ Series &Series::add(const std::vector<std::pair<float, Point2>> &data) {
 Series &Series::add(const std::vector<std::pair<float, Point3>> &data) {
   ensureDimsDepth(1, 3);
   for (const auto &d : data) {
-    entries_.push_back(data_.size());
+    entries_.push_back((int)data_.size());
     data_.push_back(d.first);
     data_.push_back(d.second.x);
     data_.push_back(d.second.y);
@@ -136,7 +136,7 @@ Series &Series::addValue(const std::vector<float> &values) {
   std::vector<std::pair<float, float>> data(values.size());
   auto i = 0;
   for (auto &d : data) {
-    d.first = i + entries_.size();
+    d.first = (float)(i + entries_.size());
     d.second = values[i++];
   }
   return add(data);
@@ -146,7 +146,7 @@ Series &Series::addValue(const std::vector<Point2> &values) {
   std::vector<std::pair<float, Point2>> data(values.size());
   auto i = 0;
   for (auto &d : data) {
-    d.first = i + entries_.size();
+    d.first = float(i + entries_.size());
     d.second = values[i++];
   }
   return add(data);
@@ -156,7 +156,7 @@ Series &Series::addValue(const std::vector<Point3> &values) {
   std::vector<std::pair<float, Point3>> data(values.size());
   auto i = 0;
   for (auto &d : data) {
-    d.first = i + entries_.size();
+    d.first = float(i + entries_.size());
     d.second = values[i++];
   }
   return add(data);
@@ -205,7 +205,7 @@ Series &Series::setValue(const std::vector<float> &values) {
   std::vector<std::pair<float, float>> data(values.size());
   auto i = 0;
   for (auto &d : data) {
-    d.first = i;
+    d.first = (float)i;
     d.second = values[i++];
   }
   return set(data);
@@ -215,7 +215,7 @@ Series &Series::setValue(const std::vector<Point2> &values) {
   std::vector<std::pair<float, Point2>> data(values.size());
   auto i = 0;
   for (auto &d : data) {
-    d.first = i;
+    d.first = (float)i;
     d.second = values[i++];
   }
   return set(data);
@@ -225,7 +225,7 @@ Series &Series::setValue(const std::vector<Point3> &values) {
   std::vector<std::pair<float, Point3>> data(values.size());
   auto i = 0;
   for (auto &d : data) {
-    d.first = i;
+    d.first = (float)i;
     d.second = values[i++];
   }
   return set(data);
@@ -310,7 +310,7 @@ void Series::bounds(float &x_min, float &x_max, float &y_min, float &y_max,
     }
   }
   if (n_max < entries_.size()) {
-    n_max = entries_.size();
+    n_max = (int)entries_.size();
   }
   if (type_ == Histogram || type_ == Vistogram) {
     p_max = std::max(30, p_max);
@@ -474,7 +474,7 @@ void Series::draw(void *b, float x_min, float x_max, float y_min, float y_max,
           color = color2scalar(Color::cos(data_[e + dims_ + 2]));
         }
         cv::Point point((int)(x * xs + xd), (int)(y * ys + yd));
-        cv::circle(trans.with(color_), point, r, color, -1, cv::LINE_AA);
+        cv::circle(trans.with(color_), point, (int)r, color, -1, (int)cv::LINE_AA);
       }
     } break;
   }
@@ -598,10 +598,10 @@ void Figure::draw(void *b, float x_min, float x_max, float y_min, float y_max,
 
   // calc sub axis grid size
   auto x_grid =
-      (x_max != x_min ? value2snap((x_max - x_min) / floor(w_plot / grid_size_))
+      (x_max != x_min ? value2snap((x_max - x_min) / floorf((float)w_plot / (float)grid_size_))
                       : 1);
   auto y_grid =
-      (y_max != x_min ? value2snap((y_max - y_min) / floor(h_plot / grid_size_))
+      (y_max != x_min ? value2snap((y_max - y_min) / floorf((float)h_plot / (float)grid_size_))
                       : 1);
 
   // calc affine transform value space to plot space
@@ -636,11 +636,11 @@ void Figure::draw(void *b, float x_min, float x_max, float y_min, float y_max,
     out << std::setprecision(4) << (x == 0 ? 0 : x);
     int baseline;
     cv::Size size =
-        getTextSize(out.str(), cv::FONT_HERSHEY_SIMPLEX, 0.3f, 1.f, &baseline);
-    cv::Point org(x * xs + xd - size.width / 2,
-                  buffer.rows - border_size_ + 5 + size.height);
+        getTextSize(out.str(), cv::FONT_HERSHEY_SIMPLEX, 0.3f, 1, &baseline);
+    cv::Point org(int(x * xs + xd - size.width / 2),
+		int(buffer.rows - border_size_ + 5 + size.height));
     cv::putText(trans.with(text_color_), out.str().c_str(), org,
-                cv::FONT_HERSHEY_SIMPLEX, 0.3f, color2scalar(text_color_), 1.f);
+                cv::FONT_HERSHEY_SIMPLEX, 0.3, color2scalar(text_color_), 1);
   }
   if (std::abs(y_grid * ys) < 20) {
     y_grid *= std::ceil(20.f / std::abs(y_grid * ys));
@@ -650,10 +650,10 @@ void Figure::draw(void *b, float x_min, float x_max, float y_min, float y_max,
     out << std::setprecision(4) << (y == 0 ? 0 : y);
     int baseline;
     cv::Size size =
-        getTextSize(out.str(), cv::FONT_HERSHEY_SIMPLEX, 0.3f, 1.f, &baseline);
-    cv::Point org(border_size_ - 5 - size.width, y * ys + yd + size.height / 2);
+        getTextSize(out.str(), cv::FONT_HERSHEY_SIMPLEX, 0.3, 1, &baseline);
+    cv::Point org(int(border_size_ - 5 - size.width), int(y * ys + yd + size.height / 2));
     cv::putText(trans.with(text_color_), out.str().c_str(), org,
-                cv::FONT_HERSHEY_SIMPLEX, 0.3f, color2scalar(text_color_), 1.f);
+                cv::FONT_HERSHEY_SIMPLEX, 0.3f, color2scalar(text_color_), 1);
   }
 
   // draw axis
@@ -688,19 +688,19 @@ void Figure::draw(void *b, float x_min, float x_max, float y_min, float y_max,
     auto name = s->label();
     int baseline;
     cv::Size size =
-        getTextSize(name, cv::FONT_HERSHEY_SIMPLEX, 0.4f, 1.f, &baseline);
+        getTextSize(name, cv::FONT_HERSHEY_SIMPLEX, 0.4f, 1, &baseline);
     cv::Point org(buffer.cols - border_size_ - size.width - 17,
                   border_size_ + 15 * index + 15);
     auto shadow = true;
     cv::putText(trans.with(background_color_), name.c_str(),
                 {org.x + (shadow ? 1 : 0), org.y + (shadow ? 1 : 0)},
                 cv::FONT_HERSHEY_SIMPLEX, 0.4f, color2scalar(background_color_),
-                (shadow ? 1.f : 2.f));
+                (shadow ? 1 : 2));
     cv::circle(trans.with(background_color_),
                {buffer.cols - border_size_ - 10 + 1, org.y - 3 + 1}, 3,
                color2scalar(background_color_), -1, cv::LINE_AA);
     cv::putText(trans.with(text_color_), name.c_str(), org,
-                cv::FONT_HERSHEY_SIMPLEX, 0.4f, color2scalar(text_color_), 1.f);
+                cv::FONT_HERSHEY_SIMPLEX, 0.4f, color2scalar(text_color_), 1);
     s->dot(&trans.with(s->color()), buffer.cols - border_size_ - 10, org.y - 3,
           3);
     index++;

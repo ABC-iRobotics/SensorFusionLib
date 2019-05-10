@@ -13,8 +13,9 @@ std::map<std::string, int> color_counter;
 Color Color::alpha(uint8_t alpha) const { return Color(r, g, b, alpha); }
 
 Color Color::gamma(float gamma) const {
-  return Color(pow(r / 255.f, 1 / gamma) * 255, pow(g / 255.f, 1 / gamma) * 255,
-               pow(b / 255.f, 1 / gamma) * 255, a);
+  return Color((uint8_t)(pow(r / 255.f, 1 / gamma) * 255),
+	  (uint8_t)(pow(g / 255.f, 1 / gamma) * 255),
+	  (uint8_t)(pow(b / 255.f, 1 / gamma) * 255), a);
 }
 
 Color Color::gray(uint8_t v) { return Color(v, v, v); }
@@ -24,28 +25,28 @@ Color Color::index(uint8_t index, uint8_t density, float avoid,
   if (avoid > 0) {
     auto step = density / (6 - range);
     auto offset = (avoid + range / 2) * step;
-    index = offset + index % density;
-    density += step * range;
+    index = (uint8_t)offset + index % density;
+    density += (uint8_t)(step * range);
   }
   auto hue = index % density * 6.f / density;
   return Color::cos(hue);
 }
 
 Color Color::hash(const std::string &seed) {
-  return Color::index(std::hash<std::string>{}(seed));
+  return Color::index((uint8_t)std::hash<std::string>{}(seed));
 }
 
 Color Color::uniq(const std::string &name) {
   if (color_counter.count(name) == 0) {
-    color_counter[name] = color_counter.size();
+    color_counter[name] = (int)color_counter.size();
   }
   return Color::index(color_counter[name]);
 }
 
 Color Color::hue(float hue) {
   Color color;
-  auto i = (int)hue;
-  auto f = (hue - i) * 255;
+  int i = (int)hue;
+  int f = (int)((hue - i) * 255);
   switch (i % 6) {
     case 0:
       return Color(255, f, 0);
@@ -64,9 +65,9 @@ Color Color::hue(float hue) {
 }
 
 Color Color::cos(float hue) {
-  return Color((std::cos(hue * 1.047f) + 1) * 127.9f,
-               (std::cos((hue - 2) * 1.047f) + 1) * 127.9f,
-               (std::cos((hue - 4) * 1.047f) + 1) * 127.9f);
+  return Color((uint8_t)((std::cos(hue * 1.047f) + 1) * 127.9f),
+	  (uint8_t)((std::cos((hue - 2) * 1.047f) + 1) * 127.9f),
+	  (uint8_t)((std::cos((hue - 4) * 1.047f) + 1) * 127.9f));
 }
 
 

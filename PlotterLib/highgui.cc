@@ -138,8 +138,8 @@ int startWindowThread() {
   return cv::startWindowThread();
 }
 
-int waitKey(int delay) { return Util::key(delay); }
+int waitKey(int delay) { return Util::key((float)delay); }
 
-int waitKeyEx(int delay) { return Util::key(delay); }
+int waitKeyEx(int delay) { return Util::key((float)delay); }
 
 }  // namespace cvplot
