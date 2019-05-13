@@ -48,7 +48,7 @@ void FilterPlot::_plotValueAt(unsigned int index, const StatisticValue & value, 
 unsigned int FilterPlot::_num(SystemValueType valueType) const {
 	if (valueType == STATE || valueType == OUTPUT)
 		return 3;
-	else return 1;
+	else return 3;
 }
 
 std::string FilterPlot::_callTypeToString(FilterCallData::FilterCallType callType) const {
@@ -78,6 +78,7 @@ unsigned int FilterPlot::_index(SystemValueType valueType, FilterCallData::Filte
 		case FilterCallData::GROUNDTRUTH:
 			return 2;
 		}
+		break;
 	case OUTPUT:
 		switch (callType) {
 		case FilterCallData::MEASUREMENT:
@@ -87,6 +88,7 @@ unsigned int FilterPlot::_index(SystemValueType valueType, FilterCallData::Filte
 		case FilterCallData::GROUNDTRUTH:
 			return 2;
 		}
+		break;
 	case NOISE:
 	case DISTURBANCE:
 		switch (callType) {
@@ -112,6 +114,7 @@ FilterCallData::FilterCallType FilterPlot::_eventType(SystemValueType valueType,
 		case 2:
 			return FilterCallData::GROUNDTRUTH;
 		}
+		break;
 	case OUTPUT:
 		switch (index) {
 		case 0:
@@ -121,6 +124,7 @@ FilterCallData::FilterCallType FilterPlot::_eventType(SystemValueType valueType,
 		case 2:
 			return FilterCallData::GROUNDTRUTH;
 		}
+		break;
 	case NOISE:
 	case DISTURBANCE:
 		return FilterCallData::PREDICTION;

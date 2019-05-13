@@ -363,7 +363,8 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 	S_out_in = B * in.variance + Szw;
 	Eigen::MatrixXd Sy = S_out_x * A.transpose() + S_out_in * B.transpose() +
 		Sz + A * Szx.transpose() + B * Szw.transpose();
-	//Eigen::MatrixXd Sy = A * state_.variance * A.transpose() + B * in.variance*B.transpose() +
+	//Eigen::MatrixXd temp = Szx * A.transpose() + Szw * B.transpose();
+	//Eigen::MatrixXd Sy = A * state_.variance * A.transpose() + B * in.variance * B.transpose() +
 	//	Sz + temp + temp.transpose();
 	
 	//std::cout << "y: " << y << "\n Syy: " << Sy << "\n Syx: " << Syx << "\n Syw: " << Syw << std::endl;
@@ -470,12 +471,18 @@ void SystemManager::PredictionDone(const StatisticValue& state, const StatisticV
 	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
 	std::vector<StatisticValue> vOutput = partitionateWithStatistic(OUTPUT, output);
 	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE, FilterCallData::PREDICTION));
-	if (baseSystem.available())
+	Call(FilterCallData(baseSystem(DISTURBANCE), baseSystem.getPtr(), t, DISTURBANCE, FilterCallData::PREDICTION));
+	if (baseSystem.available()) {
 		Call(FilterCallData(vOutput[0], baseSystem.getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
+		Call(FilterCallData(baseSystem(NOISE), baseSystem.getPtr(), t, NOISE, FilterCallData::PREDICTION));
+	}
 	for (int i = 0; i < nSensors(); i++) {
 		Call(FilterCallData(vState[i + 1], sensorList[i].getPtr(), t, STATE, FilterCallData::PREDICTION));
-		if (sensorList[i].available())
+		Call(FilterCallData(sensorList[i](DISTURBANCE), sensorList[i].getPtr(), t, DISTURBANCE, FilterCallData::PREDICTION));
+		if (sensorList[i].available()) {
 			Call(FilterCallData(vOutput[i + 1], sensorList[i].getPtr(), t, OUTPUT, FilterCallData::PREDICTION));
+			Call(FilterCallData(sensorList[i](NOISE), sensorList[i].getPtr(), t, NOISE, FilterCallData::PREDICTION));
+		}
 	}
 }
 
