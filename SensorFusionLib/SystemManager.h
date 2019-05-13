@@ -21,8 +21,8 @@ A = | Abs  0   0 ... 0   | B = | Bbs  0   0  ... 0  |
 ----------------------------------------------------------
 ---The measurementupdate model if every sensor output are available:
 
-Output vector: y = [ y_bs' y_s1' ... y_sn' ]' y_i = [] if there is not uptodate measurement
-Noise vector: v = [ v_bs' v_s1' ... v_sn' ]' v_si = [] if there is not updtodate measurement
+Output vector: y = [ y_bs' y_s1' ... y_sn' ]'
+Noise vector: v = [ v_bs' v_s1' ... v_sn' ]'
 
 y(k) = C*x(k) + D*v(k) + g(x(k),v(k));
 where
@@ -77,11 +77,10 @@ struct FilterCallData {
 	double t;
 	SystemValueType type;
 	enum FilterCallType { PREDICTION, FILTERING, MEASUREMENT, ESTIMATION, GROUNDTRUTH } callType;
-	FilterCallData(StatisticValue value_, System::SystemPtr ptr_, double t_, SystemValueType type_, FilterCallType event_) :
+	FilterCallData(const StatisticValue& value_, System::SystemPtr ptr_,
+		double t_, SystemValueType type_, FilterCallType event_) :
 		value(value_), ptr(ptr_), t(t_), type(type_), callType(event_) {};
 };
-
-
 
 class SystemManager : public CallbackHandler<const FilterCallData&> {
 public:
@@ -93,12 +92,12 @@ public:
 		StatisticValue disturbance;
 		Eigen::VectorXd measurement;
 	public:
-		SystemData(StatisticValue noise_, StatisticValue disturbance_,
-			Eigen::VectorXd measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
+		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_,
+			const Eigen::VectorXd& measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
 		virtual System::SystemPtr getPtr() const = 0;
 		StatisticValue operator()(SystemValueType type, bool forcedOutput = false) const; // returns th given value
 		size_t num(SystemValueType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
-		void set(StatisticValue value, SystemValueType type); // set the given value
+		void set(const StatisticValue& value, SystemValueType type); // set the given value
 		void resetMeasurement();
 		bool available() const; // returns if is measurement available
 		virtual bool isBaseSystem() const = 0;
@@ -107,8 +106,9 @@ public:
 	class BaseSystemData : public SystemData {
 		BaseSystem::BaseSystemPtr ptr;
 	public:
-		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
-			Eigen::VectorXd measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
+		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
+			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
+			MeasurementStatus measStatus_ = OBSOLETHE);
 		Eigen::VectorXi dep(System::UpdateType outType, System::InputType type,
 			bool forcedOutput = false) const;
 		Eigen::MatrixXd getMatrix(double Ts, System::UpdateType type,
@@ -121,8 +121,9 @@ public:
 	class SensorData : public SystemData {
 		Sensor::SensorPtr ptr;
 	public:
-		SensorData(Sensor::SensorPtr ptr_, StatisticValue noise_, StatisticValue disturbance_,
-			Eigen::VectorXd measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
+		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
+			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
+			MeasurementStatus measStatus_ = OBSOLETHE);
 		Eigen::VectorXi depSensor(System::UpdateType outType, System::InputType type,
 			bool forcedOutput = false) const;
 		Eigen::VectorXi depBaseSystem(System::UpdateType outType, System::InputType type,
@@ -137,10 +138,10 @@ public:
 	};
 
 	// Constructor: the basesystem  must be given as an input
-	SystemManager(BaseSystemData data, StatisticValue state_);
+	SystemManager(const BaseSystemData& data, const StatisticValue& state_);
 
 	// Add a sensor
-	void AddSensor(SensorData sensorData, StatisticValue sensorState);
+	void AddSensor(const SensorData& sensorData, const StatisticValue& sensorState);
 
 	size_t nSensors() const;
 
@@ -156,11 +157,11 @@ public:
 
 	// could be faster....
 	Eigen::VectorXd EvalNonLinPart(double Ts, System::UpdateType outType,
-		Eigen::VectorXd state, Eigen::VectorXd in, bool forcedOutput = false) const;
+		const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput = false) const;
 
 	// This could be faster by implementing EvalNonLinPart and partitionate to matrices
-	StatisticValue Eval(System::UpdateType outType, double Ts, StatisticValue state_, StatisticValue in,
-		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd S_out_in, bool forcedOutput = false) const;
+	StatisticValue Eval(System::UpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
+		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
 	// Get the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
 	StatisticValue operator()(SystemValueType type, bool forcedOutput = false) const;
@@ -179,18 +180,16 @@ protected:
 	const SensorData& Sensor(size_t index) const;
 
 	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	std::vector<Eigen::VectorXd> partitionate(SystemValueType type,
-		Eigen::VectorXd value, bool forcedOutput = false) const;
+	std::vector<Eigen::VectorXd> partitionate(SystemValueType type, const Eigen::VectorXd& value, bool forcedOutput = false) const;
 
 	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	std::vector<StatisticValue> partitionateWithStatistic(SystemValueType type,
-		StatisticValue value, bool forcedOutput = false) const;
+	std::vector<StatisticValue> partitionateWithStatistic(SystemValueType type, const StatisticValue& value, bool forcedOutput = false) const;
 
 	void resetMeasurement();
 
-	void PredictionDone(StatisticValue state, StatisticValue output) const;
+	void PredictionDone(const StatisticValue& state, const StatisticValue& output) const;
 
-	void FilteringDone(StatisticValue state) const;
+	void FilteringDone(const StatisticValue& state) const;
 
 	void StepClock(double dt);
 

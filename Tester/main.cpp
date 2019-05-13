@@ -40,8 +40,13 @@ SystemManager::SensorData InitIMUSensor2(Sensor::SensorPtr ptr, StatisticValue& 
 	return SystemManager::SensorData(ptr, initNoise, initDist);
 }
 
-int main() {
+// Fasten the system:
+// partitionate matrices - helper quantities
+// evalnonlinpart on matrices
 
+#include <ctime>
+
+int main() {
 	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.002, 0.4, 0.25, 0.05);
 	StatisticValue initState;
 	SystemManager::BaseSystemData data2 = InitYouBotSystem2(youBot, initState);
@@ -51,19 +56,27 @@ int main() {
 	SystemManager::SensorData data3 = InitIMUSensor2(imu, initState);
 	filter.AddSensor(data3, initState);
 
-	//filter.AddCallback(FilterCallback, 0);
-	FilterPlot plotter(filter, imu, OUTPUT);
-	FilterPlot plotter2(filter, imu, STATE);
-	FilterPlot plotter3(filter, youBot, STATE);
+	//filter.AddCallback(FilterCallback);
+	//FilterPlot plotter(filter, imu, OUTPUT);
+	//FilterPlot plotter2(filter, imu, STATE);
+	//FilterPlot plotter3(filter, youBot, STATE);
 	
 	Eigen::VectorXd a = Eigen::VectorXd(3);
 	a(0) = 0.1; a(1) = 0.3; a(2) = 0.4;
-	for (; true;) {
+	double t = 0;
+
+	std::clock_t c_start = std::clock();
+	for (unsigned int i=0; i<2000; i++) {
+		//std::cout << t << std::endl;
+		//t += 0.001;
 		imu->MeasurementDone(a);
 		filter.Step(0.001);
-		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(100.));
-		FilterPlot::UpdateWindows();
+		//std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(10.));
+		//FilterPlot::UpdateWindows();
 	}
+	std::clock_t c_end = std::clock();
+	long double time_elapsed_ms = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
+	std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
 
 	return 0;
 

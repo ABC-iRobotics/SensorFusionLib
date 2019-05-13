@@ -1,8 +1,9 @@
 #include "SystemManager.h"
 #include "PartialCholevski.h"
 
-SystemManager::SystemData::SystemData(StatisticValue noise_, StatisticValue disturbance_,
-	Eigen::VectorXd measurement_, MeasurementStatus measStatus_) :
+SystemManager::SystemData::SystemData(const StatisticValue& noise_,
+	const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
+	MeasurementStatus measStatus_) :
 	noise(noise_), measurement(measurement_), disturbance(disturbance_), measStatus(measStatus_) {}
 
 StatisticValue SystemManager::SystemData::operator()(SystemValueType type, bool forcedOutput) const {
@@ -27,7 +28,7 @@ size_t SystemManager::SystemData::num(SystemValueType type, bool forcedOutput) c
 
 // return length of the given value
 
-void SystemManager::SystemData::set(StatisticValue value, SystemValueType type) {
+void SystemManager::SystemData::set(const StatisticValue& value, SystemValueType type) {
 	switch (type)
 	{
 	case SystemValueType::NOISE:
@@ -69,6 +70,26 @@ int SystemManager::_GetIndex(unsigned int ID) const {
 // returns -1 for the basesystem!
 
 SystemManager::BaseSystemData & SystemManager::BaseSystem() { return baseSystem; }
+
+
+// Add a sensor
+
+void SystemManager::AddSensor(const SensorData & sensorData, const StatisticValue & sensorState) {
+	if (sensorData.getSensorPtr()->isCompatible(baseSystem.getBaseSystemPtr())) {
+		//Add to the list
+		sensorList.push_back(sensorData);
+		// Add the initial state values and variances to the state/variance matrix
+		state.Add(sensorState);
+		// Set callbacks
+		unsigned int sensorID = sensorData.getPtr()->getID();
+		sensorData.getPtr()->AddCallback([this, sensorID](Eigen::VectorXd value) {
+			SystemData* ptr = this->SystemByID(sensorID);
+			ptr->set(value, SystemValueType::OUTPUT);
+			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
+		}, ID);
+	}
+	else throw std::runtime_error(std::string("SystemManager::AddSensor(): Not compatible sensor tried to be added!\n"));
+}
 
 size_t SystemManager::nSensors() const { return sensorList.size(); }
 
@@ -149,8 +170,7 @@ StatisticValue SystemManager::operator()(SystemValueType type, bool forcedOutput
 // OR
 // the noises for the basesystem and the active sensors
 
-std::vector<Eigen::VectorXd> SystemManager::partitionate(SystemValueType type,
-	Eigen::VectorXd value, bool forcedOutput) const {
+std::vector<Eigen::VectorXd> SystemManager::partitionate(SystemValueType type, const Eigen::VectorXd& value, bool forcedOutput) const {
 	std::vector<Eigen::VectorXd> out = std::vector<Eigen::VectorXd>();
 	size_t n = baseSystem.num(type, forcedOutput);
 	out.push_back(value.segment(0, n));
@@ -162,8 +182,7 @@ std::vector<Eigen::VectorXd> SystemManager::partitionate(SystemValueType type,
 	return out;
 }
 
-std::vector<StatisticValue> SystemManager::partitionateWithStatistic(SystemValueType type,
-	StatisticValue value, bool forcedOutput) const {
+std::vector<StatisticValue> SystemManager::partitionateWithStatistic(SystemValueType type, const StatisticValue& value, bool forcedOutput) const {
 	std::vector<StatisticValue> out = std::vector<StatisticValue>();
 	size_t n = baseSystem.num(type, forcedOutput);
 	out.push_back(value.GetPart(0, n));
@@ -214,8 +233,8 @@ void SystemManager::getMatrices(System::UpdateType out_, double Ts, Eigen::Matri
 
 // could be faster....
 
-Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts, System::UpdateType outType,
-	Eigen::VectorXd state, Eigen::VectorXd in, bool forcedOutput) const {
+Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
+ System::UpdateType outType, const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput) const {
 	SystemValueType intype = System::getInputValueType(outType, System::INPUT);
 	SystemValueType outtype = System::getOutputValueType(outType);
 	size_t n_out = num(outtype, forcedOutput);
@@ -240,8 +259,7 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts, System::UpdateType outT
 	return out;
 }
 
-StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, StatisticValue state_,
-	StatisticValue in, Eigen::MatrixXd & S_out_x, Eigen::MatrixXd S_out_in, bool forcedOutput) const {
+StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in, Eigen::MatrixXd & S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput) const {
 	SystemValueType inType = System::getInputValueType(outType, System::INPUT);
 	Eigen::Index nX = num(STATE, forcedOutput);
 	Eigen::Index nIn = num(inType, forcedOutput);
@@ -313,16 +331,21 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, Statis
 		Sz = (tau2 - (double)nNL) / (tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
 		Szx = Eigen::MatrixXd::Zero(nOut, nX);
 		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
+		Eigen::VectorXd temp;
 		for (unsigned int i = 0; i < nNL_X; i++) {
-			Sz += (z_x[i] - z) * (z_x[i] - z).transpose() / 2. / tau2;
-			Sz += (z_x[i + nNL_X] - z) * (z_x[i + nNL_X] - z).transpose() / 2. / tau2;
+			temp = z_x[i] - z;
+			Sz += temp * temp.transpose() / 2. / tau2;
+			temp = z_x[i + nNL_X] - z;
+			Sz += temp * temp.transpose() / 2. / tau2;
 			Szx += (z_x[2 * i] - z_x[2 * i + 1])*dX.col(i).transpose() / 2. / tau2;
 
 			//std::cout << "Szx: " << Szx << std::endl <<	std::endl;
 		}
 		for (int i = 0; i < nNL_In; i++) {
-			Sz += (z_w[i] - z) * (z_w[i] - z).transpose() / 2. / tau2;
-			Sz += (z_w[i + nNL_In] - z) * (z_w[i + nNL_In] - z).transpose() / 2. / tau2;
+			temp = z_w[i] - z;
+			Sz += temp * temp.transpose() / 2. / tau2;
+			temp = z_w[i + nNL_In] - z;
+			Sz += temp * temp.transpose() / 2. / tau2;
 			Szw += (z_w[2 * i] - z_w[2 * i + 1])*dIn.col(i).transpose() / 2. / tau2;
 		}
 		//std::cout << "Szx: " << Szx << std::endl <<
@@ -336,17 +359,19 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, Statis
 	//	std::endl << Szw << std::endl << std::endl << Sz << std::endl << std::endl;
 
 	Eigen::VectorXd y = A * state_.vector + B * in.vector + z;
-	Eigen::MatrixXd temp = Szx * A.transpose() + Szw * B.transpose();
-	Eigen::MatrixXd Sy = A * state_.variance * A.transpose() + B * in.variance*B.transpose() +
-		Sz + temp + temp.transpose();
 	S_out_x = A * state_.variance + Szx;
 	S_out_in = B * in.variance + Szw;
+	Eigen::MatrixXd Sy = S_out_x * A.transpose() + S_out_in * B.transpose() +
+		Sz + A * Szx.transpose() + B * Szw.transpose();
+	//Eigen::MatrixXd Sy = A * state_.variance * A.transpose() + B * in.variance*B.transpose() +
+	//	Sz + temp + temp.transpose();
+	
 	//std::cout << "y: " << y << "\n Syy: " << Sy << "\n Syx: " << Syx << "\n Syw: " << Syw << std::endl;
 
 	return StatisticValue(y, Sy);
 }
 
-SystemManager::SystemManager(BaseSystemData data, StatisticValue state_) :
+SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
 	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data), t(0) {
 		unsigned int systemID = data.getPtr()->getID();
 		// set callback
@@ -361,23 +386,6 @@ SystemManager::~SystemManager() {
 	baseSystem.getPtr()->DeleteCallback(ID);
 	for (size_t i = 0; i < sensorList.size(); i++)
 		sensorList[i].getPtr()->DeleteCallback(ID);
-}
-
-void SystemManager::AddSensor(SensorData sensorData, StatisticValue sensorState) {
-	if (sensorData.getSensorPtr()->isCompatible(baseSystem.getBaseSystemPtr())) {
-		//Add to the list
-		sensorList.push_back(sensorData);
-		// Add the initial state values and variances to the state/variance matrix
-		state.Add(sensorState);
-		// Set callbacks
-		unsigned int sensorID = sensorData.getPtr()->getID();
-		sensorData.getPtr()->AddCallback([this, sensorID](Eigen::VectorXd value) {
-			SystemData* ptr = this->SystemByID(sensorID);
-			ptr->set(value, SystemValueType::OUTPUT);
-			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
-		}, ID);		
-	}
-	else throw std::runtime_error(std::string("SystemManager::AddSensor(): Not compatible sensor tried to be added!\n"));
 }
 
 std::ostream & SystemManager::print(std::ostream & stream) const {
@@ -458,7 +466,7 @@ void SystemManager::resetMeasurement() {
 		sensorList[i].resetMeasurement();
 }
 
-void SystemManager::PredictionDone(StatisticValue state, StatisticValue output) const {
+void SystemManager::PredictionDone(const StatisticValue& state, const StatisticValue& output) const {
 	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
 	std::vector<StatisticValue> vOutput = partitionateWithStatistic(OUTPUT, output);
 	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE, FilterCallData::PREDICTION));
@@ -471,7 +479,7 @@ void SystemManager::PredictionDone(StatisticValue state, StatisticValue output) 
 	}
 }
 
-void SystemManager::FilteringDone(StatisticValue state) const {
+void SystemManager::FilteringDone(const StatisticValue& state) const {
 	std::vector<Eigen::VectorXd> vState = partitionate(STATE, state.vector);
 	Call(FilterCallData(vState[0], baseSystem.getPtr(), t, STATE, FilterCallData::FILTERING));
 	for (int i = 0; i < nSensors(); i++)
@@ -480,8 +488,9 @@ void SystemManager::FilteringDone(StatisticValue state) const {
 
 void SystemManager::StepClock(double dt) { t += dt; }
 
-SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_, StatisticValue noise_,
-	StatisticValue disturbance_, Eigen::VectorXd measurement_, MeasurementStatus measStatus_) : ptr(ptr_),
+SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
+	const StatisticValue& noise_, const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
+	MeasurementStatus measStatus_) : ptr(ptr_),
 	SystemData(noise_, disturbance_, measurement_, measStatus_) {}
 
 Eigen::VectorXi SystemManager::BaseSystemData::dep(System::UpdateType outType, System::InputType type, bool forcedOutput) const {
@@ -524,8 +533,9 @@ System::SystemPtr SystemManager::BaseSystemData::getPtr() const { return ptr; }
 
 bool SystemManager::BaseSystemData::isBaseSystem() const { return true; }
 
-SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, StatisticValue noise_,
-	StatisticValue disturbance_, Eigen::VectorXd measurement_, MeasurementStatus measStatus_) : ptr(ptr_),
+SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
+	const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
+	MeasurementStatus measStatus_) : ptr(ptr_),
 	SystemData(noise_, disturbance_, measurement_, measStatus_) {}
 
 Eigen::VectorXi SystemManager::SensorData::depSensor(System::UpdateType outType,

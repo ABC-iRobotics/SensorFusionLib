@@ -10,7 +10,7 @@ inline unsigned int getUID() {
 template <class CallbackData>
 class CallbackHandler {
 public:
-	typedef std::function<void(CallbackData data)> Callback;
+	typedef std::function<void(const CallbackData& data)> Callback;
 
 	unsigned int getID() const { return iID; }
 
@@ -23,7 +23,7 @@ public:
 	~CallbackHandler() {}
 
 protected:
-	void Call(CallbackData data) const;
+	void Call(const CallbackData& data) const;
 
 private:
 	unsigned int iID;
@@ -65,7 +65,7 @@ CallbackHandler<CallbackData>::CallbackHandler() : vCallback(CallbackVector()) {
 }
 
 template<class CallbackData>
-void CallbackHandler<CallbackData>::Call(CallbackData data) const {
+void CallbackHandler<CallbackData>::Call(const CallbackData& data) const {
 	// call the registered callbacks
 	for (unsigned int i = 0; i < vCallback.size(); i++)
 		vCallback[i].callback(data);
