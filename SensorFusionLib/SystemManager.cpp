@@ -58,6 +58,27 @@ bool SystemManager::SystemData::available() const { return measStatus != OBSOLET
 
 // returns if is measurement available
 
+SystemManager::Partitioner SystemManager::getPartitioner(bool forcedOutput) {
+	Partitioner p(nSensors() + 1);
+	p.nx[0] = BaseSystem().num(SystemValueType::STATE, forcedOutput);
+	p.ny[0] = BaseSystem().num(SystemValueType::OUTPUT, forcedOutput);
+	p.nw[0] = BaseSystem().num(SystemValueType::DISTURBANCE, forcedOutput);
+	p.nv[0] = BaseSystem().num(SystemValueType::NOISE, forcedOutput);
+	for (size_t n = 0; n < nSensors(); n++) {
+		p.nx[n + 1] = Sensor(n).num(SystemValueType::STATE, forcedOutput);
+		p.ny[n + 1] = Sensor(n).num(SystemValueType::OUTPUT, forcedOutput);
+		p.nw[n + 1] = Sensor(n).num(SystemValueType::DISTURBANCE, forcedOutput);
+		p.nv[n + 1] = Sensor(n).num(SystemValueType::NOISE, forcedOutput);
+	}
+	return p;
+}
+
+bool SystemManager::available(int index) const {
+	if (index == -1)
+		return BaseSystem().available();
+	return Sensor(index).available();
+}
+
 int SystemManager::_GetIndex(unsigned int ID) const {
 	if (ID == baseSystem.getPtr()->getID())
 		return -1;
@@ -71,6 +92,7 @@ int SystemManager::_GetIndex(unsigned int ID) const {
 
 SystemManager::BaseSystemData & SystemManager::BaseSystem() { return baseSystem; }
 
+const SystemManager::BaseSystemData & SystemManager::BaseSystem() const { return baseSystem; }
 
 // Add a sensor
 
@@ -303,11 +325,6 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 		Eigen::VectorXd z0 = EvalNonLinPart(Ts, outType, state_.vector, in.vector, forcedOutput);
 		std::vector<Eigen::VectorXd> z_x = std::vector<Eigen::VectorXd>();
 
-		/*
-		std::cout << "dx" << dX << std::endl;
-		for (unsigned int i = 0; i < dX.cols(); i++)
-		std::cout << "dx" << i << ": " << dX.col(i) << std::endl;
-		*/
 		for (Eigen::Index i = 0; i < nNL_X; i++) {
 			z_x.push_back(EvalNonLinPart(Ts, outType, state_.vector + dX.col(i), in.vector, forcedOutput));
 			//std::cout << "x: \n" << state_.vector + dX.col(i) << "\nz:\n" << z_x[i * 2] << std::endl;
@@ -325,9 +342,6 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 		for (int i = 0; i < 2 * nNL_In; i++)
 			z += z_w[i] / 2. / tau2;
 
-		//std::cout << "z" << z << std::endl;
-		//std::cout << "z0" << z0 << std::endl;
-
 		Sz = ((tau2 - (double)nNL) / tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
 		Szx = Eigen::MatrixXd::Zero(nOut, nX);
 		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
@@ -338,8 +352,6 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 			temp = z_x[i + nNL_X] - z;
 			Sz += temp * temp.transpose() / 2. / tau2;
 			Szx += (z_x[2 * i] - z_x[2 * i + 1])*dX.col(i).transpose() / 2. / tau2;
-
-			//std::cout << "Szx: " << Szx << std::endl <<	std::endl;
 		}
 		for (int i = 0; i < nNL_In; i++) {
 			temp = z_w[i] - z;
@@ -348,26 +360,16 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 			Sz += temp * temp.transpose() / 2. / tau2;
 			Szw += (z_w[2 * i] - z_w[2 * i + 1])*dIn.col(i).transpose() / 2. / tau2;
 		}
-		//std::cout << "Szx: " << Szx << std::endl <<
-		//	std::endl << Szw << std::endl << std::endl << Sz << std::endl << std::endl;
 	}
 	// Get coefficient matrices
 	Eigen::MatrixXd A, B;
 	getMatrices(outType, Ts, A, B, forcedOutput);
-
-	//std::cout << A << std::endl << std::endl << B << std::endl << std::endl << Szx << std::endl <<
-	//	std::endl << Szw << std::endl << std::endl << Sz << std::endl << std::endl;
 
 	Eigen::VectorXd y = A * state_.vector + B * in.vector + z;
 	S_out_x = A * state_.variance + Szx;
 	S_out_in = B * in.variance + Szw;
 	Eigen::MatrixXd Sy = S_out_x * A.transpose() + S_out_in * B.transpose() +
 		Sz + A * Szx.transpose() + B * Szw.transpose();
-	//Eigen::MatrixXd temp = Szx * A.transpose() + Szw * B.transpose();
-	//Eigen::MatrixXd Sy = A * state_.variance * A.transpose() + B * in.variance * B.transpose() +
-	//	Sz + temp + temp.transpose();
-	
-	//std::cout << "y: " << y << "\n Syy: " << Sy << "\n Syx: " << Syx << "\n Syw: " << Syw << std::endl;
 
 	return StatisticValue(y, Sy);
 }
@@ -616,3 +618,54 @@ Sensor::SensorPtr SystemManager::SensorData::getSensorPtr() const { return ptr; 
 System::SystemPtr SystemManager::SensorData::getPtr() const { return ptr; }
 
 bool SystemManager::SensorData::isBaseSystem() const { return false; }
+
+SystemManager::Partitioner::Partitioner(size_t N) : nx(std::vector<size_t>(N)),
+nw(std::vector<size_t>(N)), ny(std::vector<size_t>(N)),
+nv(std::vector<size_t>(N)) {}
+
+const std::vector<size_t>& SystemManager::Partitioner::n(SystemValueType type) const {
+	switch (type) {
+	case SystemValueType::NOISE:
+		return nv;
+	case SystemValueType::DISTURBANCE:
+		return nw;
+	case SystemValueType::STATE:
+		return nx;
+	case SystemValueType::OUTPUT:
+		return ny;
+	default:
+		throw std::runtime_error(std::string("Partitioner::n(): Unknown argument!"));
+	}
+}
+
+Eigen::VectorBlock<Eigen::VectorXd> SystemManager::Partitioner::PartValue(SystemValueType type, Eigen::VectorXd & value, int index) const { //index=-1: basesystem, index=0 sensor0....
+	auto n_ = n(type);
+	//if (index == -1) return value.segment(0, n_[0]);
+	size_t n0 = 0;
+	for (int i = 0; i < index + 1; i++)
+		n0 += n_[i];
+	return value.segment(n0, n_[index + 1]);
+}
+
+Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(SystemValueType type, Eigen::MatrixXd & value, int index1, int index2) const {
+	auto n_ = n(type);
+	//if (index == -1) return value.segment(0, n_[0]);
+	size_t n01 = 0, n02 = 0;
+	for (int i = 0; i < index1 + 1; i++)
+		n01 += n_[i];
+	for (int i = 0; i < index2 + 1; i++)
+		n02 += n_[i];
+	return value.block(n01, n02, n_[index1 + 1], n_[index2 + 1]);
+}
+
+Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(SystemValueType type1, SystemValueType type2, Eigen::MatrixXd & value, int index1, int index2) const {
+	const std::vector<size_t>& n1_ = n(type1);
+	const std::vector<size_t>& n2_ = n(type2);
+	//if (index == -1) return value.segment(0, n_[0]);
+	size_t n01 = 0, n02 = 0;
+	for (int i = 0; i < index1 + 1; i++)
+		n01 += n1_[i];
+	for (int i = 0; i < index2 + 1; i++)
+		n02 += n2_[i];
+	return value.block(n01, n02, n1_[index1 + 1], n2_[index2 + 1]);
+}

@@ -171,9 +171,29 @@ public:
 	// Destructor
 	~SystemManager();
 
+	struct Partitioner {
+		std::vector<size_t> nx;
+		std::vector<size_t> nw;
+		std::vector<size_t> ny;
+		std::vector<size_t> nv;
+		Partitioner(size_t N);
+		const std::vector<size_t>& n(SystemValueType type) const;
+		Eigen::VectorBlock<Eigen::VectorXd> PartValue(SystemValueType type,
+			Eigen::VectorXd& value, int index) const;
+		Eigen::Block<Eigen::MatrixXd> PartVariance(SystemValueType type,
+			Eigen::MatrixXd& value, int index1, int index2) const;
+		Eigen::Block<Eigen::MatrixXd> PartVariance(SystemValueType type1, SystemValueType type2,
+			Eigen::MatrixXd& value, int index1, int index2) const;
+	};
+
+	Partitioner getPartitioner(bool forcedOutput = false);
+
+	bool available(int index) const;
+
 protected:
 	int _GetIndex(unsigned int ID) const; // returns -1 for the basesystem!
 	BaseSystemData & BaseSystem();
+	const BaseSystemData & BaseSystem() const;
 	SensorData & Sensor(size_t index);
 	StatisticValue& State();
 	SystemData* SystemByID(unsigned int ID);

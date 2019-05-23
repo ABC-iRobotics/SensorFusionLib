@@ -21,7 +21,6 @@ void KalmanFilter::Step(double dT) { // update, collect measurement, correction 
 	PredictionDone(x_pred, y_pred);
 
 	Eigen::MatrixXd K = Syxpred.transpose() * y_pred.variance.inverse();
-	
 	Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
 	StatisticValue newstate = StatisticValue(x_pred.vector + K * (y_meas - y_pred.vector),
 		(Sxnew + Sxnew.transpose()) / 2.);
