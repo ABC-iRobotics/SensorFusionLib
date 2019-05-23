@@ -328,7 +328,7 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 		//std::cout << "z" << z << std::endl;
 		//std::cout << "z0" << z0 << std::endl;
 
-		Sz = (tau2 - (double)nNL) / (tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
+		Sz = ((tau2 - (double)nNL) / tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
 		Szx = Eigen::MatrixXd::Zero(nOut, nX);
 		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
 		Eigen::VectorXd temp;
