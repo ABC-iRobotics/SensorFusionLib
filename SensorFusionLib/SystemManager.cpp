@@ -28,24 +28,34 @@ size_t SystemManager::SystemData::num(SystemValueType type, bool forcedOutput) c
 
 // return length of the given value
 
-void SystemManager::SystemData::set(const StatisticValue& value, SystemValueType type) {
-	switch (type)
-	{
+void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, SystemValueType type) {
+	switch (type) {
 	case SystemValueType::NOISE:
-		noise = value;
-		return;
+		noise.vector = value;
+		break;
 	case SystemValueType::DISTURBANCE:
-		disturbance = value;
-		return;
+		disturbance.vector = value;
+		break;
 	case SystemValueType::OUTPUT:
-		measurement = value.vector;
+		measurement = value;
 		if (measStatus == OBSOLETHE)
 			measStatus = UPTODATE;
-		if (!value.variance.isZero())
-			throw std::runtime_error(std::string("SystemManager::SystemData::set(OUTPUT): only zero variance is allowed"));
-		return;
+		break;
 	default:
-		throw std::runtime_error(std::string("SystemManager::SystemData::set(): only NOISE, DISTURBANCE, OUTPUT is alowed"));
+		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
+	}
+}
+
+void SystemManager::SystemData::setVariance(const Eigen::VectorXd & value, SystemValueType type) {
+	switch (type) {
+	case SystemValueType::NOISE:
+		noise.variance = value;
+		break;
+	case SystemValueType::DISTURBANCE:
+		disturbance.variance = value;
+		break;
+	default:
+		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
 	}
 }
 
@@ -104,10 +114,8 @@ void SystemManager::AddSensor(const SensorData & sensorData, const StatisticValu
 		state.Add(sensorState);
 		// Set callbacks
 		unsigned int sensorID = sensorData.getPtr()->getID();
-		sensorData.getPtr()->AddCallback([this, sensorID](Eigen::VectorXd value) {
-			SystemData* ptr = this->SystemByID(sensorID);
-			ptr->set(value, SystemValueType::OUTPUT);
-			Call(FilterCallData(value, ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
+		sensorData.getPtr()->AddCallback([this, sensorID](SystemCallData call) {
+			_setProperty(sensorID, call);
 		}, ID);
 	}
 	else throw std::runtime_error(std::string("SystemManager::AddSensor(): Not compatible sensor tried to be added!\n"));
@@ -148,6 +156,16 @@ Eigen::VectorXi SystemManager::dep(System::UpdateType outType, System::InputType
 }
 
 const SystemManager::SensorData& SystemManager::Sensor(size_t index) const { return sensorList[index]; }
+
+void SystemManager::_setProperty(int systemID, SystemCallData call) {
+	SystemData* ptr = this->SystemByID(systemID);
+	if (call.valueType == call.VALUE)
+		ptr->setValue(call.value, call.signalType);
+	else
+		ptr->setVariance(call.variance, call.signalType);
+	if (call.signalType == SystemValueType::OUTPUT)
+		Call(FilterCallData(call.value, ptr->getPtr(), this->t, call.signalType, FilterCallData::MEASUREMENT));
+}
 
 SystemManager::SensorData & SystemManager::Sensor(size_t index) { return sensorList[index]; }
 
@@ -378,10 +396,8 @@ SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& s
 	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data), t(0) {
 		unsigned int systemID = data.getPtr()->getID();
 		// set callback
-		data.getPtr()->AddCallback([this, systemID](Eigen::VectorXd value) {
-			SystemData* ptr = this->SystemByID(systemID);
-			ptr->set(std::move(value), SystemValueType::OUTPUT);
-			Call(FilterCallData(std::move(value), ptr->getPtr(), this->t, OUTPUT, FilterCallData::MEASUREMENT));
+		data.getPtr()->AddCallback([this, systemID](SystemCallData call) {
+			_setProperty(systemID, call);
 		}, ID);
 }
 
@@ -395,9 +411,6 @@ std::ostream & SystemManager::print(std::ostream & stream) const {
 	std::vector<Eigen::VectorXd> states = partitionate(STATE, state.vector);
 	Eigen::MatrixXd S1, S2;
 	StatisticValue output = Eval(System::MEASUREMENTUPDATE, 0.001, state, (*this)(NOISE, true), S1, S2, true);
-	/*std::vector<bool> active = std::vector<bool>();
-	for (unsigned int i = 0; i < systemList.size(); i++)
-	active.push_back(true);*/
 	std::vector<Eigen::VectorXd> outputs = partitionate(OUTPUT, output.vector, true);
 
 	auto printSystem = [](std::ostream& stream, const SystemData* sys,

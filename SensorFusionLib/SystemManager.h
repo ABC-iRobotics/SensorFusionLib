@@ -97,7 +97,8 @@ public:
 		virtual System::SystemPtr getPtr() const = 0;
 		StatisticValue operator()(SystemValueType type, bool forcedOutput = false) const; // returns th given value
 		size_t num(SystemValueType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
-		void set(const StatisticValue& value, SystemValueType type); // set the given value
+		void setValue(const Eigen::VectorXd& value, SystemValueType type); // set the given value
+		void setVariance(const Eigen::VectorXd& value, SystemValueType type); // set the given value
 		void resetMeasurement();
 		bool available() const; // returns if is measurement available
 		virtual bool isBaseSystem() const = 0;
@@ -198,6 +199,8 @@ protected:
 	StatisticValue& State();
 	SystemData* SystemByID(unsigned int ID);
 	const SensorData& Sensor(size_t index) const;
+
+	virtual void _setProperty(int systemID, SystemCallData call);
 
 	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
 	std::vector<Eigen::VectorXd> partitionate(SystemValueType type, const Eigen::VectorXd& value, bool forcedOutput = false) const;

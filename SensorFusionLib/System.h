@@ -6,7 +6,16 @@
 
 enum SystemValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
 
-class System : public CallbackHandler <Eigen::VectorXd>
+struct SystemCallData {
+	Eigen::VectorXd value;
+	Eigen::MatrixXd variance;
+	SystemValueType signalType;
+	enum {VALUE, VARIANCE} valueType;
+	SystemCallData(Eigen::VectorXd value, SystemValueType type);;
+	SystemCallData(Eigen::MatrixXd variance, SystemValueType type);;
+};
+
+class System : public CallbackHandler<SystemCallData>
 {
 public:
 	System();
@@ -25,8 +34,17 @@ public:
 	// Forward the actual output via the callbacks
 	void MeasurementDone(Eigen::VectorXd sensor_output) const;
 
-	// Forward the actual disturbance/noise properties, measured output, set manually the state, 
-	//void SetValues(StatisticValue value, SystemValueType type) const;
+	// Set changed disturbance characteristics
+	void SetDisturbanceValue(Eigen::VectorXd value) const;
+
+	// Set changed disturbance characteristics
+	void SetDisturbanceVariance(Eigen::MatrixXd value) const;
+
+	// Set changed noise characteristics
+	void SetNoiseValue(Eigen::VectorXd value) const;
+
+	// Set changed noise characteristics
+	void SetNoiseVariance(Eigen::MatrixXd value) const;
 
 	virtual std::vector<std::string> getStateNames() const;
 

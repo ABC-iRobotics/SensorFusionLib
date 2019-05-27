@@ -32,14 +32,66 @@ void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(sensor_output);
+	Call(SystemCallData(sensor_output,SystemValueType::OUTPUT));
 }
+
+// Set changed disturbance characteristics
+
+void System::SetDisturbanceValue(Eigen::VectorXd value) const {
+	if (value.size() != getNumOfDisturbances()) {
+		std::cout << "(System::SetDisturbanceValue) Wrong value size! Returned without setting...\n";
+		return;
+	}
+	// call the registered callbacks
+	Call(SystemCallData(value, SystemValueType::DISTURBANCE));
+}
+
+// Set changed disturbance characteristics
+
+void System::SetDisturbanceVariance(Eigen::MatrixXd value) const {
+	if (value.cols() != getNumOfDisturbances() || value.rows() != getNumOfDisturbances()) {
+		std::cout << "(System::SetDisturbanceVariance) Wrong value size! Returned without setting...\n";
+		return;
+	}
+	// call the registered callbacks
+	Call(SystemCallData(value, SystemValueType::DISTURBANCE));
+}
+
+// Set changed noise characteristics
+
+void System::SetNoiseValue(Eigen::VectorXd value) const {
+	if (value.size() != getNumOfNoises()) {
+		std::cout << "(System::SetNoiseValue) Wrong value size! Returned without setting...\n";
+		return;
+	}
+	// call the registered callbacks
+	Call(SystemCallData(value, SystemValueType::NOISE));
+}
+
+
+
 std::vector<std::string> list(std::string fp, unsigned int n) {
 	std::vector<std::string> out = std::vector<std::string>();
 	for (unsigned int i = 0; i < n; i++)
 		out.push_back(fp + "_" + std::to_string(i+1));
 	return out;
 }
+
+// Set changed noise characteristics
+
+
+
+// Set changed noise characteristics
+
+void System::SetNoiseVariance(Eigen::MatrixXd value) const {
+	if (value.cols() != getNumOfNoises() || value.rows() != getNumOfNoises()) {
+		std::cout << "(System::SetNoiseVariance) Wrong value size! Returned without setting...\n";
+		return;
+	}
+	// call the registered callbacks
+	Call(SystemCallData(value, SystemValueType::NOISE));
+}
+
 std::vector<std::string> System::getStateNames() const {
 	return list("x", getNumOfStates());
 }
@@ -100,17 +152,9 @@ void System::_systemTest() const {
 	if (getNames(SystemValueType::NOISE).size() != getNumOf(SystemValueType::NOISE))
 		throw std::runtime_error(std::string("System::_systemTest()"));
 }
-/*
-void System::SetValues(StatisticValue value, SystemValueType type) const {
-	// Check input sizes
-	unsigned int n = getNumOf(type);
-	if (value.Length() != n) {
-		std::cout << "(System::SetValues) Wrong value size! Returned without setting...\n";
-		return;
-	}
-	// call the registered callbacks
-	Call(value, type);
-}*/
 
+SystemCallData::SystemCallData(Eigen::VectorXd value, SystemValueType type) :
+	value(value), signalType(type), valueType(VALUE) {}
 
-
+SystemCallData::SystemCallData(Eigen::MatrixXd variance, SystemValueType type) :
+	variance(variance), signalType(type), valueType(VARIANCE) {}
