@@ -48,4 +48,6 @@ public:
 	Eigen::VectorXi genNonlinearDependency(UpdateType outType, InputType inType);
 
 	typedef std::shared_ptr<BaseSystem> BaseSystemPtr;
+
+	void systemTest() const;
 };

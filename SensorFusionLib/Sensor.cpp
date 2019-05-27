@@ -112,6 +112,85 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 	 throw std::runtime_error(std::string("Sensor::genNonlinearSensorDependency(): Unknown input!"));
  }
 
+ void Sensor::systemTest() const {
+	 _systemTest();
+	 int nx = getNumOfStates();
+	 int ny = getNumOfOutputs();
+	 int nv = getNumOfNoises();
+	 int nw = getNumOfDisturbances();
+	 int nx0 = getNumOfBaseSystemStates();
+	 int nv0 = getNumOfBaseSystemNoises();
+	 int nw0 = getNumOfBaseSystemDisturbances();
+	 // Check A,B,C,D matrices
+	 Eigen::MatrixXd M;
+	 M = getAi(1);
+	 if (M.cols() != nx || M.rows() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 M = getBi(1);
+	 if (M.cols() != nw || M.rows() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 M = getCi(1);
+	 if (M.cols() != nx || M.rows() != ny)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 M = getDi(1);
+	 if (M.cols() != nv || M.rows() != ny)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 //
+	 M = getA0(1);
+	 if (M.cols() != nx0 || M.rows() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 M = getB0(1);
+	 if (M.cols() != nw0 || M.rows() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 M = getC0(1);
+	 if (M.cols() != nx0 || M.rows() != ny)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 M = getD0(1);
+	 if (M.cols() != nv0 || M.rows() != ny)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 // Check dependency vectors
+	 Eigen::VectorXi v;
+	 v = getUpdateNonlinearX0Dependencies();
+	 if (v.size() != nx0)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 v = getUpdateNonlinearW0Dependencies();
+	 if (v.size() != nw0)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 v = getOutputNonlinearX0Dependencies();
+	 if (v.size() != nx0)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 v = getOutputNonlinearV0Dependencies();
+	 if (v.size() != nv0)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 //
+	 v = getUpdateNonlinearXiDependencies();
+	 if (v.size() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 v = getUpdateNonlinearWiDependencies();
+	 if (v.size() != nw)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 v = getOutputNonlinearXiDependencies();
+	 if (v.size() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 v = getOutputNonlinearViDependencies();
+	 if (v.size() != nv)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 // Check nonlinear parts
+	 Eigen::VectorXd m;
+	 Eigen::VectorXd x = Eigen::VectorXd::Zero(nx);
+	 Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nx0);
+	 Eigen::VectorXd i = Eigen::VectorXd::Zero(nw);
+	 Eigen::VectorXd i0 = Eigen::VectorXd::Zero(nw0);
+	 m = UpdateNonlinearPart(1, x0, i0, x, i);
+	 if (m.size() != nx)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 i0 = Eigen::VectorXd::Zero(nv0);
+	 i = Eigen::VectorXd::Zero(nv);
+	 m = OutputNonlinearPart(1, x0, i0, x, i);
+	 if (m.size() != ny)
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+ }
+
  unsigned int Sensor::getNumOfBaseSystemStates() const { return numOfBaseSystemStates; }
 
  unsigned int Sensor::getNumOfBaseSystemNoises() const { return numOfBaseSystemNoises; }

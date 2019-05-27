@@ -3,9 +3,7 @@
 
 System::System() {}
 
-System::~System()
-{
-}
+System::~System() {}
 
 unsigned int System::getNumOf(SystemValueType type) const {
 	switch (type)
@@ -28,38 +26,6 @@ unsigned int System::getNumOf(SystemValueType type) const {
 		break;
 	}
 }
-/*
-StatisticValue System::getInitializationStates() const {
-	return StatisticValue(getNumOfStates());
-}
-
-StatisticValue System::getInitializationDisturbances() const {
-	return StatisticValue(getNumOfDisturbances());
-}
-
-StatisticValue System::getInitializationNoises() const {
-	unsigned int a = getNumOfNoises();
-	return StatisticValue(a);
-}
-
-StatisticValue System::getInitValue(SystemValueType type) const {
-	switch (type)
-	{
-	case SystemValueType::NOISE:
-		return getInitializationNoises();
-		break;
-	case SystemValueType::DISTURBANCE:
-		return getInitializationDisturbances();
-		break;
-	case SystemValueType::STATE:
-		return getInitializationStates();
-		break;
-	default:
-		return StatisticValue();
-		break;
-	}
-}
-*/
 void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
 	if (sensor_output.size() != getNumOfOutputs()) {
 		std::cout << "(System::MeasurementDone) Wrong value size! Returned without setting...\n";
@@ -123,6 +89,16 @@ SystemValueType System::getOutputValueType(System::UpdateType outType) {
 		return SystemValueType::OUTPUT;
 	}
 	throw std::runtime_error(std::string("System::getOutputValueType(): Unknown input!"));
+}
+void System::_systemTest() const {
+	if (getNames(SystemValueType::STATE).size() != getNumOf(SystemValueType::STATE))
+		throw std::runtime_error(std::string("System::_systemTest()"));
+	if (getNames(SystemValueType::OUTPUT).size() != getNumOf(SystemValueType::OUTPUT))
+		throw std::runtime_error(std::string("System::_systemTest()"));
+	if (getNames(SystemValueType::DISTURBANCE).size() != getNumOf(SystemValueType::DISTURBANCE))
+		throw std::runtime_error(std::string("System::_systemTest()"));
+	if (getNames(SystemValueType::NOISE).size() != getNumOf(SystemValueType::NOISE))
+		throw std::runtime_error(std::string("System::_systemTest()"));
 }
 /*
 void System::SetValues(StatisticValue value, SystemValueType type) const {

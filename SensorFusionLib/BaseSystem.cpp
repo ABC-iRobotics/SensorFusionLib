@@ -66,3 +66,50 @@ Eigen::VectorXi BaseSystem::genNonlinearDependency(UpdateType outType, InputType
 	}
 	throw std::runtime_error(std::string("BaseSystem::genNonlinearDependency(): Unknown input!"));
 }
+
+void BaseSystem::systemTest() const {
+	_systemTest();
+	int nx = getNumOfStates();
+	int ny = getNumOfOutputs();
+	int nv = getNumOfNoises();
+	int nw = getNumOfDisturbances();
+	// Check A,B,C,D matrices
+	Eigen::MatrixXd M;
+	M = getA(1);
+	if (M.cols() != nx || M.rows() != nx)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	M = getB(1);
+	if (M.cols() != nw || M.rows() != nx)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	M = getC(1);
+	if (M.cols() != nx || M.rows() != ny)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	M = getD(1);
+	if (M.cols() != nv || M.rows() != ny)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	// Check dependency vectors
+	Eigen::VectorXi v;
+	v = getUpdateNonlinearXDependencies();
+	if (v.size() != nx)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	v = getUpdateNonlinearWDependencies();
+	if (v.size() != nw)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	v = getOutputNonlinearXDependencies();
+	if (v.size() != nx)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	v = getOutputNonlinearVDependencies();
+	if (v.size() != nv)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	// Check nonlinear parts
+	Eigen::VectorXd m;
+	Eigen::VectorXd x = Eigen::VectorXd::Zero(nx);
+	Eigen::VectorXd i = Eigen::VectorXd::Zero(nw);
+	m = UpdateNonlinearPart(1, x, i);
+	if (m.size() != nx)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	i = Eigen::VectorXd::Zero(nv);
+	m = OutputNonlinearPart(1, x, i);
+	if (m.size() != ny)
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+}

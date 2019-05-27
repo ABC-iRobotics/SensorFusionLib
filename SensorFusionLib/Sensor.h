@@ -75,6 +75,8 @@ public:
 	Eigen::VectorXi genNonlinearSensorDependency(UpdateType outType, InputType inType) const;
 
 	typedef std::shared_ptr<Sensor> SensorPtr;
+
+	void systemTest() const;
 };
 
 template<class BaseSystemType>

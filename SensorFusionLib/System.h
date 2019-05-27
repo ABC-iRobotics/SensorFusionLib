@@ -49,4 +49,7 @@ public:
 	static SystemValueType getInputValueType(System::UpdateType outType, System::InputType inType);
 
 	static SystemValueType getOutputValueType(System::UpdateType outType);
+
+protected:
+	void _systemTest() const;
 };
