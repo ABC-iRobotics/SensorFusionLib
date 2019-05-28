@@ -330,15 +330,17 @@ StatisticValue SystemManager::Eval(System::UpdateType outType, double Ts, const 
 		double tau = sqrt(tau2);
 		// Sigma values by applying partial chol
 		Eigen::MatrixXd dX = tau * PartialChol(state_.variance, stateDep);
-		Eigen::MatrixXd dIn = Eigen::MatrixXd::Zero(nIn, nNL_In);
-		{
+		Eigen::MatrixXd dIn;
+		if (in.isIndependent) {
+			dIn = Eigen::MatrixXd::Zero(nIn, nNL_In);
 			unsigned int j = 0;
 			for (unsigned int i = 0; i < nIn; i++)
 				if (inDep[i] == 1) {
 					dIn(i, j) = tau * sqrt(in.variance(i, i));
 					j++;
 				}
-		}
+		} else
+			dIn = tau * PartialChol(in.variance, inDep);
 		// Mean value
 		Eigen::VectorXd z0 = EvalNonLinPart(Ts, outType, state_.vector, in.vector, forcedOutput);
 		std::vector<Eigen::VectorXd> z_x = std::vector<Eigen::VectorXd>();

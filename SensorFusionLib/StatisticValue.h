@@ -9,9 +9,9 @@ struct StatisticValue {
 
 	Eigen::MatrixXd variance;
 
-	bool isIndependent = false;
+	bool isIndependent; // if the varince matrix is diagonal
 
-	StatisticValue(Eigen::VectorXd vector_, Eigen::MatrixXd variance_);
+	StatisticValue(Eigen::VectorXd vector_, Eigen::MatrixXd variance_, bool isIndependent_ = false);
 
 	StatisticValue(Eigen::VectorXd vector_);
 

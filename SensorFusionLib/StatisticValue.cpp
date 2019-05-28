@@ -9,20 +9,22 @@ const char * WrongVarianceSizes::what() const throw() {
 	return "Not consistent value and variance values";
 }
 
-StatisticValue::StatisticValue(Eigen::VectorXd vector_, Eigen::MatrixXd variance_) :
-	vector(vector_), variance(variance_) {
+StatisticValue::StatisticValue(Eigen::VectorXd vector_,
+	Eigen::MatrixXd variance_, bool isIndependent_) :
+	vector(vector_), variance(variance_), isIndependent(isIndependent_) {
 	if (vector_.size() != variance.rows() || vector_.size() != variance.cols())
 		throw WrongVarianceSizes();
 }
 
 StatisticValue::StatisticValue(Eigen::VectorXd vector_) :
-	vector(vector_), variance(Eigen::MatrixXd::Zero(vector_.size(), vector_.size())) {}
+	vector(vector_), isIndependent(true),
+	variance(Eigen::MatrixXd::Zero(vector_.size(), vector_.size())) {}
 
 StatisticValue::StatisticValue() : vector(Eigen::VectorXd(0)),
-variance(Eigen::MatrixXd(0, 0)) {}
+	variance(Eigen::MatrixXd(0, 0)), isIndependent(true) {}
 
 StatisticValue::StatisticValue(size_t n) :
-	vector(Eigen::VectorXd::Zero(n)), variance(Eigen::MatrixXd::Zero(n, n)) {}
+	vector(Eigen::VectorXd::Zero(n)), variance(Eigen::MatrixXd::Zero(n, n)), isIndependent(true) {}
 
 Eigen::Index StatisticValue::Length() const { return vector.size(); }
 
