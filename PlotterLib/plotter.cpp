@@ -37,10 +37,15 @@ cvplot::Plotter::Plotter(std::string name_, Offset o, Size plotsize) :
 }
 
 void cvplot::Plotter::addPlot(std::string plotName, unsigned int numofsignals, std::vector<std::string> names, bool showLegend) {
-	W.resize(Rect(offset.x, offset.y, plotSize.width, plotSize.height*(numOfPlots + 1)));
+	int numofcols = (int)( numOfPlots / MAX_NUM_OF_ROWS) +1;
+	int numofrows = numOfPlots + 1;
+	if (numofcols > 1)
+		numofrows = MAX_NUM_OF_ROWS;
+	W.resize(Rect(offset.x, offset.y, plotSize.width * numofcols, plotSize.height * numofrows));
 	cvplot::View::ViewPtr view = W.view(name + "_" + std::to_string(numOfPlots), plotSize);
 	_setNthView(numOfPlots, view);
-	view->offset(cvplot::Offset(0, numOfPlots * plotSize.height));
+	view->offset(cvplot::Offset( (numofcols-1)*plotSize.width,
+		(numOfPlots % MAX_NUM_OF_ROWS) * plotSize.height));
 	view->title(plotName);
 
 	cvplot::Figure::FigurePtr figure = std::make_shared<cvplot::Figure>(view);

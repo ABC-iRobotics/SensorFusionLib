@@ -10,6 +10,7 @@
 #include <map>
 
 namespace cvplot {
+	const int MAX_NUM_OF_ROWS = 6;
 
 	struct SeriesID  {
 		unsigned int plotindex;
