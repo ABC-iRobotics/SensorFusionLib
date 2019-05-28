@@ -6,7 +6,7 @@
 #include "youBotSystem.h"
 #include "INSSensor.h"
 #include "AbsoluthePoseSensor.h"
-#include "FilterPlot.h"
+
 
 struct Random {
 	static std::default_random_engine generator;

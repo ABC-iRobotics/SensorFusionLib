@@ -106,8 +106,12 @@ endfunction ()
 #file(COPY ${CMAKE_SOURCE_DIR}/FunctionTester/FunctionTesterExample.bat DESTINATION ${CMAKE_BINARY_DIR}/bin/Debug)
 #file(COPY ${CMAKE_SOURCE_DIR}/FunctionTester/FunctionTesterExample.bat DESTINATION ${CMAKE_BINARY_DIR}/bin/Release)
 
+option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
+set(FILTERPLOT ${ADD_PLOTTER})
 
-add_subdirectory (PlotterLib)
+if (FILTERPLOT)
+	add_subdirectory (PlotterLib)
+endif()
 add_subdirectory (SensorFusionLib)
 add_subdirectory (GINOPLib)
 add_subdirectory (Tester)

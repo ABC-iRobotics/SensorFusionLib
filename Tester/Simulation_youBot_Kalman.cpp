@@ -1,5 +1,9 @@
 #include "Simulation_youbot_Kalman.h"
 
+#ifdef FILTERPLOT
+#include "FilterPlot.h"
+#endif
+
 void simulation_youbot_Kalman() {
 	// Trajectory
 	Trajectory traj = genTrajectory();
@@ -58,10 +62,11 @@ void simulation_youbot_Kalman() {
 		filter->AddSensor(data, initState);
 	}
 
+#ifdef FILTERPLOT
 	FilterPlot plotter(*filter, youBot, STATE);
 	//FilterPlot plotter2(*filter, absPose, OUTPUT);
 	FilterPlot plotter3(*filter, ins, OUTPUT);
-
+#endif
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {
 		youBot->SetDisturbanceValue(youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]));
@@ -75,10 +80,13 @@ void simulation_youbot_Kalman() {
 		//std::cout << (*filter)(STATE).vector(9) << std::endl;
 
 		filter->Step(traj.Ts);
+#ifdef FILTERPLOT
 		if (n % 100 == 0)
 			FilterPlot::UpdateWindows();
+#endif
 	}
 
+	std::cout << "Ready\n";
 	unsigned int in;
 	std::cin >> in;
 

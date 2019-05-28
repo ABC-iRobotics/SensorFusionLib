@@ -4,7 +4,6 @@
 #include "pch.h"
 #include <iostream>
 #include <thread>
-#include "FilterPlot.h"
 #include "KalmanFilter.h"
 #include "youBotSystem.h"
 #include "IMUSensor.h"
@@ -56,6 +55,7 @@ int main() {
 
 	return 0;
 
+	/*
 	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.2, 0.4, 0.25, 0.05);
 	StatisticValue initState;
 	SystemManager::BaseSystemData data2 = InitYouBotSystem2(youBot, initState);

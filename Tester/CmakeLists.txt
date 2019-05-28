@@ -1,15 +1,24 @@
 # PROJECT(SensorFusion)
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(OpenCV REQUIRED)
+if (FILTERPLOT)
+	find_package(OpenCV REQUIRED)
+endif()
 
-
+if (FILTERPLOT)
 include_directories (
 		${PROJECT_SOURCE_DIR}/PlotterLib
 		${PROJECT_SOURCE_DIR}/SensorFusionLib
 		${PROJECT_SOURCE_DIR}/GINOPLib
 		${Eigen_INCLUDE_DIRS}
 		)
+else()
+include_directories (
+		${PROJECT_SOURCE_DIR}/SensorFusionLib
+		${PROJECT_SOURCE_DIR}/GINOPLib
+		${Eigen_INCLUDE_DIRS}
+		)
+endif()
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
@@ -31,10 +40,14 @@ set (SOURCES
 add_executable (Tester ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (Tester PlotterLib SensorFusionLib Eigen3::Eigen GINOPLib
-		${OpenCV_LIBS}
-		)
-		
+if (FILTERPLOT)
+	target_link_libraries (Tester PlotterLib SensorFusionLib Eigen3::Eigen GINOPLib	
+	${OpenCV_LIBS})
+	add_compile_definitions(FILTERPLOT)
+else()
+	target_link_libraries (Tester SensorFusionLib Eigen3::Eigen GINOPLib)
+endif()
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
