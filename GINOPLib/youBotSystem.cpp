@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "youBotSystem.h"
 
 youBotSystem::youBotSystem(double Tdyn, double L, double W, double R) :
@@ -58,3 +57,23 @@ Eigen::VectorXd youBotSystem::UpdateNonlinearPart(double Ts, const Eigen::Vector
 	out(4) = Ts * (state(0)*sin(state(5)) + state(1)*cos(state(5)));
 	return out;
 }
+
+ std::vector<std::string> youBotSystem::getStateNames() const {
+	return { "vx","vy","omega","x","y","phi","n" };
+}
+
+ std::vector<std::string> youBotSystem::getNoiseNames() const {
+	 return {};
+ }
+
+ std::vector<std::string> youBotSystem::getDisturbanceNames() const {
+	 return { "om_FL","om_FR","om_BL","om_BR" };
+ }
+
+ std::vector<std::string> youBotSystem::getOutputNames() const {
+	 return { "n" };
+ }
+
+ std::string youBotSystem::getName() const {
+	 return "youBot";
+ }

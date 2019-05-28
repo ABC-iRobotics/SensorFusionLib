@@ -109,7 +109,9 @@ endfunction ()
 
 add_subdirectory (PlotterLib)
 add_subdirectory (SensorFusionLib)
+add_subdirectory (GINOPLib)
 add_subdirectory (Tester)
+
 
 # Place target xxx into the specified folder in IDEs supporting it
 #set_property (TARGET MeshPreprocessor PROPERTY FOLDER "meshProcessor")

@@ -35,10 +35,6 @@ public:
 
 	unsigned int getNumOfStates() const override;
 
-	//StatisticValue getInitializationDisturbances() const override;
-
-	//StatisticValue getInitializationStates() const;
-
 	Eigen::MatrixXd getA(double Ts) const override;
 
 	Eigen::MatrixXd getB(double Ts) const override;
@@ -50,5 +46,15 @@ public:
 	Eigen::VectorXi getUpdateNonlinearXDependencies() const;
 
 	Eigen::VectorXd UpdateNonlinearPart(double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& disturbance) const override;
+
+	std::vector<std::string> getStateNames() const override;
+
+	std::vector<std::string> getNoiseNames() const override;
+
+	std::vector<std::string> getDisturbanceNames() const override;
+
+	std::vector<std::string> getOutputNames() const override;
+
+	std::string getName() const override;
 };
 

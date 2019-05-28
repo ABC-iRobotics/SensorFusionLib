@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "IMUSensor.h"
 #include "youBotSystem.h"
 
@@ -94,4 +93,8 @@ std::vector<std::string> IMUSensor::getDisturbanceNames() const {
 }
 std::vector<std::string> IMUSensor::getOutputNames() const {
 	return {"yax","yay","yomega"};
+}
+
+std::string IMUSensor::getName() const {
+	return "IMU";
 }

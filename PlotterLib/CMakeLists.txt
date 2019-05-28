@@ -1,8 +1,12 @@
 # PROJECT(SensorFusion)
 
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(OpenCV REQUIRED)
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS}
+		${PROJECT_SOURCE_DIR}/SensorFusionLib
+		${Eigen_INCLUDE_DIRS}
+		)
 
 #file(COPY ${OpenCV_BINARY_DIRS}/3rdParty DESTINATION ${CMAKE_BINARY_DIR}/3rdParty)
 
@@ -24,6 +28,7 @@ set (HEADERS
 	internal.h
 	window.h
 	plotter.h
+	FilterPlot.h
 	)
 	
 set (SOURCES
@@ -32,6 +37,7 @@ set (SOURCES
 	highgui.cc
 	window.cc
 	plotter.cpp
+	FilterPlot.cpp
 	)
 
 
@@ -40,7 +46,7 @@ set (SOURCES
 add_library (PlotterLib STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries ( PlotterLib ${OpenCV_LIBS}
+target_link_libraries ( PlotterLib ${OpenCV_LIBS} SensorFusionLib Eigen3::Eigen
 		)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

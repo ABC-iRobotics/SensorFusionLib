@@ -69,8 +69,6 @@ public:
 
 	std::vector<std::string> getOutputNames() const override;
 
-	std::string getName() const override {
-		return "IMU";
-	}
+	std::string getName() const override;
 };
 

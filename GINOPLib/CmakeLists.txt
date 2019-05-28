@@ -1,38 +1,34 @@
 # PROJECT(SensorFusion)
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(OpenCV REQUIRED)
-
 
 include_directories (
 		${PROJECT_SOURCE_DIR}/PlotterLib
 		${PROJECT_SOURCE_DIR}/SensorFusionLib
-		${PROJECT_SOURCE_DIR}/GINOPLib
 		${Eigen_INCLUDE_DIRS}
 		)
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	pch.h
-	Simulation.h
-	Simulation_youBot_Kalman.h
+	IMUSensor.h
+	INSSensor.h
+	AbsoluthePoseSensor.h
+	youBotSystem.h
 	)
 	
 
 set (SOURCES
-	main.cpp
-	pch.cpp
-	Simulation.cpp
-	Simulation_youBot_Kalman.cpp
+	IMUSensor.cpp
+	INSSensor.cpp
+	AbsoluthePoseSensor.cpp
+	youBotSystem.cpp
 	)
-	
 
 # Add the dinamic library target to the project
-add_executable (Tester ${SOURCES} ${HEADERS})
+add_library (GINOPLib STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (Tester PlotterLib SensorFusionLib Eigen3::Eigen GINOPLib
-		${OpenCV_LIBS}
+target_link_libraries (GINOPLib Eigen3::Eigen SensorFusionLib
 		)
 		
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
