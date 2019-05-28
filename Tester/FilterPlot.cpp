@@ -6,8 +6,7 @@ void FilterPlot::Callback(const FilterCallData & data) {
 	if (data.ptr == ptr && data.type == valueType) {
 		unsigned int index = _index(valueType, data.callType);
 		_plotValueAt(index, data.value, data.t);
-		for (unsigned int i = 0; i < nViews; i++)
-			plotter.updatePlot(i);
+		
 	}
 }
 
@@ -33,6 +32,8 @@ FilterPlot::FilterPlot(SystemManager & filter, System::SystemPtr sys, SystemValu
 }
 
 void FilterPlot::Update() {
+	for (unsigned int i = 0; i < nViews; i++)
+		plotter.updatePlot(i);
 	plotter.updateWindow();
 }
 
