@@ -7,5 +7,7 @@ public:
 	~KalmanFilter();
 
 	void Step(double dT);
+
+	typedef std::shared_ptr<KalmanFilter> KalmanFilterPtr;
 };
 

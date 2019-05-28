@@ -18,9 +18,7 @@ struct SystemCallData {
 class System : public CallbackHandler<SystemCallData>
 {
 public:
-	System();
-	~System();
-
+	// Functions to override
 	virtual unsigned int getNumOfStates() const = 0;
 
 	virtual unsigned int getNumOfDisturbances() const = 0;
@@ -28,6 +26,22 @@ public:
 	virtual unsigned int getNumOfOutputs() const = 0;
 
 	virtual unsigned int getNumOfNoises() const = 0;
+
+	virtual std::vector<std::string> getStateNames() const;
+
+	virtual std::vector<std::string> getNoiseNames() const;
+
+	virtual std::vector<std::string> getDisturbanceNames() const;
+
+	virtual std::vector<std::string> getOutputNames() const;
+
+	virtual std::string getName() const;
+
+
+	// Functions defined (based on them)
+	System();
+
+	~System();
 
 	unsigned int getNumOf(SystemValueType type) const;
 
@@ -46,17 +60,7 @@ public:
 	// Set changed noise characteristics
 	void SetNoiseVariance(Eigen::MatrixXd value) const;
 
-	virtual std::vector<std::string> getStateNames() const;
-
-	virtual std::vector<std::string> getNoiseNames() const;
-
-	virtual std::vector<std::string> getDisturbanceNames() const;
-
-	virtual std::vector<std::string> getOutputNames() const;
-
 	std::vector<std::string> getNames(SystemValueType type) const;
-
-	virtual std::string getName() const;
 
 	typedef std::shared_ptr<System> SystemPtr;
 
