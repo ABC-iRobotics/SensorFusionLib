@@ -513,7 +513,12 @@ void SystemManager::StepClock(double dt) { t += dt; }
 SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
 	const StatisticValue& noise_, const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
 	MeasurementStatus measStatus_) : ptr(ptr_),
-	SystemData(noise_, disturbance_, measurement_, measStatus_) {}
+	SystemData(noise_, disturbance_, measurement_, measStatus_) {
+	if (noise_.Length() != ptr_->getNumOfNoises() ||
+		disturbance_.Length() != ptr_->getNumOfDisturbances() ||
+		(measStatus_ != OBSOLETHE && measurement_.size() != ptr_->getNumOfOutputs()))
+		throw std::runtime_error(std::string("BaseSystemData::BaseSystemData Wrong argument sizes"));
+}
 
 Eigen::VectorXi SystemManager::BaseSystemData::dep(System::UpdateType outType, System::InputType type, bool forcedOutput) const {
 	if (outType == System::TIMEUPDATE || available() || forcedOutput)
@@ -558,7 +563,12 @@ bool SystemManager::BaseSystemData::isBaseSystem() const { return true; }
 SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
 	const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
 	MeasurementStatus measStatus_) : ptr(ptr_),
-	SystemData(noise_, disturbance_, measurement_, measStatus_) {}
+	SystemData(noise_, disturbance_, measurement_, measStatus_) {
+	if (noise_.Length() != ptr_->getNumOfNoises() ||
+		disturbance_.Length() != ptr_->getNumOfDisturbances() ||
+		(measStatus_ != OBSOLETHE && measurement_.size() != ptr_->getNumOfOutputs()))
+		throw std::runtime_error(std::string("SensorData::SensorData Wrong argument sizes"));
+}
 
 Eigen::VectorXi SystemManager::SensorData::depSensor(System::UpdateType outType,
 	System::InputType type, bool forcedOutput) const {
