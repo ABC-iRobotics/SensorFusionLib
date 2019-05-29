@@ -6,11 +6,15 @@
 
 enum SystemValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
 
+enum EvalType { EVAL_STATEUPDATE, EVAL_OUTPUT };
+
+enum VariableType { VAR_STATE, VAR_EXTERNAL };
+
 struct SystemCallData {
 	Eigen::VectorXd value;
 	Eigen::MatrixXd variance;
 	SystemValueType signalType;
-	enum {VALUE, VARIANCE} valueType;
+	ValueType valueType;
 	SystemCallData(Eigen::VectorXd value, SystemValueType type);;
 	SystemCallData(Eigen::MatrixXd variance, SystemValueType type);;
 };
@@ -64,13 +68,9 @@ public:
 
 	typedef std::shared_ptr<System> SystemPtr;
 
-	enum UpdateType { TIMEUPDATE, MEASUREMENTUPDATE };
+	static SystemValueType getInputValueType(EvalType outType, VariableType inType);
 
-	enum InputType { STATE, INPUT };
-
-	static SystemValueType getInputValueType(System::UpdateType outType, System::InputType inType);
-
-	static SystemValueType getOutputValueType(System::UpdateType outType);
+	static SystemValueType getOutputValueType(EvalType outType);
 
 protected:
 	void _systemTest() const;

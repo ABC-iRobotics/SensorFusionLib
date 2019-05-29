@@ -37,30 +37,30 @@ Eigen::VectorXd BaseSystem::EvalOutput(double Ts, const Eigen::VectorXd& state, 
 	return getC(Ts)*state + getD(Ts)*noise + OutputNonlinearPart(Ts, state, noise);
 }
 
-Eigen::VectorXd BaseSystem::genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd & state, const Eigen::VectorXd & in) const {
+Eigen::VectorXd BaseSystem::genNonlinearPart(EvalType type, double Ts, const Eigen::VectorXd & state, const Eigen::VectorXd & in) const {
 	switch (type) {
-	case TIMEUPDATE:
+	case EVAL_STATEUPDATE:
 		return UpdateNonlinearPart(Ts, state, in);
-	case MEASUREMENTUPDATE:
+	case EVAL_OUTPUT:
 		return OutputNonlinearPart(Ts, state, in);
 	}
 	throw std::runtime_error(std::string("BaseSystem::genNonlinearPart(): Unknown input!"));
 }
 
-Eigen::VectorXi BaseSystem::genNonlinearDependency(UpdateType outType, InputType inType) {
+Eigen::VectorXi BaseSystem::genNonlinearDependency(EvalType outType, VariableType inType) {
 	switch (outType) {
-	case TIMEUPDATE:
+	case EVAL_STATEUPDATE:
 		switch (inType) {
-		case STATE:
+		case VAR_STATE:
 			return getUpdateNonlinearXDependencies();
-		case INPUT:
+		case VAR_EXTERNAL:
 			return getUpdateNonlinearWDependencies();
 		}
-	case MEASUREMENTUPDATE:
+	case EVAL_OUTPUT:
 		switch (inType) {
-		case STATE:
+		case VAR_STATE:
 			return getOutputNonlinearXDependencies();
-		case INPUT:
+		case VAR_EXTERNAL:
 			return getOutputNonlinearVDependencies();
 		}
 	}

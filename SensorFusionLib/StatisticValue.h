@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+enum ValueType { VALUE, VARIANCE };
+
 struct StatisticValue {
 	Eigen::VectorXd vector;
 

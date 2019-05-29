@@ -110,10 +110,10 @@ public:
 		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
 			MeasurementStatus measStatus_ = OBSOLETHE);
-		Eigen::VectorXi dep(System::UpdateType outType, System::InputType type,
+		Eigen::VectorXi dep(EvalType outType, VariableType type,
 			bool forcedOutput = false) const;
-		Eigen::MatrixXd getMatrix(double Ts, System::UpdateType type,
-			System::InputType inType, bool forcedOutput = false) const;
+		Eigen::MatrixXd getMatrix(double Ts, EvalType type,
+			VariableType inType, bool forcedOutput = false) const;
 		BaseSystem::BaseSystemPtr getBaseSystemPtr() const;
 		System::SystemPtr getPtr() const override;
 		bool isBaseSystem() const override;
@@ -125,13 +125,13 @@ public:
 		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
 			MeasurementStatus measStatus_ = OBSOLETHE);
-		Eigen::VectorXi depSensor(System::UpdateType outType, System::InputType type,
+		Eigen::VectorXi depSensor(EvalType outType, VariableType type,
 			bool forcedOutput = false) const;
-		Eigen::VectorXi depBaseSystem(System::UpdateType outType, System::InputType type,
+		Eigen::VectorXi depBaseSystem(EvalType outType, VariableType type,
 			bool forcedOutput = false) const;
-		Eigen::MatrixXd getMatrixBaseSystem(double Ts, System::UpdateType type,
-			System::InputType inType, bool forcedOutput = false) const;
-		Eigen::MatrixXd getMatrixSensor(double Ts, System::UpdateType type, System::InputType inType,
+		Eigen::MatrixXd getMatrixBaseSystem(double Ts, EvalType type,
+			VariableType inType, bool forcedOutput = false) const;
+		Eigen::MatrixXd getMatrixSensor(double Ts, EvalType type, VariableType inType,
 			bool forcedOutput = false) const;
 		Sensor::SensorPtr getSensorPtr() const;
 		System::SystemPtr getPtr() const override;;
@@ -150,18 +150,18 @@ public:
 
 	size_t num(SystemValueType type, bool forcedOutput = false) const;
 
-	Eigen::VectorXi dep(System::UpdateType outType, System::InputType inType, bool forcedOutput = false) const;
+	Eigen::VectorXi dep(EvalType outType, VariableType inType, bool forcedOutput = false) const;
 
 	/* Get A,B, C,D matrices according to the available sensors*/
-	void getMatrices(System::UpdateType out_, double Ts, Eigen::MatrixXd& A,
+	void getMatrices(EvalType out_, double Ts, Eigen::MatrixXd& A,
 		Eigen::MatrixXd& B, bool forcedOutput = false) const;
 
 	// could be faster....
-	Eigen::VectorXd EvalNonLinPart(double Ts, System::UpdateType outType,
+	Eigen::VectorXd EvalNonLinPart(double Ts, EvalType outType,
 		const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput = false) const;
 
 	// This could be faster by implementing EvalNonLinPart and partitionate to matrices
-	StatisticValue Eval(System::UpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
+	StatisticValue Eval(EvalType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
 	// Get the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors

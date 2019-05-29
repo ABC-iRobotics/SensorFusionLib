@@ -43,9 +43,9 @@ public:
 
 	Eigen::VectorXd EvalOutput(double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& BaseSystemNoise) const;
 
-	Eigen::VectorXd genNonlinearPart(UpdateType type, double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& in) const;
+	Eigen::VectorXd genNonlinearPart(EvalType type, double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& in) const;
 
-	Eigen::VectorXi genNonlinearDependency(UpdateType outType, InputType inType);
+	Eigen::VectorXi genNonlinearDependency(EvalType outType, VariableType inType);
 
 	typedef std::shared_ptr<BaseSystem> BaseSystemPtr;
 

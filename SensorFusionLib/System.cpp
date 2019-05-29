@@ -122,22 +122,22 @@ std::vector<std::string> System::getNames(SystemValueType type) const {
 std::string System::getName() const {
 	return "System";
 }
-SystemValueType System::getInputValueType(System::UpdateType outType, System::InputType inType) {
-	if (inType == STATE)
+SystemValueType System::getInputValueType(EvalType outType, VariableType inType) {
+	if (inType == VAR_STATE)
 		return SystemValueType::STATE;
 	switch (outType) {
-	case UpdateType::MEASUREMENTUPDATE:
+	case EvalType::EVAL_OUTPUT:
 		return SystemValueType::NOISE;
-	case UpdateType::TIMEUPDATE:
+	case EvalType::EVAL_STATEUPDATE:
 		return SystemValueType::DISTURBANCE;
 	}
 	throw std::runtime_error(std::string("System::getInputValueType(): Unknown input!"));
 }
-SystemValueType System::getOutputValueType(System::UpdateType outType) {
+SystemValueType System::getOutputValueType(EvalType outType) {
 	switch (outType) {
-	case TIMEUPDATE:
+	case EVAL_STATEUPDATE:
 		return SystemValueType::STATE;
-	case MEASUREMENTUPDATE:
+	case EVAL_OUTPUT:
 		return SystemValueType::OUTPUT;
 	}
 	throw std::runtime_error(std::string("System::getOutputValueType(): Unknown input!"));

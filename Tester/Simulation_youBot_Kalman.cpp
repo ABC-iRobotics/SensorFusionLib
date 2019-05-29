@@ -1,4 +1,10 @@
+#include <iostream>
+
 #include "Simulation_youbot_Kalman.h"
+#include "KalmanFilter.h"
+#include "youBotSystem.h"
+#include "INSSensor.h"
+#include "AbsoluthePoseSensor.h"
 
 #ifdef FILTERPLOT
 #include "FilterPlot.h"
