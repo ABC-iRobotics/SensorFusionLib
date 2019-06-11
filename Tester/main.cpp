@@ -48,10 +48,12 @@ SystemManager::SensorData InitIMUSensor2(Sensor::SensorPtr ptr, StatisticValue& 
 
 #include "Simulation_youbot_Kalman.h"
 
-int main() {
-	simulation_youbot_Kalman();
+#include "Simulation_youbot_WAUKF.h"
 
-	
+int main() {
+	//simulation_youbot_Kalman();
+
+	Simulation_youBot_WAUKF();
 
 	return 0;
 

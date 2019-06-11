@@ -25,6 +25,7 @@ set (HEADERS
 	pch.h
 	Simulation.h
 	Simulation_youBot_Kalman.h
+	Simulation_youBot_WAUKF.h
 	)
 	
 
@@ -33,6 +34,7 @@ set (SOURCES
 	pch.cpp
 	Simulation.cpp
 	Simulation_youBot_Kalman.cpp
+	Simulation_youBot_WAUKF.cpp
 	)
 	
 
