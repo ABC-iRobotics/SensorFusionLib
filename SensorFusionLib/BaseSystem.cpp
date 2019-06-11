@@ -1,5 +1,5 @@
 #include "BaseSystem.h"
-
+#include "pinv.h"
 // The nonlinear parts and the dependencies are by default zeros
 
 Eigen::VectorXi BaseSystem::getUpdateNonlinearXDependencies() const {
@@ -112,4 +112,12 @@ void BaseSystem::systemTest() const {
 	m = OutputNonlinearPart(1, x, i);
 	if (m.size() != ny)
 		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+}
+
+Eigen::MatrixXd BaseSystem::getPInvB(double Ts) const {
+	return pinv(getB(Ts));
+}
+
+Eigen::MatrixXd BaseSystem::getPInvD(double Ts) const {
+	return pinv(getD(Ts));
 }

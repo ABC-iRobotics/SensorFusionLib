@@ -50,4 +50,8 @@ public:
 	typedef std::shared_ptr<BaseSystem> BaseSystemPtr;
 
 	void systemTest() const;
+
+	virtual Eigen::MatrixXd getPInvB(double Ts) const;
+
+	virtual Eigen::MatrixXd getPInvD(double Ts) const;
 };

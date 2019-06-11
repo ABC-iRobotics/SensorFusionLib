@@ -1,5 +1,5 @@
 #include "Sensor.h"
-
+#include "pinv.h"
 // The nonlinear parts and the dependencies are by default zeros
 
 Eigen::VectorXi Sensor::getUpdateNonlinearX0Dependencies() const {
@@ -189,6 +189,14 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 	 m = OutputNonlinearPart(1, x0, i0, x, i);
 	 if (m.size() != ny)
 		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+ }
+
+ Eigen::MatrixXd Sensor::getPInvBi(double Ts) const {
+	 return pinv(getBi(Ts));
+ }
+
+ Eigen::MatrixXd Sensor::getPInvDi(double Ts) const {
+	 return pinv(getDi(Ts));
  }
 
  unsigned int Sensor::getNumOfBaseSystemStates() const { return numOfBaseSystemStates; }

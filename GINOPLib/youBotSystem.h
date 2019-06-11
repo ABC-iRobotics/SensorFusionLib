@@ -39,13 +39,16 @@ public:
 
 	Eigen::MatrixXd getB(double Ts) const override;
 
+	Eigen::MatrixXd getPInvB(double Ts) const override;
+
 	Eigen::MatrixXd getC(double Ts) const;
 
 	Eigen::MatrixXd getD(double Ts) const;
 
 	Eigen::VectorXi getUpdateNonlinearXDependencies() const;
 
-	Eigen::VectorXd UpdateNonlinearPart(double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& disturbance) const override;
+	Eigen::VectorXd UpdateNonlinearPart(double Ts, const Eigen::VectorXd& state,
+		const Eigen::VectorXd& disturbance) const override;
 
 	std::vector<std::string> getStateNames() const override;
 

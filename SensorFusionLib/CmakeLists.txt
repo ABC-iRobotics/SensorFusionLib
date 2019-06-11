@@ -17,6 +17,7 @@ set (HEADERS
 	PartialCholevski.h
 	KalmanFilter.h
 	FilterLog.h
+	pinv.h
 	)
 	
 set (SOURCES
@@ -28,6 +29,7 @@ set (SOURCES
 	PartialCholevski.cpp
 	KalmanFilter.cpp
 	FilterLog.cpp
+	pinv.cpp
 	)
 	
 

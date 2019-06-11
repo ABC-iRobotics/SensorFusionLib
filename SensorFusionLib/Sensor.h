@@ -77,6 +77,10 @@ public:
 	typedef std::shared_ptr<Sensor> SensorPtr;
 
 	void systemTest() const;
+
+	virtual Eigen::MatrixXd getPInvBi(double Ts) const;
+
+	virtual Eigen::MatrixXd getPInvDi(double Ts) const;
 };
 
 template<class BaseSystemType>

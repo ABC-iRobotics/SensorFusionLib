@@ -35,6 +35,23 @@ Eigen::MatrixXd youBotSystem::getB(double Ts) const {
 	return out;
 }
 
+Eigen::MatrixXd youBotSystem::getPInvB(double Ts) const {
+	double s = dTdyn / Ts;
+	double e = s / dGeomR;
+	double g = (dGeomW + dGeomL) / 2. / dGeomR;
+	double f = g * s;
+	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(4, 7);
+	for (unsigned int i = 0; i < 4; i++) {
+		out(i, 0) = e;
+		out(i, 1) = e;
+		out(i, 2) = f;
+		out(i, 6) = g;
+	}
+	out(0, 1) *= -1; out(0, 2) *= -1; out(0, 6) *= -1;
+	out(3, 1) *= -1; out(2, 2) *= -1; out(1, 6) *= -1;
+	return out;
+}
+
 Eigen::MatrixXd youBotSystem::getC(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(1, 7);
 	out(0, 6) = 1;
