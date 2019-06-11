@@ -87,7 +87,6 @@ public:
 	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
 
 	class SystemData {
-	public:
 		MeasurementStatus measStatus;
 		StatisticValue noise;
 		StatisticValue disturbance;

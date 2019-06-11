@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include "PartialCholevski.h"
 
 typedef Eigen::LLT<Eigen::MatrixXd>::RealScalar Real;
@@ -14,8 +14,8 @@ Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {
 			for (unsigned int k = 0; k < i; k++)
 				temp -= out(j, k) * out(j, k);
 			if (temp <= Real(0)) {
-				std::cout << std::endl << a << std::endl << std::endl;
-				std::cout << std::endl << v.transpose() << std::endl << std::endl;
+				std::cout << "The considered matrix" << std::endl << a << std::endl << std::endl;
+				std::cout << "To be decomposed by column" << std::endl << v.transpose() << std::endl << std::endl;
 				throw std::runtime_error(std::string("The matrix is not positive definite or numerical error."));
 			}
 			out(j, i) = sqrtl(temp);
