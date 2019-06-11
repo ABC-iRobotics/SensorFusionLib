@@ -59,6 +59,34 @@ void SystemManager::SystemData::setVariance(const Eigen::MatrixXd & value, Syste
 	}
 }
 
+// set the given value
+
+Eigen::VectorXd SystemManager::SystemData::getValue(SystemValueType type) const {
+	switch (type) {
+	case SystemValueType::NOISE:
+		return noise.vector;
+		break;
+	case SystemValueType::DISTURBANCE:
+		return disturbance.vector;
+	case SystemValueType::OUTPUT:
+		return measurement;
+	default:
+		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
+	}
+}
+
+Eigen::MatrixXd SystemManager::SystemData::getVariance(SystemValueType type) const {
+	switch (type) {
+	case SystemValueType::NOISE:
+		return noise.variance;
+		break;
+	case SystemValueType::DISTURBANCE:
+		return disturbance.variance;
+	default:
+		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
+	}
+}
+
 void SystemManager::SystemData::resetMeasurement() {
 	if (measStatus == UPTODATE)
 		measStatus = OBSOLETHE;

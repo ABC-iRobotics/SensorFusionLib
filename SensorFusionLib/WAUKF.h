@@ -5,13 +5,6 @@
 
 const unsigned int MAX_WINDOW_SIZE = 200;
 
-template <class Type>
-struct WindowOptions { // Type will be Eigen::VectorXd or Eigen::MatrixXd
-	unsigned int windowSize;
-	Type InitValue;
-	WindowOptions(unsigned int windowSize_, Type initValue_);
-};
-
 template<class Type>
 class MAWindow { // Type will be Eigen::VectorXd or Eigen::MatrixXd
 	Type data[MAX_WINDOW_SIZE];
@@ -22,7 +15,7 @@ class MAWindow { // Type will be Eigen::VectorXd or Eigen::MatrixXd
 	unsigned int windowSize;
 public:
 	MAWindow(unsigned int windowSize_, const Type& initValue);
-	MAWindow(unsigned int windowSize_ = 100);
+	MAWindow(unsigned int windowSize_ = 100); // constructor without initialization
 	const Type& Value();
 	void AddValue(const Type& value);
 };
@@ -48,13 +41,13 @@ private:
 	MAWindow<Eigen::MatrixXd>& _getMatrixWindow(unsigned int systemID, SystemValueType signal, bool& found);
 
 public:
-	void SetDisturbanceValueWindowing(System::SystemPtr ptr, WindowOptions<Eigen::VectorXd> opt);
+	void SetDisturbanceValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
 
-	void SetNoiseValueWindowing(System::SystemPtr ptr, WindowOptions<Eigen::VectorXd> opt);
+	void SetNoiseValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
 
-	void SetDisturbanceVarianceWindowing(System::SystemPtr ptr, WindowOptions<Eigen::MatrixXd> opt);
+	void SetDisturbanceVarianceWindowing(System::SystemPtr ptr, unsigned int windowSize);
 
-	void SetNoiseVarianceWindowing(System::SystemPtr ptr, WindowOptions<Eigen::MatrixXd> opt);
+	void SetNoiseVarianceWindowing(System::SystemPtr ptr, unsigned int windowSize);
 		
 	WAUKF(const BaseSystemData& data, const StatisticValue& state_);
 
@@ -83,9 +76,6 @@ public:
 		StatisticValue y_pred = EvalWithV0(EVAL_OUTPUT, dT, x_pred,
 			(*this)(SystemValueType::NOISE), Syxpred, sg2, false, y_pred0);
 
-		//std::cout << "Prediction:" << std::endl << x_pred.variance << std::endl << std::endl;
-		//std::cout << std::endl << y_pred.variance << std::endl << std::endl;
-
 		StepClock(dT);
 		PredictionDone(x_pred, y_pred);
 		// Kalman-filtering
@@ -93,8 +83,6 @@ public:
 		Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
 		StatisticValue newstate = StatisticValue(x_pred.vector + K * (y_meas - y_pred.vector),
 			(Sxnew + Sxnew.transpose()) / 2.);
-
-		//std::cout << "Filtering:" << std::endl << newstate.variance << std::endl << std::endl;
 
 		FilteringDone(newstate);
 		State() = newstate;
@@ -271,7 +259,3 @@ inline void MAWindow<Type>::AddValue(const Type & value) {
 			data[n] = value;
 	}
 }
-
-template<class Type>
-inline WindowOptions<Type>::WindowOptions(unsigned int windowSize_, Type initValue_) :
-	windowSize(windowSize_), InitValue(initValue_) {}

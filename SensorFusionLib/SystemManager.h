@@ -99,6 +99,8 @@ public:
 		size_t num(SystemValueType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
 		void setValue(const Eigen::VectorXd& value, SystemValueType type); // set the given value
 		void setVariance(const Eigen::MatrixXd& value, SystemValueType type); // set the given value
+		Eigen::VectorXd getValue(SystemValueType type) const;
+		Eigen::MatrixXd getVariance(SystemValueType type) const;
 		void resetMeasurement();
 		bool available() const; // returns if is measurement available
 		virtual bool isBaseSystem() const = 0;

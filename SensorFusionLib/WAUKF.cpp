@@ -82,24 +82,28 @@ MAWindow<Eigen::MatrixXd>& WAUKF::_getMatrixWindow(unsigned int systemID, System
 	}
 }
 
-void WAUKF::SetDisturbanceValueWindowing(System::SystemPtr ptr, WindowOptions<Eigen::VectorXd> opt) {
+void WAUKF::SetDisturbanceValueWindowing(System::SystemPtr ptr, unsigned int windowSize) {
 	disturbanceValueWindows.insert(std::pair<unsigned int,
-		MAWindow<Eigen::VectorXd>>(ptr->getID(), MAWindow<Eigen::VectorXd>(opt.windowSize, opt.InitValue)));
+		MAWindow<Eigen::VectorXd>>(ptr->getID(), MAWindow<Eigen::VectorXd>(windowSize,
+			SystemByID(ptr->getID())->getValue(DISTURBANCE))));
 }
 
-void WAUKF::SetNoiseValueWindowing(System::SystemPtr ptr, WindowOptions<Eigen::VectorXd> opt) {
+void WAUKF::SetNoiseValueWindowing(System::SystemPtr ptr, unsigned int windowSize) {
 	noiseValueWindows.insert(std::pair<unsigned int,
-		MAWindow<Eigen::VectorXd>>(ptr->getID(), MAWindow<Eigen::VectorXd>(opt.windowSize, opt.InitValue)));
+		MAWindow<Eigen::VectorXd>>(ptr->getID(), MAWindow<Eigen::VectorXd>(windowSize,
+			SystemByID(ptr->getID())->getValue(NOISE))));
 }
 
-void WAUKF::SetDisturbanceVarianceWindowing(System::SystemPtr ptr, WindowOptions<Eigen::MatrixXd> opt) {
+void WAUKF::SetDisturbanceVarianceWindowing(System::SystemPtr ptr, unsigned int windowSize) {
 	disturbanceVarianceWindows.insert(std::pair<unsigned int,
-		MAWindow<Eigen::MatrixXd>>(ptr->getID(), MAWindow<Eigen::MatrixXd>(opt.windowSize, opt.InitValue)));
+		MAWindow<Eigen::MatrixXd>>(ptr->getID(), MAWindow<Eigen::MatrixXd>(windowSize,
+			SystemByID(ptr->getID())->getVariance(DISTURBANCE))));
 }
 
-void WAUKF::SetNoiseVarianceWindowing(System::SystemPtr ptr, WindowOptions<Eigen::MatrixXd> opt) {
+void WAUKF::SetNoiseVarianceWindowing(System::SystemPtr ptr, unsigned int windowSize) {
 	noiseVarianceWindows.insert(std::pair<unsigned int,
-		MAWindow<Eigen::MatrixXd>>(ptr->getID(), MAWindow<Eigen::MatrixXd>(opt.windowSize, opt.InitValue)));
+		MAWindow<Eigen::MatrixXd>>(ptr->getID(), MAWindow<Eigen::MatrixXd>(windowSize,
+			SystemByID(ptr->getID())->getVariance(NOISE))));
 }
 
 WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_) : SystemManager(data, state_),
