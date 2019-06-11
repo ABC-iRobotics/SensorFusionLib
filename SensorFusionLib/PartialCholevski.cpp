@@ -13,8 +13,11 @@ Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {
 			Real temp = a(j, j);
 			for (unsigned int k = 0; k < i; k++)
 				temp -= out(j, k) * out(j, k);
-			if (temp <= Real(0))
+			if (temp <= Real(0)) {
+				std::cout << std::endl << a << std::endl << std::endl;
+				std::cout << std::endl << v.transpose() << std::endl << std::endl;
 				throw std::runtime_error(std::string("The matrix is not positive definite or numerical error."));
+			}
 			out(j, i) = sqrtl(temp);
 			for (unsigned int k = 0; k < n; k++) {
 				if (v[k] == 1 && k < j)

@@ -46,7 +46,7 @@ void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, SystemVa
 	}
 }
 
-void SystemManager::SystemData::setVariance(const Eigen::VectorXd & value, SystemValueType type) {
+void SystemManager::SystemData::setVariance(const Eigen::MatrixXd & value, SystemValueType type) {
 	switch (type) {
 	case SystemValueType::NOISE:
 		noise.variance = value;
