@@ -48,14 +48,13 @@ void Simulation_youBot_WAUKF() {
 		x0[2] = 0.2;
 		StatisticValue initState = StatisticValue(x0, Eigen::MatrixXd::Identity(3, 3)*0.03);
 		// Init noise (vx,vy,v_om)
-		StatisticValue initNoise(Eigen::VectorXd::Zero(3), Eigen::MatrixXd::Identity(3, 3)*0.1);
+		StatisticValue initNoise(0);
 		// Init disturbance () 
-		StatisticValue initDist(Eigen::VectorXd::Zero(3), Eigen::MatrixXd::Identity(3, 3)*0.05);
+		StatisticValue initDist(Eigen::VectorXd::Ones(3)*0, Eigen::MatrixXd::Identity(3, 3)*0.5);
 		SystemManager::SensorData data = SystemManager::SensorData(ins, initNoise, initDist);
 		filter->AddSensor(data, initState);
 		filter->SetDisturbanceValueWindowing(ins, 100);
 		filter->SetDisturbanceVarianceWindowing(ins, 100);
-		//filter->SetNoiseValueWindowing()
 	}
 
 	Sensor::SensorPtr absPose = std::make_shared<AbsoluthePoseSensor>(youBot, true);

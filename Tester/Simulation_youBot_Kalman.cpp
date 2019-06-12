@@ -46,9 +46,9 @@ void simulation_youbot_Kalman() {
 		// Init state (xs,ys,dphi)
 		Eigen::VectorXd x0 = Eigen::VectorXd::Zero(3);
 		x0[2] = 0.2;
-		StatisticValue initState = StatisticValue(x0, Eigen::MatrixXd::Identity(3, 3)*0.03);
+		StatisticValue initState = StatisticValue(x0, Eigen::MatrixXd::Identity(3, 3)*0.3);
 		// Init noise (vx,vy,v_om)
-		StatisticValue initNoise(Eigen::VectorXd::Zero(3), Eigen::MatrixXd::Identity(3, 3)*0.1);
+		StatisticValue initNoise(0);// Eigen::VectorXd::Zero(3), Eigen::MatrixXd::Identity(3, 3)*0.1);
 		// Init disturbance () 
 		StatisticValue initDist(Eigen::VectorXd::Zero(3), Eigen::MatrixXd::Identity(3, 3)*0.05);
 		SystemManager::SensorData data = SystemManager::SensorData(ins, initNoise, initDist);

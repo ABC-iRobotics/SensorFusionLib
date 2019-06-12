@@ -32,7 +32,7 @@ Eigen::MatrixXd INSSensor::getD0(double Ts) const {
 }
 
 Eigen::MatrixXd INSSensor::getDi(double Ts) const {
-	return Eigen::MatrixXd::Identity(3, 3);
+	return Eigen::MatrixXd::Zero(3, 0);
 }
 
 Eigen::VectorXi INSSensor::getUpdateNonlinearX0Dependencies() const {
@@ -54,7 +54,7 @@ unsigned int INSSensor::getNumOfOutputs() const {
 }
 
 unsigned int INSSensor::getNumOfNoises() const {
-	return 3;
+	return 0;
 }
 
 Eigen::VectorXi INSSensor::getUpdateNonlinearXiDependencies() const {
@@ -79,7 +79,7 @@ std::vector<std::string> INSSensor::getStateNames() const {
 	return {"xs","ys","dphi"};
 }
 std::vector<std::string> INSSensor::getNoiseNames() const {
-	return {"vx","vy","vphi"};
+	return std::vector<std::string>();
 }
 std::vector<std::string> INSSensor::getDisturbanceNames() const {
 	return { "wx","wy","wphi" };
