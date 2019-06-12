@@ -119,42 +119,45 @@ StatisticValue WAUKF::EvalWithV0(EvalType outType, double Ts,
 	// Get nonlinear dependencies
 	Eigen::VectorXi stateDep = dep(outType, VAR_STATE, forcedOutput);
 	Eigen::VectorXi inDep = dep(outType, VAR_EXTERNAL, forcedOutput);
-	Eigen::Index nNL_X = stateDep.sum();
-	Eigen::Index nNL_In = inDep.sum();
-	Eigen::Index nNL = nNL_X + nNL_In;
 	size_t nOut = num(System::getOutputValueType(outType), forcedOutput);
 	// 
 	Eigen::VectorXd z;
 	Eigen::MatrixXd Sz;
 	Eigen::MatrixXd Szx;
 	Eigen::MatrixXd Szw;
-	if (nNL == 0) {
+	if (stateDep.sum() + inDep.sum() == 0) {
 		z = Eigen::VectorXd::Zero(nOut);
 		Sz = Eigen::MatrixXd::Zero(nOut, nOut);
 		Szx = Eigen::MatrixXd::Zero(nOut, nX);
 		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
 	}
 	else {
-		// Constants for UT
-		double alpha = 0.3;
-		double beta = 2.;
-		double kappa = 1e-8;
-		double tau2 = alpha * alpha * (kappa + (double)nNL);
-		double tau = sqrt(tau2);
 		// Sigma values by applying partial chol
-		Eigen::MatrixXd dX = tau * PartialChol(state_.variance, stateDep);
+		Eigen::MatrixXd dX = PartialChol(state_.variance, stateDep);
 		Eigen::MatrixXd dIn;
 		if (in.isIndependent) {
-			dIn = Eigen::MatrixXd::Zero(nIn, nNL_In);
+			dIn = Eigen::MatrixXd::Zero(nIn, inDep.sum());
 			unsigned int j = 0;
 			for (unsigned int i = 0; i < nIn; i++)
 				if (inDep[i] == 1) {
-					dIn(i, j) = tau * sqrt(in.variance(i, i));
+					dIn(i, j) = sqrt(in.variance(i, i));
 					j++;
 				}
 		}
 		else
-			dIn = tau * PartialChol(in.variance, inDep);
+			dIn = PartialChol(in.variance, inDep);
+		Eigen::Index nNL_X = dX.cols();
+		Eigen::Index nNL_In = dIn.cols();
+		Eigen::Index nNL = nNL_X + nNL_In;
+		// Constants for UT
+		double alpha = 0.7;
+		double beta = 2.;
+		double kappa = 1e-8;
+		double tau2 = alpha * alpha * (kappa + (double)nNL);
+		double tau = sqrt(tau2);
+		dX *= tau;
+		dIn *= tau;
+
 		// Mean value
 		Eigen::VectorXd z0 = EvalNonLinPart(Ts, outType, state_.vector, in.vector, forcedOutput);
 		std::vector<Eigen::VectorXd> z_x = std::vector<Eigen::VectorXd>();
