@@ -148,6 +148,11 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 	 M = getD0(1);
 	 if (M.cols() != nv0 || M.rows() != ny)
 		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 // Check pinv-s
+	 if (!eq(getPInvBi(0.01),pinv(getBi(0.01))))
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
+	 if (!eq(getPInvDi(0.01),pinv(getDi(0.01))))
+		 throw std::runtime_error(std::string("Sensor::systemTest()"));
 	 // Check dependency vectors
 	 Eigen::VectorXi v;
 	 v = getUpdateNonlinearX0Dependencies();

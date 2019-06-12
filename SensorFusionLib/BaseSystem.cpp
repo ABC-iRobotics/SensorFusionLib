@@ -87,6 +87,11 @@ void BaseSystem::systemTest() const {
 	M = getD(1);
 	if (M.cols() != nv || M.rows() != ny)
 		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	// Check pinv-s
+	if (!eq(getPInvB(0.01), pinv(getB(0.01))))
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
+	if (!eq(getPInvD(0.01), pinv(getD(0.01))))
+		throw std::runtime_error(std::string("BaseSystem::systemTest()"));
 	// Check dependency vectors
 	Eigen::VectorXi v;
 	v = getUpdateNonlinearXDependencies();

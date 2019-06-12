@@ -7,6 +7,11 @@ Eigen::MatrixXd pinv(const Eigen::MatrixXd & in) {
 		return in.completeOrthogonalDecomposition().pseudoInverse();
 }
 
+bool eq(const Eigen::MatrixXd & a, const Eigen::MatrixXd & b) {
+	//std::cout << (a - b).norm() << " ?<? " << (a.norm() + b.norm() + 1e-10)*1e-10 << std::endl;
+	return (a - b).norm() < (a.norm() + b.norm() + 1e-10)*1e-10;
+}
+
 
 /*
 function Y = geninv(G)
