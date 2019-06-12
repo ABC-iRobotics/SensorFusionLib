@@ -10,9 +10,26 @@ void FilterPlot::Callback(const FilterCallData & data) {
 	}
 }
 
+std::string SystemValueType2String(SystemValueType type) {
+	switch (type)
+	{
+	case NOISE:
+		return "Noise";
+	case DISTURBANCE:
+		return "Disturbance";
+	case STATE:
+		return "State";
+	case OUTPUT:
+		return "Output";
+	default:
+		return "";
+	}
+}
+
 FilterPlot::FilterPlot(SystemManager & filter, System::SystemPtr sys, SystemValueType type_, cvplot::Rect pose) :
 	FilterLog(filter), valueType(type_), ptr(sys), nViews(sys->getNumOf(type_)),
-	plotter("debugger", cvplot::Offset(pose.x, pose.y), cvplot::Size(pose.width, pose.height)) {
+	plotter(sys->getName() + ": " + SystemValueType2String(type_),
+	cvplot::Offset(pose.x, pose.y), cvplot::Size(pose.width, pose.height)) {
 	// Create plots, set number of serieses	
 	std::vector<std::string> viewNames = ptr->getNames(valueType);
 	unsigned int nSeries = _num(type_);
