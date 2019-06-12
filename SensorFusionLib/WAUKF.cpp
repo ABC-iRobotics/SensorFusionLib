@@ -66,7 +66,7 @@ WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_) : Syste
 	noiseValueWindows(mapOfVectorWindows()), disturbanceValueWindows(mapOfVectorWindows()),
 	noiseVarianceWindows(mapOfMatrixWindows()), disturbanceVarianceWindows(mapOfMatrixWindows()) {}
 
-StatisticValue WAUKF::EvalWithV0(EvalType outType, double Ts,
+StatisticValue WAUKF::_evalWithV0(EvalType outType, double Ts,
 	const StatisticValue & state_, const StatisticValue & in, Eigen::MatrixXd & S_out_x,
 	Eigen::MatrixXd & S_out_in, bool forcedOutput, StatisticValue & v0) const {
 	SystemValueType inType = System::getInputValueType(outType, VAR_EXTERNAL);
@@ -167,4 +167,146 @@ StatisticValue WAUKF::EvalWithV0(EvalType outType, double Ts,
 	Sy += B * in.variance * B.transpose();
 	y += B * in.vector;
 	return StatisticValue(y, Sy);
+}
+
+
+Eigen::MatrixXd DiagAndLimit(const Eigen::MatrixXd& in, double limit) {
+	Eigen::MatrixXd out = in;
+	for (unsigned int i = 0; i < out.rows(); i++)
+		for (unsigned int j = 0; j < out.rows(); j++)
+			if (i != j)
+				out(i, j) = 0;
+			else
+				if (out(i, i) < limit)
+					out(i, i) = limit;
+	return out;
+}
+
+// TODO: further tests on the adaptive methods
+
+void WAUKF::Step(double dT) { // update, collect measurement, correction via Kalman-filtering
+									 // Prediction
+	Eigen::MatrixXd sg1, sg2;
+	StatisticValue x_pred0, y_pred0;
+	StatisticValue x_pred = _evalWithV0(EVAL_STATEUPDATE, dT, (*this)(STATE),
+		(*this)(SystemValueType::DISTURBANCE), sg1, sg2, false, x_pred0);
+	Eigen::MatrixXd Syxpred;
+	Eigen::VectorXd y_meas = (*this)(OUTPUT).vector;
+	StatisticValue y_pred = _evalWithV0(EVAL_OUTPUT, dT, x_pred,
+		(*this)(SystemValueType::NOISE), Syxpred, sg2, false, y_pred0);
+
+	StepClock(dT);
+	PredictionDone(x_pred, y_pred);
+	// Kalman-filtering
+	Eigen::MatrixXd K = Syxpred.transpose() * y_pred.variance.inverse();
+	Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
+	StatisticValue newstate = StatisticValue(x_pred.vector + K * (y_meas - y_pred.vector),
+		(Sxnew + Sxnew.transpose()) / 2.);
+
+	FilteringDone(newstate);
+	State() = newstate;
+
+	// Statistics estimation
+	Partitioner p = getPartitioner();
+	Eigen::VectorXd epsilon = y_meas - y_pred.vector;
+	// DISTURBANCE
+	{
+		Eigen::MatrixXd pinvBbs = BaseSystem().getBaseSystemPtr()->getPInvB(dT);
+		{ //Disturbance value estimation
+			Eigen::VectorXd value = newstate.vector - x_pred0.vector;
+			for (auto it = disturbanceValueWindows.begin(); it != disturbanceValueWindows.end(); it++) {
+				int index = _GetIndex(it->first);
+				Eigen::VectorXd v = pinvBbs * p.PartValue(SystemValueType::STATE, value, -1);// partx_[0];
+				if (index != -1) { //basesystem
+					auto sys = Sensor(index);
+					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT, EVAL_STATEUPDATE, VAR_EXTERNAL, true);
+					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBi(dT);
+					v = pinvBi1 * (p.PartValue(SystemValueType::STATE, value, index) - Bi0 * v);
+				}
+				it->second.AddValue(v);
+				if (index != -1)
+					Sensor(index).setValue(it->second.Value(), DISTURBANCE);
+				else
+					BaseSystem().setValue(it->second.Value(), DISTURBANCE);
+			}
+		}
+		{ // Disturbance variance
+			Eigen::MatrixXd value = K * epsilon;
+			value = newstate.variance + value * value.transpose() - x_pred0.variance;
+			for (auto it = disturbanceVarianceWindows.begin(); it != disturbanceVarianceWindows.end(); it++) {
+				int index = _GetIndex(it->first);
+				Eigen::MatrixXd v = pinvBbs * p.PartVariance(SystemValueType::STATE, value, -1, -1) * pinvBbs.transpose();
+				if (index != -1) {
+					auto sys = Sensor(index);
+					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT, EVAL_STATEUPDATE, VAR_EXTERNAL, true);
+					Eigen::MatrixXd v2 = Bi0 * pinvBbs * p.PartVariance(SystemValueType::STATE, value, -1, index);
+					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBi(dT);
+					v = pinvBi1 * (Bi0*v*Bi0.transpose() - v2 - v2.transpose() +
+						p.PartVariance(SystemValueType::STATE, value, index, index))*pinvBi1.transpose();
+				}
+				it->second.AddValue(DiagAndLimit(v, 0.00001));
+				Eigen::MatrixXd out = it->second.Value();
+				if (index != -1)
+					Sensor(index).setVariance(out, DISTURBANCE);
+				else
+					BaseSystem().setVariance(out, DISTURBANCE);
+			}
+		}
+	}
+	// NOISE
+	{
+		Eigen::MatrixXd pinvDbs = BaseSystem().getBaseSystemPtr()->getPInvD(dT);
+		{ //Noise value estimation
+			Eigen::VectorXd value = y_meas - y_pred0.vector;
+			auto party_ = partitionate(OUTPUT, y_meas - y_pred0.vector);
+			for (auto it = noiseValueWindows.begin(); it != noiseValueWindows.end(); it++) {
+				int index = _GetIndex(it->first);
+				if (available(index)) {
+					Eigen::VectorXd v = pinvDbs * p.PartValue(SystemValueType::OUTPUT, value, -1);// partx_[0];
+					if (index != -1) { //basesystem
+						auto sys = Sensor(index);
+						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT, EVAL_OUTPUT, VAR_EXTERNAL, true);
+						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDi(dT);
+						v = pinvDi1 * (p.PartValue(SystemValueType::OUTPUT, value, index) - Di0 * v);
+					}
+					it->second.AddValue(v);
+					if (index != -1)
+						Sensor(index).setValue(it->second.Value(), NOISE);
+					else
+						BaseSystem().setValue(it->second.Value(), NOISE);
+				}
+			}
+		}
+		{ // Noise variance
+			Eigen::MatrixXd value = epsilon * epsilon.transpose() - y_pred0.variance;
+			for (auto it = noiseVarianceWindows.begin(); it != noiseVarianceWindows.end(); it++) {
+				int index = _GetIndex(it->first);
+				if (available(index)) {
+					Eigen::MatrixXd v = pinvDbs * p.PartVariance(OUTPUT, value, -1, -1) * pinvDbs.transpose();
+					if (index != -1) { //basesystem
+						auto sys = Sensor(index);
+						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT, EVAL_OUTPUT, VAR_EXTERNAL, true);
+						Eigen::MatrixXd v2 = Di0 * pinvDbs * p.PartVariance(OUTPUT, value, -1, index); // index sorrend?
+						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDi(dT);
+						v = pinvDi1 * (Di0*v*Di0.transpose() - v2 - v2.transpose() +
+							p.PartVariance(OUTPUT, value, index, index))*pinvDi1.transpose();
+					}
+					it->second.AddValue(v);
+					Eigen::MatrixXd res = DiagAndLimit(it->second.Value(), 0.00001);
+					std::cout << "S_vv_0: \n" << res << std::endl;
+					if (index != -1)
+						Sensor(index).setVariance(res, NOISE);
+					else
+						BaseSystem().setVariance(res, NOISE);
+				}
+			}
+		}
+	}
+	// Reset measurement
+	resetMeasurement();
+}
+
+void WAUKF::_setProperty(int systemID, SystemCallData call) {
+	if (!_isEstimated(systemID, call.signalType, call.valueType))
+		SystemManager::_setProperty(systemID, call);
 }
