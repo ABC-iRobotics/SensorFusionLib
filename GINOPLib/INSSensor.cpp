@@ -17,6 +17,10 @@ Eigen::MatrixXd INSSensor::getBi(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
+Eigen::MatrixXd INSSensor::getPInvBi(double Ts) const {
+	return Eigen::MatrixXd::Identity(3, 3);
+}
+
 Eigen::MatrixXd INSSensor::getC0(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(3, 7);
 	out(2, 5) = 1;

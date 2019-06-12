@@ -34,6 +34,8 @@ public:
 
 	Eigen::MatrixXd getDi(double Ts) const;
 
+	Eigen::MatrixXd getPInvDi(double Ts) const override;
+
 	bool isCompatible(BaseSystem::BaseSystemPtr ptr) const override;
 
 	typedef std::shared_ptr<AbsoluthePoseSensor> AbsoluthePoseSensorPtr;

@@ -39,6 +39,10 @@ Eigen::MatrixXd IMUSensor::getDi(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
+Eigen::MatrixXd IMUSensor::getPInvDi(double Ts) const {
+	return Eigen::MatrixXd::Identity(3, 3);
+}
+
 Eigen::VectorXi IMUSensor::getOutputNonlinearX0Dependencies() const {
 	return Eigen::VectorXi::Ones(3);
 }

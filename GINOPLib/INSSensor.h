@@ -35,6 +35,8 @@ public:
 
 	Eigen::MatrixXd getBi(double Ts) const;
 
+	Eigen::MatrixXd getPInvBi(double Ts) const override;
+
 	Eigen::MatrixXd getC0(double Ts) const;
 
 	Eigen::MatrixXd getCi(double Ts) const;

@@ -58,6 +58,10 @@ Eigen::MatrixXd AbsoluthePoseSensor::getDi(double Ts) const {
 	return Eigen::MatrixXd::Identity(getNumOfOutputs(), getNumOfNoises());
 }
 
+Eigen::MatrixXd AbsoluthePoseSensor::getPInvDi(double Ts) const {
+	return Eigen::MatrixXd::Identity(getNumOfNoises(), getNumOfOutputs());
+}
+
 bool AbsoluthePoseSensor::isCompatible(BaseSystem::BaseSystemPtr ptr) const {
 	return _isCompatible<youBotSystem>(ptr);
 }

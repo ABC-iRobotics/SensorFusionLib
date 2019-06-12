@@ -50,6 +50,8 @@ public:
 
 	Eigen::MatrixXd getDi(double Ts) const;
 
+	Eigen::MatrixXd getPInvDi(double Ts) const override;
+
 	Eigen::VectorXi getOutputNonlinearX0Dependencies() const override;
 
 	Eigen::VectorXi getOutputNonlinearXiDependencies() const override;
