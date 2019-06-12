@@ -79,7 +79,7 @@ void INS::Step(double ax, double ay, double om, double Ts) {
 	vy += Ts * (ay_ - om_ * vx);
 }
 
-INS::INS(double sax, double say, double som) : vx(0), vy(0), x(0), y(0), phi(0),
+INS::INS(double sax, double say, double som) : vx(0), vy(0), x(0), y(0), phi(0.2),
 	sqrtsax(sqrt(sax)), sqrtsay(sqrt(say)), sqrtsom(sqrt(som)) {}
 
 Eigen::VectorXd INS::Out() const {

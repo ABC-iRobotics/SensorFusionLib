@@ -51,3 +51,10 @@ struct AbsSensor {
 	AbsSensor(double s) : disturbance(3,s) {};
 	Eigen::VectorXd update(double x, double y, double phi);;
 };
+
+/*
+void FilterCallback(FilterCallData data) {
+	if (data.callType == FilterCallData::FILTERING && data.type == STATE) {
+		std::cout << data.value.vector.transpose() << std::endl;
+	}
+}*/

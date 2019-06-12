@@ -76,7 +76,7 @@ void simulation_youbot_Kalman() {
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {
 		youBot->SetDisturbanceValue(youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]));
-
+		std::cout << (*filter)(STATE).vector.transpose() << std::endl;
 		if (n % 30 == 0)
 			absPose->MeasurementDone(GPS.update(traj.x[n], traj.y[n], traj.phi[n]));
 
