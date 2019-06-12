@@ -1,28 +1,6 @@
 #include "WAUKF.h"
 #include "PartialCholevski.h"
 
-WAUKF::mapOfVectorWindows& WAUKF::_getValueWindows(SystemValueType signal) {
-	switch (signal) {
-	case DISTURBANCE:
-		return disturbanceValueWindows;
-	case NOISE:
-		return noiseValueWindows;
-	default:
-		throw std::runtime_error(std::string("WAUKF::_getValueWindows Unknown option!"));
-	}
-}
-
-WAUKF::mapOfMatrixWindows & WAUKF::_getVarianceWindows(SystemValueType signal) {
-	switch (signal) {
-	case DISTURBANCE:
-		return disturbanceVarianceWindows;
-	case NOISE:
-		return noiseVarianceWindows;
-	default:
-		throw std::runtime_error(std::string("WAUKF::_getVarianceWindows Unknown option!"));
-	}
-}
-
 const WAUKF::mapOfVectorWindows & WAUKF::_getValueWindows(SystemValueType signal) const {
 	switch (signal) {
 	case DISTURBANCE:
@@ -57,28 +35,6 @@ bool WAUKF::_isEstimated(unsigned int systemID, SystemValueType signal, ValueTyp
 	}
 	default:
 		throw std::runtime_error(std::string("WAUKF::_isEstimated Unknown option!"));
-	}
-}
-
-MAWindow<Eigen::VectorXd>& WAUKF::_getVectorWindow(unsigned int systemID, SystemValueType signal, bool & found) {
-	mapOfVectorWindows& temp = _getValueWindows(signal);
-	auto it = temp.find(systemID);
-	found = it != temp.end();
-	if (found) return it->second;
-	else {
-		static MAWindow<Eigen::VectorXd> w(0);
-		return w;
-	}
-}
-
-MAWindow<Eigen::MatrixXd>& WAUKF::_getMatrixWindow(unsigned int systemID, SystemValueType signal, bool & found) {
-	mapOfMatrixWindows& temp = _getVarianceWindows(signal);
-	auto it = temp.find(systemID);
-	found = it != temp.end();
-	if (found) return it->second;
-	else {
-		static MAWindow<Eigen::MatrixXd> w(0);
-		return w;
 	}
 }
 

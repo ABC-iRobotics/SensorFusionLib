@@ -30,15 +30,10 @@ private:
 	mapOfMatrixWindows noiseVarianceWindows;
 	mapOfMatrixWindows disturbanceVarianceWindows;
 
-	mapOfVectorWindows& _getValueWindows(SystemValueType signal);
-	mapOfMatrixWindows& _getVarianceWindows(SystemValueType signal);
-
 	// fölösleges....
 	const mapOfVectorWindows& _getValueWindows(SystemValueType signal) const;
 	const mapOfMatrixWindows& _getVarianceWindows(SystemValueType signal) const;
 	bool _isEstimated(unsigned int systemID, SystemValueType signal, ValueType type) const;
-	MAWindow<Eigen::VectorXd>& _getVectorWindow(unsigned int systemID, SystemValueType signal, bool& found);
-	MAWindow<Eigen::MatrixXd>& _getMatrixWindow(unsigned int systemID, SystemValueType signal, bool& found);
 
 public:
 	void SetDisturbanceValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
