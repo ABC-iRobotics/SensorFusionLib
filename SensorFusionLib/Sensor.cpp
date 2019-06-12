@@ -204,6 +204,9 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 	 return pinv(getDi(Ts));
  }
 
+ Sensor::Sensor(BaseSystem::BaseSystemPtr ptr) : numOfBaseSystemStates(ptr->getNumOfStates()),
+	 numOfBaseSystemDisturbances(ptr->getNumOfDisturbances()), numOfBaseSystemNoises(ptr->getNumOfNoises()) {}
+
  unsigned int Sensor::getNumOfBaseSystemStates() const { return numOfBaseSystemStates; }
 
  unsigned int Sensor::getNumOfBaseSystemNoises() const { return numOfBaseSystemNoises; }

@@ -15,12 +15,11 @@ struct SystemCallData {
 	Eigen::MatrixXd variance;
 	SystemValueType signalType;
 	ValueType valueType;
-	SystemCallData(Eigen::VectorXd value, SystemValueType type);;
-	SystemCallData(Eigen::MatrixXd variance, SystemValueType type);;
+	SystemCallData(Eigen::VectorXd value, SystemValueType type);
+	SystemCallData(Eigen::MatrixXd variance, SystemValueType type);
 };
 
-class System : public CallbackHandler<SystemCallData>
-{
+class System : public CallbackHandler<SystemCallData> {
 public:
 	// Functions to override
 	virtual unsigned int getNumOfStates() const = 0;
@@ -40,7 +39,6 @@ public:
 	virtual std::vector<std::string> getOutputNames() const;
 
 	virtual std::string getName() const;
-
 
 	// Functions defined (based on them)
 	System();

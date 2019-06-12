@@ -14,8 +14,7 @@ protected:
 	bool _isCompatible(BaseSystem::BaseSystemPtr ptr) const;
 
 public:
-	Sensor(BaseSystem::BaseSystemPtr ptr) : numOfBaseSystemStates(ptr->getNumOfStates()),
-	numOfBaseSystemDisturbances(ptr->getNumOfDisturbances()), numOfBaseSystemNoises(ptr->getNumOfNoises()) {};
+	Sensor(BaseSystem::BaseSystemPtr ptr);
 
 	unsigned int getNumOfBaseSystemStates() const;
 	unsigned int getNumOfBaseSystemNoises() const;

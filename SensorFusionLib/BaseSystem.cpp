@@ -22,7 +22,6 @@ Eigen::VectorXd BaseSystem::UpdateNonlinearPart(double Ts, const Eigen::VectorXd
 	return Eigen::VectorXd::Zero(getNumOfStates());
 }
 
-
 // The Eval functions execute the prediction/output computation with the given values and defined coefficients/functions
 
 Eigen::VectorXd BaseSystem::OutputNonlinearPart(double Ts, const Eigen::VectorXd& state, const Eigen::VectorXd& noise) const {
