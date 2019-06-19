@@ -1,0 +1,1 @@
+./flatc --cpp --python msg.fbs

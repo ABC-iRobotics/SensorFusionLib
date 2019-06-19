@@ -1,0 +1,13 @@
+namespace SensorDataMsg;
+
+enum ValueType : ubyte { MEASUREMENT = 0, DISTURBANCE } 
+
+table Msg {
+	type : ValueType;
+	sensorID : int;
+	value_vector : [float];    // - optional, as [ v1 v2 ... vn ]
+	variance_matrix : [float]; // - optional, as [ m11, m12, ..., m1n, m22, m23 ... m2n, m33 ... m3n, m41 ... ... ... mnn ] ( = n*(n+1)/2 values)
+	timestamp_in_us : ulong;
+}
+
+root_type Msg;

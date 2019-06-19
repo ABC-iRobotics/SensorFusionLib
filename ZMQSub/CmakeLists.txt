@@ -1,0 +1,27 @@
+# PROJECT(SensorFusion)
+
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
+include_directories (
+		${Eigen_INCLUDE_DIRS}
+		${PROJECT_SOURCE_DIR}/CommunicationLib
+		)
+
+# Add all header and cpp files in the directory to the project
+set (HEADERS	)
+
+set (SOURCES
+	main.cpp
+	)
+
+# Add the dinamic library target to the project
+add_executable (ZMQSub ${SOURCES} ${HEADERS})
+
+# Link with dependency libraries
+target_link_libraries (ZMQSub Eigen3::Eigen	CommunicationLib)
+
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MT")
