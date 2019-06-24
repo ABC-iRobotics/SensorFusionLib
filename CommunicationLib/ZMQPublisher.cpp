@@ -16,7 +16,7 @@ void ZMQPublisher::SendString() {
 	std::this_thread::sleep_for(std::chrono::duration<float, std::micro>(5));
 }
 
-void ZMQPublisher::SendMsg(const DataMsg & data) {
+void ZMQPublisher::SendMsg(const SystemDataMsg & data) {
 	Buffer b = data.GetMsgBuffer();
 	zmq::message_t request((void*)b.Buf(), b.Size(), NULL);
 	socket.send(request, zmq::send_flags::none);

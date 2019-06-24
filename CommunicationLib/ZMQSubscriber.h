@@ -11,9 +11,9 @@ public:
 	ZMQSubscriber();
 	~ZMQSubscriber();
 	
-	bool RecvMsg_Wait(DataMsg& data, int waitinMS=500);
+	bool RecvMsg_Wait(SystemDataMsg& data, int waitinMS=500);
 
-	bool RecvMsg_DontWait(DataMsg& data);
+	bool RecvMsg_DontWait(SystemDataMsg& data);
 
 	// TODO: Poller
 	//https://stackoverflow.com/questions/7538988/zeromq-how-to-prevent-infinite-wait

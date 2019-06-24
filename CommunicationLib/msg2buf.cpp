@@ -69,7 +69,7 @@ Buffer& Buffer::operator=(const Buffer& buf0) {
 	return *this;
 }
 
-void DataMsg::print() const {
+void SystemDataMsg::print() const {
 	unsigned int t = getTimeInMicroseconds();
 	if (contentType == EMPTY) {
 		printf("EMTPY DataMsg.\n\n");
@@ -78,44 +78,62 @@ void DataMsg::print() const {
 	printf("SourceID: %d Content: ", sourceID);
 	switch (contentType)
 	{
-	case MEASUREMENT:
-		printf("MEASUREMENT");
+	case TOFILTER_MEASUREMENT:
+		printf("TOFILTER_MEASUREMENT");
 		break;
-	case DISTURBANCE:
-		printf("DISTURBANCE");
+	case TOFILTER_DISTURBANCE:
+		printf("TOFILTER_DISTURBANCE");
+		break;
+	case FROMFILTER_FILTEREDSTATE:
+		printf("FROMFILTER_FILTEREDSTATE");
+		break;
+	case FROMFILTER_MEASUREDOUTPUT:
+		printf("FROMFILTER_MEASUREDOUTPUT");
+		break;
+	case FROMFILTER_PREDICTEDOUTPUT:
+		printf("FROMFILTFROMFILTER_PREDICTEDOUTPUTER_FILTEREDSTATE");
+		break;
+	case FROMFILTER_PREDICTEDSTATE:
+		printf("FROMFILTER_PREDICTEDSTATE");
+		break;
+	case FROMFILTER_USEDDISTURBANCE:
+		printf("FROMFILTER_USEDDISTURBANCE");
+		break;
+	case FROMFILTER_USEDNOISE:
+		printf("FROMFILTER_USEDNOISE");
 		break;
 	}
 	printf(" Age: %f [ms]\n", (float)(t - timestamp_in_us)*1.e-3);
-	if (isValue)
+	if (hasValue)
 		std::cout << "Value:\n" << value << std::endl;
-	if (isVariance)
+	if (hasVariance)
 		std::cout << "Variance:\n" << variance << std::endl;
 	printf("\n");
 }
 
-void DataMsg::SetVarianceMatrix(Eigen::MatrixXd m) {
+void SystemDataMsg::SetVarianceMatrix(const Eigen::MatrixXd& m) {
 	variance = m;
-	isVariance = true;
+	hasVariance = true;
 }
 
-void DataMsg::SetValueVector(Eigen::VectorXd v) {
+void SystemDataMsg::SetValueVector(const Eigen::VectorXd& v) {
 	value = v;
-	isValue = true;
+	hasValue = true;
 }
 
-DataMsg::DataMsg(unsigned char ID, ContentType type, unsigned long timestamp_in_us_) :
-	sourceID(ID), contentType(type), isValue(false), isVariance(false), timestamp_in_us(timestamp_in_us_) {
-	if (type==DataMsg::EMPTY)
+SystemDataMsg::SystemDataMsg(unsigned char ID, ContentTypes type, unsigned long timestamp_in_us_) :
+	sourceID(ID), contentType(type), hasValue(false), hasVariance(false), timestamp_in_us(timestamp_in_us_) {
+	if (type==SystemDataMsg::EMPTY)
 		throw std::runtime_error(std::string("DataMsg::DataMsg wrong argument"));
 }
 
-DataMsg::DataMsg() : contentType(EMPTY), isValue(false), isVariance(false) {}
+SystemDataMsg::SystemDataMsg() : contentType(EMPTY), hasValue(false), hasVariance(false) {}
 
-DataMsg::DataMsg(const Buffer & buf) {
+SystemDataMsg::SystemDataMsg(const Buffer & buf) {
 	auto msg = SensorDataMsg::GetMsg(buf.Buf());
 
-	isValue = flatbuffers::IsFieldPresent(msg, SensorDataMsg::Msg::VT_VALUE_VECTOR);
-	if (isValue) {
+	hasValue = flatbuffers::IsFieldPresent(msg, SensorDataMsg::Msg::VT_VALUE_VECTOR);
+	if (hasValue) {
 		auto v = msg->value_vector();
 		size_t N = v->size();
 		value = Eigen::VectorXd(N);
@@ -123,8 +141,8 @@ DataMsg::DataMsg(const Buffer & buf) {
 			value[n] = v->Get(n);
 	}
 
-	isVariance = flatbuffers::IsFieldPresent(msg, SensorDataMsg::Msg::VT_VARIANCE_MATRIX);
-	if (isVariance) {
+	hasVariance = flatbuffers::IsFieldPresent(msg, SensorDataMsg::Msg::VT_VARIANCE_MATRIX);
+	if (hasVariance) {
 		auto v = msg->variance_matrix();
 		size_t K = v->size();
 		size_t N = static_cast<size_t>((sqrt(8 * K + 1) - 1) / 2);
@@ -139,11 +157,29 @@ DataMsg::DataMsg(const Buffer & buf) {
 	}
 
 	switch (msg->type()) {
-	case SensorDataMsg::ValueType::ValueType_MEASUREMENT:
-		contentType = MEASUREMENT;
+	case SensorDataMsg::ValueType::ValueType_TOFILTER_MEASUREMENT:
+		contentType = TOFILTER_MEASUREMENT;
 		break;
-	case SensorDataMsg::ValueType::ValueType_DISTURBANCE:
-		contentType = DISTURBANCE;
+	case SensorDataMsg::ValueType::ValueType_TOFILTER_DISTURBANCE:
+		contentType = TOFILTER_DISTURBANCE;
+		break;
+	case SensorDataMsg::ValueType::ValueType_FROMFILTER_FILTEREDSTATE:
+		contentType = FROMFILTER_FILTEREDSTATE;
+		break;
+	case SensorDataMsg::ValueType::ValueType_FROMFILTER_MEASUREDOUTPUT:
+		contentType = FROMFILTER_MEASUREDOUTPUT;
+		break;
+	case SensorDataMsg::ValueType::ValueType_FROMFILTER_PREDICTEDOUTPUT:
+		contentType = FROMFILTER_PREDICTEDOUTPUT;
+		break;
+	case SensorDataMsg::ValueType::ValueType_FROMFILTER_PREDICTEDSTATE:
+		contentType = FROMFILTER_PREDICTEDSTATE;
+		break;
+	case SensorDataMsg::ValueType::ValueType_FROMFILTER_USEDDISTURBANCE:
+		contentType = FROMFILTER_USEDDISTURBANCE;
+		break;
+	case SensorDataMsg::ValueType::ValueType_FROMFILTER_USEDNOISE:
+		contentType = FROMFILTER_USEDNOISE;
 		break;
 	}
 
@@ -152,11 +188,36 @@ DataMsg::DataMsg(const Buffer & buf) {
 	sourceID = msg->sensorID();
 }
 
-Buffer DataMsg::GetMsgBuffer() const {
+bool SystemDataMsg::IsEmpty() const { return contentType == EMPTY; }
+
+bool SystemDataMsg::IsToFilter() const { return contentType == TOFILTER_DISTURBANCE || contentType == TOFILTER_MEASUREMENT; }
+
+bool SystemDataMsg::IsFromFilter() const {
+	return contentType == FROMFILTER_FILTEREDSTATE ||
+		contentType == FROMFILTER_MEASUREDOUTPUT ||
+		contentType == FROMFILTER_PREDICTEDOUTPUT ||
+		contentType == FROMFILTER_PREDICTEDSTATE ||
+		contentType == FROMFILTER_USEDDISTURBANCE ||
+		contentType == FROMFILTER_USEDNOISE;
+}
+
+bool SystemDataMsg::HasValue() const { return hasValue; }
+
+bool SystemDataMsg::HasVariance() const { return hasVariance; }
+
+Eigen::VectorXd SystemDataMsg::Value() const { return value; }
+
+Eigen::MatrixXd SystemDataMsg::Variance() const { return variance; }
+
+unsigned char SystemDataMsg::SourceID() const { return sourceID; }
+
+SystemDataMsg::ContentTypes SystemDataMsg::ContentType() const { return contentType; }
+
+Buffer SystemDataMsg::GetMsgBuffer() const {
 	flatbuffers::FlatBufferBuilder fbb(1024);
 
 	flatbuffers::Offset<flatbuffers::Vector<float>> fbb_value;
-	if (isValue) {
+	if (hasValue) {
 		size_t N = value.size();
 		float* v = new float[N];
 		for (unsigned int i = 0; i < N; i++)
@@ -165,7 +226,7 @@ Buffer DataMsg::GetMsgBuffer() const {
 	}
 
 	flatbuffers::Offset<flatbuffers::Vector<float>> fbb_variance;
-	if (isVariance) {
+	if (hasVariance) {
 		unsigned int N = static_cast<unsigned int>(variance.rows());
 		unsigned int K = static_cast<unsigned int>((N*(N + 1)) / 2);
 		float* v = new float[K];
@@ -181,20 +242,38 @@ Buffer DataMsg::GetMsgBuffer() const {
 	SensorDataMsg::MsgBuilder msgBuilder(fbb);
 	switch (contentType)
 	{
-	case MEASUREMENT:
-		msgBuilder.add_type(SensorDataMsg::ValueType_MEASUREMENT);
+	case TOFILTER_MEASUREMENT:
+		msgBuilder.add_type(SensorDataMsg::ValueType_TOFILTER_MEASUREMENT);
 		break;
-	case DISTURBANCE:
-		msgBuilder.add_type(SensorDataMsg::ValueType_DISTURBANCE);
+	case TOFILTER_DISTURBANCE:
+		msgBuilder.add_type(SensorDataMsg::ValueType_TOFILTER_DISTURBANCE);
+		break;
+	case FROMFILTER_FILTEREDSTATE:
+		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_FILTEREDSTATE);
+		break;
+	case FROMFILTER_MEASUREDOUTPUT:
+		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_MEASUREDOUTPUT);
+		break;
+	case FROMFILTER_PREDICTEDOUTPUT:
+		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_PREDICTEDOUTPUT);
+		break;
+	case FROMFILTER_PREDICTEDSTATE:
+		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_PREDICTEDSTATE);
+		break;
+	case FROMFILTER_USEDDISTURBANCE:
+		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_USEDDISTURBANCE);
+		break;
+	case FROMFILTER_USEDNOISE:
+		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_USEDNOISE);
 		break;
 	}
 
 	msgBuilder.add_sensorID(sourceID);
 
-	if (isValue)
+	if (hasValue)
 		msgBuilder.add_value_vector(fbb_value);
 
-	if (isVariance)
+	if (hasVariance)
 		msgBuilder.add_variance_matrix(fbb_variance);
 
 	msgBuilder.add_timestamp_in_us(timestamp_in_us);

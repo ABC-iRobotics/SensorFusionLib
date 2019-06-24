@@ -33,27 +33,58 @@ private:
 	size_t size;
 };
 
-struct DataMsg {
+class SystemDataMsg {
 public:
-	unsigned char sourceID;
-	enum ContentType { MEASUREMENT, DISTURBANCE, EMPTY } contentType;
-	Eigen::VectorXd value;
-	bool isValue;
-	Eigen::MatrixXd variance;
-	bool isVariance;
-	unsigned long timestamp_in_us;
+	enum ContentTypes {
+		TOFILTER_MEASUREMENT = 0,
+		TOFILTER_DISTURBANCE = 1,
+		FROMFILTER_PREDICTEDSTATE = 2,
+		FROMFILTER_FILTEREDSTATE = 3,
+		FROMFILTER_PREDICTEDOUTPUT = 4,
+		FROMFILTER_MEASUREDOUTPUT = 5,
+		FROMFILTER_USEDDISTURBANCE = 6,
+		FROMFILTER_USEDNOISE = 7,
+		EMPTY = 8
+	};
 
 	void print() const;
 
-	DataMsg(unsigned char ID, ContentType type, unsigned long timestamp_in_us);
+	SystemDataMsg(unsigned char ID, ContentTypes type, unsigned long timestamp_in_us);
 
-	DataMsg(); // to initialize empty instances
+	SystemDataMsg(); // to initialize empty instances
 
-	void SetVarianceMatrix(Eigen::MatrixXd m);
+	void SetVarianceMatrix(const Eigen::MatrixXd& m);
 
-	void SetValueVector(Eigen::VectorXd v);
+	void SetValueVector(const Eigen::VectorXd& v);
 
 	Buffer GetMsgBuffer() const;
 
-	DataMsg(const Buffer& buf);
+	SystemDataMsg(const Buffer& buf);
+
+	bool IsEmpty() const;
+
+	bool IsToFilter() const;
+
+	bool IsFromFilter() const;
+
+	bool HasValue() const;
+
+	bool HasVariance() const;
+
+	Eigen::VectorXd Value() const;
+
+	Eigen::MatrixXd Variance() const;
+
+	unsigned char SourceID() const;
+
+	ContentTypes ContentType() const;
+
+private:
+	unsigned char sourceID;
+	Eigen::VectorXd value;
+	bool hasValue;
+	Eigen::MatrixXd variance;
+	bool hasVariance;
+	unsigned long timestamp_in_us;
+	ContentTypes contentType;
 };

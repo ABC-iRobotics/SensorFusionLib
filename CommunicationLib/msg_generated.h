@@ -11,31 +11,49 @@ namespace SensorDataMsg {
 struct Msg;
 
 enum ValueType {
-  ValueType_MEASUREMENT = 0,
-  ValueType_DISTURBANCE = 1,
-  ValueType_MIN = ValueType_MEASUREMENT,
-  ValueType_MAX = ValueType_DISTURBANCE
+  ValueType_TOFILTER_MEASUREMENT = 0,
+  ValueType_TOFILTER_DISTURBANCE = 1,
+  ValueType_FROMFILTER_PREDICTEDSTATE = 2,
+  ValueType_FROMFILTER_FILTEREDSTATE = 3,
+  ValueType_FROMFILTER_PREDICTEDOUTPUT = 4,
+  ValueType_FROMFILTER_MEASUREDOUTPUT = 5,
+  ValueType_FROMFILTER_USEDDISTURBANCE = 6,
+  ValueType_FROMFILTER_USEDNOISE = 7,
+  ValueType_MIN = ValueType_TOFILTER_MEASUREMENT,
+  ValueType_MAX = ValueType_FROMFILTER_USEDNOISE
 };
 
-inline const ValueType (&EnumValuesValueType())[2] {
+inline const ValueType (&EnumValuesValueType())[8] {
   static const ValueType values[] = {
-    ValueType_MEASUREMENT,
-    ValueType_DISTURBANCE
+    ValueType_TOFILTER_MEASUREMENT,
+    ValueType_TOFILTER_DISTURBANCE,
+    ValueType_FROMFILTER_PREDICTEDSTATE,
+    ValueType_FROMFILTER_FILTEREDSTATE,
+    ValueType_FROMFILTER_PREDICTEDOUTPUT,
+    ValueType_FROMFILTER_MEASUREDOUTPUT,
+    ValueType_FROMFILTER_USEDDISTURBANCE,
+    ValueType_FROMFILTER_USEDNOISE
   };
   return values;
 }
 
 inline const char * const *EnumNamesValueType() {
   static const char * const names[] = {
-    "MEASUREMENT",
-    "DISTURBANCE",
+    "TOFILTER_MEASUREMENT",
+    "TOFILTER_DISTURBANCE",
+    "FROMFILTER_PREDICTEDSTATE",
+    "FROMFILTER_FILTEREDSTATE",
+    "FROMFILTER_PREDICTEDOUTPUT",
+    "FROMFILTER_MEASUREDOUTPUT",
+    "FROMFILTER_USEDDISTURBANCE",
+    "FROMFILTER_USEDNOISE",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameValueType(ValueType e) {
-  if (e < ValueType_MEASUREMENT || e > ValueType_DISTURBANCE) return "";
+  if (e < ValueType_TOFILTER_MEASUREMENT || e > ValueType_FROMFILTER_USEDNOISE) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesValueType()[index];
 }
@@ -108,7 +126,7 @@ struct MsgBuilder {
 
 inline flatbuffers::Offset<Msg> CreateMsg(
     flatbuffers::FlatBufferBuilder &_fbb,
-    ValueType type = ValueType_MEASUREMENT,
+    ValueType type = ValueType_TOFILTER_MEASUREMENT,
     int32_t sensorID = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> value_vector = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> variance_matrix = 0,
@@ -124,7 +142,7 @@ inline flatbuffers::Offset<Msg> CreateMsg(
 
 inline flatbuffers::Offset<Msg> CreateMsgDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    ValueType type = ValueType_MEASUREMENT,
+    ValueType type = ValueType_TOFILTER_MEASUREMENT,
     int32_t sensorID = 0,
     const std::vector<float> *value_vector = nullptr,
     const std::vector<float> *variance_matrix = nullptr,
