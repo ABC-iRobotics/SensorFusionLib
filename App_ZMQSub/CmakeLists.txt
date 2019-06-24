@@ -1,34 +1,26 @@
 # PROJECT(SensorFusion)
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(cppzmq)
-find_path(flatbuffers_include_dir "")
 
 include_directories (
 		${Eigen_INCLUDE_DIRS}
-		${flatbuffers_include_dir}
+		${PROJECT_SOURCE_DIR}/Lib_Communication
 		)
 
 # Add all header and cpp files in the directory to the project
-set (HEADERS
-	msg_generated.h
-	msg2buf.h
-	ZMQSubscriber.h
-	ZMQPublisher.h
-	)
-	
+set (HEADERS	)
 
 set (SOURCES
-	msg2buf.cpp
-	ZMQSubscriber.cpp
-	ZMQPublisher.cpp
+	main.cpp
 	)
-	
-add_library (CommunicationLib STATIC ${SOURCES} ${HEADERS})
 
 # Add the dinamic library target to the project
-target_link_libraries (CommunicationLib Eigen3::Eigen	cppzmq-static)
-		
+add_executable (App_ZMQSub ${SOURCES} ${HEADERS})
+
+# Link with dependency libraries
+target_link_libraries (App_ZMQSub Eigen3::Eigen	Lib_Communication)
+
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")

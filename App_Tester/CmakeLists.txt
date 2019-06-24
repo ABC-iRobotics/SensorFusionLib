@@ -7,16 +7,14 @@ endif()
 
 if (FILTERPLOT)
 include_directories (
-		${PROJECT_SOURCE_DIR}/PlotterLib
-		${PROJECT_SOURCE_DIR}/SensorFusionLib
-		${PROJECT_SOURCE_DIR}/GINOPLib
-		${Eigen_INCLUDE_DIRS}
+		${PROJECT_SOURCE_DIR}/Lib_Plotter
+		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
+		${PROJECT_SOURCE_DIR}/Lib_GINOP
 		)
 else()
 include_directories (
-		${PROJECT_SOURCE_DIR}/SensorFusionLib
-		${PROJECT_SOURCE_DIR}/GINOPLib
-		${Eigen_INCLUDE_DIRS}
+		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
+		${PROJECT_SOURCE_DIR}/Lib_GINOP
 		)
 endif()
 
@@ -27,7 +25,6 @@ set (HEADERS
 	Simulation_youBot_Kalman.h
 	Simulation_youBot_WAUKF.h
 	)
-	
 
 set (SOURCES
 	main.cpp
@@ -36,18 +33,18 @@ set (SOURCES
 	Simulation_youBot_Kalman.cpp
 	Simulation_youBot_WAUKF.cpp
 	)
-	
 
 # Add the dinamic library target to the project
-add_executable (Tester ${SOURCES} ${HEADERS})
+add_executable (App_Tester ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
 if (FILTERPLOT)
-	target_link_libraries (Tester PlotterLib SensorFusionLib Eigen3::Eigen GINOPLib	
-	${OpenCV_LIBS})
+	target_link_libraries (App_Tester Lib_Plotter Lib_SensorFusion Lib_GINOP ${OpenCV_LIBS}
+	)
 	add_compile_definitions(FILTERPLOT)
 else()
-	target_link_libraries (Tester SensorFusionLib Eigen3::Eigen GINOPLib)
+	target_link_libraries (App_Tester Lib_SensorFusion Lib_GINOP
+	)
 endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

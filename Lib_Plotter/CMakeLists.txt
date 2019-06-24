@@ -4,7 +4,7 @@ find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(OpenCV REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS}
-		${PROJECT_SOURCE_DIR}/SensorFusionLib
+		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
 		${Eigen_INCLUDE_DIRS}
 		)
 
@@ -43,10 +43,10 @@ set (SOURCES
 
 
 # Add the dinamic library target to the project
-add_library (PlotterLib STATIC ${SOURCES} ${HEADERS})
+add_library (Lib_Plotter STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries ( PlotterLib ${OpenCV_LIBS} SensorFusionLib Eigen3::Eigen
+target_link_libraries ( Lib_Plotter ${OpenCV_LIBS} Lib_SensorFusion Eigen3::Eigen
 		)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

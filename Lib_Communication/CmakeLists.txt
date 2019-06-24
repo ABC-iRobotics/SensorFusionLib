@@ -1,35 +1,33 @@
 # PROJECT(SensorFusion)
 
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(cppzmq)
+find_path(flatbuffers_include_dir "")
 
 include_directories (
-		${PROJECT_SOURCE_DIR}/PlotterLib
-		${PROJECT_SOURCE_DIR}/SensorFusionLib
 		${Eigen_INCLUDE_DIRS}
+		${flatbuffers_include_dir}
 		)
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	IMUSensor.h
-	INSSensor.h
-	AbsoluthePoseSensor.h
-	youBotSystem.h
+	msg_generated.h
+	msg2buf.h
+	ZMQSubscriber.h
+	ZMQPublisher.h
 	)
 	
 
 set (SOURCES
-	IMUSensor.cpp
-	INSSensor.cpp
-	AbsoluthePoseSensor.cpp
-	youBotSystem.cpp
+	msg2buf.cpp
+	ZMQSubscriber.cpp
+	ZMQPublisher.cpp
 	)
+	
+add_library (Lib_Communication STATIC ${SOURCES} ${HEADERS})
 
 # Add the dinamic library target to the project
-add_library (GINOPLib STATIC ${SOURCES} ${HEADERS})
-
-# Link with dependency libraries
-target_link_libraries (GINOPLib Eigen3::Eigen SensorFusionLib
-		)
+target_link_libraries (Lib_Communication Eigen3::Eigen cppzmq-static)
 		
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

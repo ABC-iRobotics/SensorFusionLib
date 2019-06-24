@@ -1,7 +1,6 @@
 #include "SystemManager.h"
 #include "Eigen/Dense"
 #include <map>
-#include "pinv.h"
 
 const unsigned int MAX_WINDOW_SIZE = 200;
 
@@ -35,7 +34,7 @@ public:
 	typedef std::shared_ptr<WAUKF> WAUKFPtr;
 
 	// TODO: perform further tests on the adaptive methods
-	void Step(double dT);
+	void Step(double dT) override;
 
 protected:
 	void _setProperty(int systemID, SystemCallData call) override;

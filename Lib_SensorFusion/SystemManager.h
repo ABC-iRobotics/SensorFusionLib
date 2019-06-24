@@ -193,6 +193,10 @@ public:
 
 	bool available(int index) const;
 
+	virtual void Step(double Ts) = 0;
+
+	typedef std::shared_ptr<SystemManager> SystemManagerPtr;
+
 protected:
 	int _GetIndex(unsigned int ID) const; // returns -1 for the basesystem!
 	BaseSystemData & BaseSystem();

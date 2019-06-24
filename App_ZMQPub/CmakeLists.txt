@@ -4,44 +4,26 @@ find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 include_directories (
 		${Eigen_INCLUDE_DIRS}
+		${PROJECT_SOURCE_DIR}/Lib_Communication
 		)
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	BaseSystem.h
-	Sensor.h 
-	StatisticValue.h 
-	System.h 
-	CallbackHandler.h
-	SystemManager.h
-	PartialCholevski.h
-	KalmanFilter.h
-	FilterLog.h
-	WAUKF.h
-	pinv.h
 	)
 	
+
 set (SOURCES
-	BaseSystem.cpp
-	Sensor.cpp 
-	StatisticValue.cpp
-	System.cpp
-	SystemManager.cpp
-	PartialCholevski.cpp
-	KalmanFilter.cpp
-	FilterLog.cpp
-	WAUKF.cpp
-	pinv.cpp
+	main.cpp
 	)
 	
 
 # Add the dinamic library target to the project
-add_library (SensorFusionLib STATIC ${SOURCES} ${HEADERS})
+add_executable (App_ZMQPub ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (SensorFusionLib Eigen3::Eigen
-		)
-		
+target_link_libraries (App_ZMQPub Eigen3::Eigen	Lib_Communication)
+
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
