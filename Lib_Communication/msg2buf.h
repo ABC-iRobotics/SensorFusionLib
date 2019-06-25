@@ -4,8 +4,6 @@
 
 unsigned long getTimeInMicroseconds();
 
-const int port = 5556;
-
 class Buffer {
 public:
 	Buffer();

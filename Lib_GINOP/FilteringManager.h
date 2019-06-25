@@ -1,12 +1,16 @@
 #pragma once
 
 #include "ZMQSubscriber.h"
+#include "ZMQPublisher.h"
 #include "SystemManager.h"
+#include "ZMQFilterLogger.h"
 #include <map>
 
 class FilteringManager {
 	ZMQSubscriber zmqSub;
-	
+
+	ZMQFilterLogger* zmqLogger;
+
 	std::map<unsigned int, System::SystemPtr> systems; // ID - Systems
 
 	const double Ts_max; // in seconds
@@ -34,8 +38,13 @@ protected:
 		return success;
 	}
 
+	FilteringManager(double Ts_max_s, int port);
+
+	void SetZMQLogger(SystemManager& filter, int port) {
+		zmqLogger = new ZMQFilterLogger(filter, port);
+	}
+
 public:
-	FilteringManager(double Ts_max_s);
 
 	void run() {
 		unsigned long t_last = getTimeInMicroseconds();
@@ -50,6 +59,11 @@ public:
 			filter->Step(double(t_last - t_filt) / 1e6); // gyorsan léptetni a fúziót - az eltelt idõnek megfelelõen...
 			t_last = t_filt;
 		}
+	}
+
+	~FilteringManager() {
+		if (!zmqLogger)
+			delete zmqLogger;
 	}
 
 	// ráregisztrálni callback-et a szûrõre, h továbbítsa az adatokat zmq-n?

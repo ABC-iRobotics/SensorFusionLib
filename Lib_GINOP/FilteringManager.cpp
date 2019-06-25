@@ -27,4 +27,4 @@ void FilteringManager::_processMSG(const SystemDataMsg & msg) {
 	}
 }
 
-FilteringManager::FilteringManager(double Ts_max_s) : Ts_max(Ts_max_s), zmqSub(), systems(std::map<unsigned int, System::SystemPtr>()) {}
+FilteringManager::FilteringManager(double Ts_max_s, int port) : zmqLogger(NULL), Ts_max(Ts_max_s), zmqSub(port), systems(std::map<unsigned int, System::SystemPtr>()) {}

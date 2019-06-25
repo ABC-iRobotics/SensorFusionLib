@@ -8,7 +8,7 @@ class ZMQSubscriber {
 	zmq::socket_t socket;
 
 public:
-	ZMQSubscriber();
+	ZMQSubscriber(int port);
 	~ZMQSubscriber();
 	
 	bool RecvMsg_Wait(SystemDataMsg& data, int waitinMS=500);

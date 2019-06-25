@@ -7,7 +7,7 @@ class ZMQPublisher {
 	zmq::socket_t socket;
 
 public:
-	ZMQPublisher();
+	ZMQPublisher(int port);
 	~ZMQPublisher() {}
 
 	void SendString();

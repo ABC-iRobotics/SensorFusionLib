@@ -1,10 +1,9 @@
-#include "msg2buf.h"
 #include <thread>
 #include "ZMQPublisher.h"
 
 int main() {
 	
-	ZMQPublisher pub;
+	ZMQPublisher pub(5555);
 
 	SystemDataMsg msg(5, SystemDataMsg::TOFILTER_MEASUREMENT, getTimeInMicroseconds());
 	msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(4, 4));

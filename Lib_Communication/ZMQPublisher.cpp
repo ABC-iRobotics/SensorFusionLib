@@ -3,7 +3,7 @@
 #include <iostream>
 #include <thread>
 
-ZMQPublisher::ZMQPublisher() : context(1), socket(context, ZMQ_PUB) {
+ZMQPublisher::ZMQPublisher(int port) : context(1), socket(context, ZMQ_PUB) {
 	std::string protocol = "tcp://*:" + std::to_string(port);
 	socket.bind(protocol.c_str());
 }

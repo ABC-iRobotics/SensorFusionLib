@@ -8,7 +8,7 @@
 class youBotINSGPS : public FilteringManager {
 
 public:
-	youBotINSGPS() : FilteringManager(0.01) {
+	youBotINSGPS(int port, int port_logger=-1) : FilteringManager(0.01, port) {
 		WAUKF::WAUKFPtr waukf;
 
 		//youbot
@@ -45,7 +45,7 @@ public:
 			waukf->AddSensor(data, initState);
 			waukf->SetDisturbanceValueWindowing(ins, 100);
 			waukf->SetDisturbanceVarianceWindowing(ins, 100);
-			_addSystem(1, ins);
+			_addSystem(2, ins);
 		}
 		// GPS
 		{
@@ -62,9 +62,11 @@ public:
 			waukf->AddSensor(data, initState);
 			waukf->SetNoiseVarianceWindowing(absPose, 100);
 			//waukf->SetNoiseValueWindowing(absPose, 100);
-			_addSystem(2, absPose);
+			_addSystem(1, absPose);
 		}
 		filter = waukf;
+		if (port_logger >=0)
+			SetZMQLogger(*filter, port_logger);
 	}
 
 	~youBotINSGPS();

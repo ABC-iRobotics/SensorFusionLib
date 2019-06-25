@@ -1,9 +1,7 @@
-#include "msg2buf.h"
-#include <thread>
 #include "ZMQSubscriber.h"
 
 int main(void) {
-	ZMQSubscriber sub;
+	ZMQSubscriber sub(5555);
 
 	while (true) {
 		SystemDataMsg d;
