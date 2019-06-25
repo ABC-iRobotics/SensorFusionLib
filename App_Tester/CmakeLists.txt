@@ -21,7 +21,6 @@ endif()
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	pch.h
-	Simulation.h
 	Simulation_youBot_Kalman.h
 	Simulation_youBot_WAUKF.h
 	)
@@ -29,7 +28,6 @@ set (HEADERS
 set (SOURCES
 	main.cpp
 	pch.cpp
-	Simulation.cpp
 	Simulation_youBot_Kalman.cpp
 	Simulation_youBot_WAUKF.cpp
 	)

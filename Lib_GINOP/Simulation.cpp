@@ -55,7 +55,7 @@ Trajectory::Trajectory(double Ts_) : Ts(Ts_) {
 }
 
 Trajectory genTrajectory() {
-	double Ts = 0.001;
+	double Ts = 0.01;
 	Trajectory traj(Ts);
 	for (unsigned int n = 0; n < (0.5 / Ts); n++)
 		traj.add(0, 0, 0);
