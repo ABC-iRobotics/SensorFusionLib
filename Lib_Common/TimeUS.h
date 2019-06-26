@@ -1,12 +1,12 @@
 #pragma once
 
-class Time {
+class TimeUS {
 	unsigned long time_in_us;
 
 public:
-	Time();
+	TimeUS();
 
-	Time(unsigned long timeinUS);
+	TimeUS(unsigned long timeinUS);
 
 	unsigned long TimeInUS() const;
 
@@ -14,9 +14,9 @@ public:
 
 	double TimeInS() const;
 
-	Time operator-(const Time& time) const;
+	TimeUS operator-(const TimeUS& time) const;
 
-	~Time();
+	~TimeUS();
 };
 
 

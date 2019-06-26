@@ -1,6 +1,6 @@
 #include "DataMsg.h"
 
-#include "Time.h"
+#include "TimeUS.h"
 #include <iostream>
 
 DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_) :
@@ -24,7 +24,7 @@ DataType DataMsg::GetDataType() const { return dataType; }
 OperationType DataMsg::GetDataSourceType() const { return dataSource; }
 
 void DataMsg::print() const {
-	auto t = Time();
+	auto t = TimeUS();
 	if (IsEmpty()) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
@@ -61,7 +61,7 @@ void DataMsg::print() const {
 	default:
 		break;
 	}
-	printf("\n Age: %f [ms]\n", (t - Time(timestamp_in_us)).TimeInS());
+	printf("\n Age: %f [ms]\n", (t - TimeUS(timestamp_in_us)).TimeInS());
 	if (hasValue)
 		std::cout << "Value:\n" << value << std::endl;
 	if (hasVariance)

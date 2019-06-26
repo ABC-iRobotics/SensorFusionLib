@@ -3,25 +3,10 @@
 #include "msg_generated.h"
 #include <iostream>
 
-
-#include <windows.h>
+#include "TimeUS.h"
 
 unsigned long getTimeInMicroseconds() {
-	SYSTEMTIME time;
-	GetSystemTime(&time);
-	unsigned long out = time.wYear;
-	out *= 12;
-	out += time.wDay;
-	out *= 24;
-	out += time.wHour;
-	out *= 60;
-	out += time.wMinute;
-	out *= 60;
-	out += time.wSecond;
-	out *= 1000;
-	out += time.wMilliseconds;
-	out *= 1000;
-	return out;
+	return TimeUS().TimeInUS();
 }
 
 
@@ -70,7 +55,7 @@ Buffer& Buffer::operator=(const Buffer& buf0) {
 }
 
 void SystemDataMsg::print() const {
-	unsigned int t = getTimeInMicroseconds();
+	unsigned long t = getTimeInMicroseconds();
 	if (contentType == EMPTY) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
