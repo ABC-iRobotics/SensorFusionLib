@@ -16,8 +16,8 @@ void ZMQPublisher::SendString() {
 	std::this_thread::sleep_for(std::chrono::duration<float, std::micro>(5));
 }
 
-void ZMQPublisher::SendMsg(const SystemDataMsg & data) {
-	Buffer b = data.GetMsgBuffer();
+void ZMQPublisher::SendMsg(const DataMsg & data) {
+	Buffer b(data);
 	zmq::message_t request((void*)b.Buf(), b.Size(), NULL);
 	socket.send(request, zmq::send_flags::none);
 	std::this_thread::sleep_for(std::chrono::duration<float, std::micro>(50)); // 5 us is enough for messages of 50 byte

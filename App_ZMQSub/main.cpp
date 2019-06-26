@@ -4,7 +4,7 @@ int main(void) {
 	ZMQSubscriber sub(5555);
 
 	while (true) {
-		SystemDataMsg d;
+		DataMsg d;
 		if (sub.RecvMsg_Wait(d))
 			d.print();
 	}

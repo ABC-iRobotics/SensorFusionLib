@@ -5,7 +5,7 @@ int main() {
 	
 	ZMQPublisher pub(5555);
 
-	SystemDataMsg msg(5, SystemDataMsg::TOFILTER_MEASUREMENT, getTimeInMicroseconds());
+	DataMsg msg(5, STATE, SENSOR, getTimeInMicroseconds());
 	msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(4, 4));
 	Eigen::VectorXd v0 = Eigen::VectorXd::Ones(4);
 	v0[3] = 2;
@@ -15,7 +15,7 @@ int main() {
 
 	int i = 0;
 	while (true) {
-		msg = SystemDataMsg(i, SystemDataMsg::TOFILTER_MEASUREMENT, getTimeInMicroseconds());
+		msg = DataMsg(i, STATE, SENSOR, getTimeInMicroseconds());
 		msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(4, 4)*i);
 		pub.SendMsg(msg);
 		msg.print();

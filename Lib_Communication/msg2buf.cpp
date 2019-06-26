@@ -22,6 +22,82 @@ Buffer::Buffer(const Buffer & buf_) :
 
 Buffer::Buffer(Buffer && o) : size(std::move(o.size)) { _allocandcopy(o.Buf()); }
 
+Buffer::Buffer(const DataMsg & data) {
+	flatbuffers::FlatBufferBuilder fbb(1024);
+
+	flatbuffers::Offset<flatbuffers::Vector<float>> fbb_value;
+	if (data.HasValue()) {
+		auto value = data.GetValue();
+		size_t N = value.size();
+		float* v = new float[N];
+		for (unsigned int i = 0; i < N; i++)
+			v[i] = (float)value[i];
+		fbb_value = fbb.CreateVector<float>(v, 4);
+	}
+
+	flatbuffers::Offset<flatbuffers::Vector<float>> fbb_variance;
+	if (data.HasVariance()) {
+		auto variance = data.GetVariance();
+		unsigned int N = static_cast<unsigned int>(variance.rows());
+		unsigned int K = static_cast<unsigned int>((N*(N + 1)) / 2);
+		float* v = new float[K];
+		int k = 0;
+		for (unsigned int i = 0; i < N; i++)
+			for (unsigned int j = i; j < N; j++) {
+				v[k] = (float)variance(i, j);
+				k++;
+			}
+		fbb_variance = fbb.CreateVector<float>(v, K);
+	}
+
+	DataMsgNameSpace::MsgBuilder msgBuilder(fbb);
+	switch (data.GetDataType()) {
+	case STATE:
+		msgBuilder.add_type(DataMsgNameSpace::DataType_STATE);
+		break;
+	case OUTPUT:
+		msgBuilder.add_type(DataMsgNameSpace::DataType_OUTPUT);
+		break;
+	case NOISE:
+		msgBuilder.add_type(DataMsgNameSpace::DataType_NOISE);
+		break;
+	case DISTURBANCE:
+		msgBuilder.add_type(DataMsgNameSpace::DataType_DISTURBANCE);
+		break;
+	}
+	switch (data.GetDataSourceType()) {
+	case FILTER_TIME_UPDATE:
+		msgBuilder.add_source(DataMsgNameSpace::OperationType_FILTER_TIME_UPDATE);
+		break;
+	case FILTER_MEAS_UPDATE:
+		msgBuilder.add_source(DataMsgNameSpace::OperationType_FILTER_MEAS_UPDATE);
+		break;
+	case FILTER_PARAM_ESTIMATION:
+		msgBuilder.add_source(DataMsgNameSpace::OperationType_FILTER_PARAM_ESTIMATION);
+		break;
+	case SENSOR:
+		msgBuilder.add_source(DataMsgNameSpace::OperationType_SENSOR);
+		break;
+	}
+
+	msgBuilder.add_sensorID(data.GetSourceID());
+
+	if (data.HasValue())
+		msgBuilder.add_value_vector(fbb_value);
+
+	if (data.HasVariance())
+		msgBuilder.add_variance_matrix(fbb_variance);
+
+	msgBuilder.add_timestamp_in_us(data.GetTimeInUs());
+
+	auto msg = msgBuilder.Finish();
+	fbb.Finish(msg);
+
+	size = fbb.GetSize();
+
+	_allocandcopy(fbb.GetBufferPointer());
+}
+
 Buffer::Buffer() : size(0), buf(NULL) {}
 
 bool Buffer::isNull() const { return size == 0; }
@@ -42,6 +118,73 @@ void Buffer::_allocandcopy(const unsigned char * buf_) {
 		buf[i] = buf_[i];
 }
 
+DataMsg Buffer::ExtractDataMsg() const {
+	auto msg = DataMsgNameSpace::GetMsg(buf);
+
+	DataType type;
+	switch (msg->type()) {
+	case DataMsgNameSpace::DataType_STATE:
+		type = STATE;
+		break;
+	case DataMsgNameSpace::DataType_OUTPUT:
+		type = OUTPUT;
+		break;
+	case DataMsgNameSpace::DataType_DISTURBANCE:
+		type = DISTURBANCE;
+		break;
+	case DataMsgNameSpace::DataType_NOISE:
+		type = NOISE;
+		break;
+	}
+
+	OperationType source;
+	switch (msg->source()) {
+	case DataMsgNameSpace::OperationType_FILTER_TIME_UPDATE:
+		source = FILTER_TIME_UPDATE;
+		break;
+	case DataMsgNameSpace::OperationType_FILTER_MEAS_UPDATE:
+		source = FILTER_MEAS_UPDATE;
+		break;
+	case DataMsgNameSpace::OperationType_FILTER_PARAM_ESTIMATION:
+		source = FILTER_PARAM_ESTIMATION;
+		break;
+	case DataMsgNameSpace::OperationType_SENSOR:
+		source = SENSOR;
+		break;
+	}
+
+	auto timestamp_in_us = msg->timestamp_in_us();
+
+	auto sourceID = msg->sensorID();
+
+	DataMsg out(sourceID, type, source, timestamp_in_us);
+
+	if (flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VALUE_VECTOR)) {
+		auto v = msg->value_vector();
+		size_t N = v->size();
+		auto value = Eigen::VectorXd(N);
+		for (unsigned int n = 0; n < N; n++)
+			value[n] = v->Get(n);
+		out.SetValueVector(value);
+	}
+
+	if (flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VARIANCE_MATRIX)) {
+		auto v = msg->variance_matrix();
+		size_t K = v->size();
+		size_t N = static_cast<size_t>((sqrt(8 * K + 1) - 1) / 2);
+		auto variance = Eigen::MatrixXd(N, N);
+		int k = 0;
+		for (unsigned int i = 0; i < N; i++)
+			for (unsigned int j = i; j < N; j++) {
+				variance(i, j) = v->Get(k);
+				variance(j, i) = variance(i, j);
+				k++;
+			}
+		out.SetVarianceMatrix(variance);
+	}
+	return out;
+}
+
 Buffer::~Buffer() { delete buf; }
 
 Buffer& Buffer::operator=(const Buffer& buf0) {
@@ -54,6 +197,8 @@ Buffer& Buffer::operator=(const Buffer& buf0) {
 	return *this;
 }
 
+
+/*
 void SystemDataMsg::print() const {
 	unsigned long t = getTimeInMicroseconds();
 	if (contentType == EMPTY) {
@@ -115,9 +260,9 @@ SystemDataMsg::SystemDataMsg(unsigned char ID, ContentTypes type, unsigned long 
 SystemDataMsg::SystemDataMsg() : contentType(EMPTY), hasValue(false), hasVariance(false) {}
 
 SystemDataMsg::SystemDataMsg(const Buffer & buf) {
-	auto msg = SensorDataMsg::GetMsg(buf.Buf());
+	auto msg = DataMsgNameSpace::GetMsg(buf.Buf());
 
-	hasValue = flatbuffers::IsFieldPresent(msg, SensorDataMsg::Msg::VT_VALUE_VECTOR);
+	hasValue = flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VALUE_VECTOR);
 	if (hasValue) {
 		auto v = msg->value_vector();
 		size_t N = v->size();
@@ -126,7 +271,7 @@ SystemDataMsg::SystemDataMsg(const Buffer & buf) {
 			value[n] = v->Get(n);
 	}
 
-	hasVariance = flatbuffers::IsFieldPresent(msg, SensorDataMsg::Msg::VT_VARIANCE_MATRIX);
+	hasVariance = flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VARIANCE_MATRIX);
 	if (hasVariance) {
 		auto v = msg->variance_matrix();
 		size_t K = v->size();
@@ -142,28 +287,28 @@ SystemDataMsg::SystemDataMsg(const Buffer & buf) {
 	}
 
 	switch (msg->type()) {
-	case SensorDataMsg::ValueType::ValueType_TOFILTER_MEASUREMENT:
+	case DataMsgNameSpace::ValueType::ValueType_TOFILTER_MEASUREMENT:
 		contentType = TOFILTER_MEASUREMENT;
 		break;
-	case SensorDataMsg::ValueType::ValueType_TOFILTER_DISTURBANCE:
+	case DataMsgNameSpace::ValueType::ValueType_TOFILTER_DISTURBANCE:
 		contentType = TOFILTER_DISTURBANCE;
 		break;
-	case SensorDataMsg::ValueType::ValueType_FROMFILTER_FILTEREDSTATE:
+	case DataMsgNameSpace::ValueType::ValueType_FROMFILTER_FILTEREDSTATE:
 		contentType = FROMFILTER_FILTEREDSTATE;
 		break;
-	case SensorDataMsg::ValueType::ValueType_FROMFILTER_MEASUREDOUTPUT:
+	case DataMsgNameSpace::ValueType::ValueType_FROMFILTER_MEASUREDOUTPUT:
 		contentType = FROMFILTER_MEASUREDOUTPUT;
 		break;
-	case SensorDataMsg::ValueType::ValueType_FROMFILTER_PREDICTEDOUTPUT:
+	case DataMsgNameSpace::ValueType::ValueType_FROMFILTER_PREDICTEDOUTPUT:
 		contentType = FROMFILTER_PREDICTEDOUTPUT;
 		break;
-	case SensorDataMsg::ValueType::ValueType_FROMFILTER_PREDICTEDSTATE:
+	case DataMsgNameSpace::ValueType::ValueType_FROMFILTER_PREDICTEDSTATE:
 		contentType = FROMFILTER_PREDICTEDSTATE;
 		break;
-	case SensorDataMsg::ValueType::ValueType_FROMFILTER_USEDDISTURBANCE:
+	case DataMsgNameSpace::ValueType::ValueType_FROMFILTER_USEDDISTURBANCE:
 		contentType = FROMFILTER_USEDDISTURBANCE;
 		break;
-	case SensorDataMsg::ValueType::ValueType_FROMFILTER_USEDNOISE:
+	case DataMsgNameSpace::ValueType::ValueType_FROMFILTER_USEDNOISE:
 		contentType = FROMFILTER_USEDNOISE;
 		break;
 	}
@@ -224,32 +369,32 @@ Buffer SystemDataMsg::GetMsgBuffer() const {
 		fbb_variance = fbb.CreateVector<float>(v, K);
 	}
 
-	SensorDataMsg::MsgBuilder msgBuilder(fbb);
+	DataMsgNameSpace::MsgBuilder msgBuilder(fbb);
 	switch (contentType)
 	{
 	case TOFILTER_MEASUREMENT:
-		msgBuilder.add_type(SensorDataMsg::ValueType_TOFILTER_MEASUREMENT);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_TOFILTER_MEASUREMENT);
 		break;
 	case TOFILTER_DISTURBANCE:
-		msgBuilder.add_type(SensorDataMsg::ValueType_TOFILTER_DISTURBANCE);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_TOFILTER_DISTURBANCE);
 		break;
 	case FROMFILTER_FILTEREDSTATE:
-		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_FILTEREDSTATE);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_FROMFILTER_FILTEREDSTATE);
 		break;
 	case FROMFILTER_MEASUREDOUTPUT:
-		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_MEASUREDOUTPUT);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_FROMFILTER_MEASUREDOUTPUT);
 		break;
 	case FROMFILTER_PREDICTEDOUTPUT:
-		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_PREDICTEDOUTPUT);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_FROMFILTER_PREDICTEDOUTPUT);
 		break;
 	case FROMFILTER_PREDICTEDSTATE:
-		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_PREDICTEDSTATE);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_FROMFILTER_PREDICTEDSTATE);
 		break;
 	case FROMFILTER_USEDDISTURBANCE:
-		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_USEDDISTURBANCE);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_FROMFILTER_USEDDISTURBANCE);
 		break;
 	case FROMFILTER_USEDNOISE:
-		msgBuilder.add_type(SensorDataMsg::ValueType_FROMFILTER_USEDNOISE);
+		msgBuilder.add_type(DataMsgNameSpace::ValueType_FROMFILTER_USEDNOISE);
 		break;
 	}
 
@@ -268,3 +413,4 @@ Buffer SystemDataMsg::GetMsgBuffer() const {
 
 	return Buffer(fbb.GetBufferPointer(), fbb.GetSize());
 }
+*/

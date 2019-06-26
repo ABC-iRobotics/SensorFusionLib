@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Eigen/Dense"
+#include "DataMsg.h"
 
 unsigned long getTimeInMicroseconds();
 
@@ -10,6 +10,10 @@ public:
 	Buffer(const unsigned char * buf_, size_t size_);
 	Buffer(const Buffer& buf0);
 	Buffer(Buffer&& o);
+
+	Buffer(const DataMsg& data);
+
+	DataMsg ExtractDataMsg() const;
 	
 	~Buffer();
 
@@ -30,7 +34,7 @@ private:
 
 	size_t size;
 };
-
+/*
 class SystemDataMsg {
 public:
 	enum ContentTypes {
@@ -85,4 +89,4 @@ private:
 	bool hasVariance;
 	unsigned long timestamp_in_us;
 	ContentTypes contentType;
-};
+};*/

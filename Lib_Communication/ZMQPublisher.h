@@ -12,6 +12,6 @@ public:
 
 	void SendString();
 
-	void SendMsg(const SystemDataMsg& data);
+	void SendMsg(const DataMsg & data);
 };
 

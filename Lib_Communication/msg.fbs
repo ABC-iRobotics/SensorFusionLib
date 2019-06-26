@@ -1,12 +1,13 @@
-namespace SensorDataMsg;
+namespace DataMsgNameSpace;
 
-enum ValueType : ubyte { TOFILTER_MEASUREMENT = 0, TOFILTER_DISTURBANCE,
- FROMFILTER_PREDICTEDSTATE, FROMFILTER_FILTEREDSTATE,
- FROMFILTER_PREDICTEDOUTPUT, FROMFILTER_MEASUREDOUTPUT,
- FROMFILTER_USEDDISTURBANCE, FROMFILTER_USEDNOISE} 
+enum DataType : ubyte { NOISE=0, DISTURBANCE, STATE, OUTPUT }
+
+enum OperationType : ubyte { FILTER_TIME_UPDATE=0, FILTER_MEAS_UPDATE,
+ SENSOR, FILTER_PARAM_ESTIMATION, GROUND_TRUTH}
 
 table Msg {
-	type : ValueType;
+	type : DataType;
+	source : OperationType;
 	sensorID : int;
 	value_vector : [float];    // - optional, as [ v1 v2 ... vn ]
 	variance_matrix : [float]; // - optional, as [ m11, m12, ..., m1n, m22, m23 ... m2n, m33 ... m3n, m41 ... ... ... mnn ] ( = n*(n+1)/2 values)

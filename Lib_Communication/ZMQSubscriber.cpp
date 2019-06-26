@@ -12,28 +12,28 @@ ZMQSubscriber::~ZMQSubscriber() {
 	socket.close();
 }
 
-bool ZMQSubscriber::RecvMsg_Wait(SystemDataMsg & data, int waitinMS) {
+bool ZMQSubscriber::RecvMsg_Wait(DataMsg& data, int waitinMS) {
 	socket.setsockopt(ZMQ_RCVTIMEO, waitinMS);
 	zmq::message_t reply;
 	auto success = socket.recv(reply, zmq::recv_flags::none);
 	if (success.has_value()) {
 		Buffer b = Buffer(static_cast<unsigned char*>(reply.data()), reply.size());
-		data = SystemDataMsg(b);
+		data = b.ExtractDataMsg();
 	}
 	else
-		data = SystemDataMsg();
+		data = DataMsg();
 	return success.has_value();
 }
 
-bool ZMQSubscriber::RecvMsg_DontWait(SystemDataMsg & data) {
+bool ZMQSubscriber::RecvMsg_DontWait(DataMsg& data) {
 	zmq::message_t reply;
 	auto success = socket.recv(reply, zmq::recv_flags::dontwait);
 	if (success.has_value()) {
 		Buffer b = Buffer(static_cast<unsigned char*>(reply.data()), reply.size());
-		data = SystemDataMsg(b);
+		data = b.ExtractDataMsg();
 	}
 	else
-		data = SystemDataMsg();
+		data = DataMsg();
 	return success.has_value();
 }
 
