@@ -1,6 +1,7 @@
 #pragma once
 
 #include "defs.h"
+#include "TimeUS.h"
 
 class DataMsg {
 	DataType dataType;
@@ -16,13 +17,17 @@ class DataMsg {
 public:
 	DataMsg();
 
-	DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_);;
+	DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_ = TimeUS().TimeInUS());;
 
 	bool IsEmpty() const;
 
 	bool HasValue() const;
 
 	bool HasVariance() const;
+
+	void ClearValue();
+
+	void ClearVariance();
 
 	Eigen::VectorXd GetValue() const;
 
@@ -33,6 +38,8 @@ public:
 	DataType GetDataType() const;
 
 	OperationType GetDataSourceType() const;
+
+	unsigned long GetTimeInUs() const;
 
 	void print() const;
 

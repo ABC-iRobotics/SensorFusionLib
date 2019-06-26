@@ -1,3 +1,4 @@
+#pragma once
 #include "Eigen/Dense"
 
 enum DataType { NOISE, DISTURBANCE, STATE, OUTPUT };

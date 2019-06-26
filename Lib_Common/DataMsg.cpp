@@ -13,6 +13,10 @@ bool DataMsg::HasValue() const { return hasValue; }
 
 bool DataMsg::HasVariance() const { return hasVariance; }
 
+void DataMsg::ClearValue() { hasValue = false; }
+
+void DataMsg::ClearVariance() { hasVariance = false; }
+
 Eigen::VectorXd DataMsg::GetValue() const { return value; }
 
 Eigen::MatrixXd DataMsg::GetVariance() const { return variance; }
@@ -23,13 +27,15 @@ DataType DataMsg::GetDataType() const { return dataType; }
 
 OperationType DataMsg::GetDataSourceType() const { return dataSource; }
 
+unsigned long DataMsg::GetTimeInUs() const { return timestamp_in_us; }
+
 void DataMsg::print() const {
 	auto t = TimeUS();
 	if (IsEmpty()) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
 	}
-	printf("SourceID: %d Content: ", sourceID);
+	printf("Content: ");
 	switch (dataType) {
 	case STATE:
 		printf("STATE");
@@ -56,7 +62,7 @@ void DataMsg::print() const {
 		printf("filter(param. estimation)");
 		break;
 	case SENSOR:
-		printf("sensor");
+		printf("sensor (ID: %d) ", sourceID);
 		break;
 	default:
 		break;
