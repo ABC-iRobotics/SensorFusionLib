@@ -2,11 +2,10 @@
 
 std::vector<FilterPlot*> FilterPlot::toUpdate = std::vector<FilterPlot*>();
 
-void FilterPlot::Callback(const FilterCallData & data) {
-	if (data.ptr == ptr && data.type == valueType) {
-		unsigned int index = _index(valueType, data.callType);
-		_plotValueAt(index, data.value, data.t);
-		
+void FilterPlot::Callback(const DataMsg & data) {
+	if (ID == 0 && data.GetDataType() == valueType) { // TODO - sourceID
+		unsigned int index = _index(valueType, data.GetDataSourceType());
+		_plotValueAt(index, data.GetValue(), double(data.GetTimeInUs())*1e-6);
 	}
 }
 
@@ -27,11 +26,11 @@ std::string SystemValueType2String(DataType type) {
 }
 
 FilterPlot::FilterPlot(SystemManager & filter, System::SystemPtr sys, DataType type_, cvplot::Rect pose) :
-	FilterLog(filter), valueType(type_), ptr(sys), nViews(sys->getNumOf(type_)),
+	FilterLog(filter), valueType(type_), ID(sys->getID()), nViews(sys->getNumOf(type_)),
 	plotter(sys->getName() + ": " + SystemValueType2String(type_),
 	cvplot::Offset(pose.x, pose.y), cvplot::Size(pose.width, pose.height)) {
 	// Create plots, set number of serieses	
-	std::vector<std::string> viewNames = ptr->getNames(valueType);
+	std::vector<std::string> viewNames = sys->getNames(valueType);
 	unsigned int nSeries = _num(type_);
 	std::vector<std::string> seriesNames = std::vector<std::string>();
 	for (unsigned int i = 0; i < nSeries; i++)
@@ -69,83 +68,83 @@ unsigned int FilterPlot::_num(DataType valueType) const {
 	else return 3;
 }
 
-std::string FilterPlot::_callTypeToString(FilterCallData::FilterCallType callType) const {
+std::string FilterPlot::_callTypeToString(OperationType callType) const {
 	switch (callType) {
-	case FilterCallData::FILTERING:
+	case FILTER_MEAS_UPDATE:
 		return "filt.";
-	case FilterCallData::MEASUREMENT:
+	case SENSOR:
 		return "meas.";
-	case FilterCallData::PREDICTION:
+	case FILTER_TIME_UPDATE:
 		return "pred.";
-	case FilterCallData::ESTIMATION:
+	case FILTER_PARAM_ESTIMATION:
 		return "est.";
-	case FilterCallData::GROUNDTRUTH:
+	case GROUND_TRUTH:
 		return "truth";
 	}
 	throw std::runtime_error(std::string("System::_callTypeToString(): Unhandled argument!\n"));
 }
 
-unsigned int FilterPlot::_index(DataType valueType, FilterCallData::FilterCallType callType) const {
+unsigned int FilterPlot::_index(DataType valueType, OperationType callType) const {
 	switch (valueType) {
 	case STATE:
 		switch (callType) {
-		case FilterCallData::FILTERING:
+		case FILTER_MEAS_UPDATE:
 			return 0;
-		case FilterCallData::PREDICTION:
+		case FILTER_TIME_UPDATE:
 			return 1;
-		case FilterCallData::GROUNDTRUTH:
+		case GROUND_TRUTH:
 			return 2;
 		}
 		break;
 	case OUTPUT:
 		switch (callType) {
-		case FilterCallData::MEASUREMENT:
+		case SENSOR:
 			return 0;
-		case FilterCallData::PREDICTION:
+		case FILTER_TIME_UPDATE:
 			return 1;
-		case FilterCallData::GROUNDTRUTH:
+		case GROUND_TRUTH:
 			return 2;
 		}
 		break;
 	case NOISE:
 	case DISTURBANCE:
 		switch (callType) {
-		case FilterCallData::ESTIMATION:
+		case FILTER_PARAM_ESTIMATION:
 			return 0;
-		case FilterCallData::PREDICTION:
+		case FILTER_TIME_UPDATE:
 			return 1;
-		case FilterCallData::GROUNDTRUTH:
+		case GROUND_TRUTH:
 			return 2;
 		}
 	}
 	throw std::runtime_error(std::string("System::_index(): Unhandled argument!\n"));
 }
 
-FilterCallData::FilterCallType FilterPlot::_eventType(DataType valueType, unsigned int index) const {
+OperationType FilterPlot::_eventType(DataType valueType, unsigned int index) const {
 	switch (valueType) {
 	case STATE:
 		switch (index) {
 		case 0:
-			return FilterCallData::FILTERING;
+			return FILTER_MEAS_UPDATE;
 		case 1:
-			return FilterCallData::PREDICTION;
+			return FILTER_TIME_UPDATE;
 		case 2:
-			return FilterCallData::GROUNDTRUTH;
+			return GROUND_TRUTH;
 		}
 		break;
 	case OUTPUT:
 		switch (index) {
 		case 0:
-			return FilterCallData::MEASUREMENT;
+			return SENSOR;
 		case 1:
-			return FilterCallData::PREDICTION;
+			return FILTER_TIME_UPDATE;
 		case 2:
-			return FilterCallData::GROUNDTRUTH;
+			return GROUND_TRUTH;
 		}
 		break;
 	case NOISE:
 	case DISTURBANCE:
-		return FilterCallData::PREDICTION;
+		return FILTER_TIME_UPDATE;
 	}
 	throw std::runtime_error(std::string("System::_eventType(): Unhandled argument!\n"));
 }

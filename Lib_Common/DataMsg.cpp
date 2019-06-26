@@ -7,6 +7,10 @@ DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, unsigned
 	sourceID(ID), dataType(type), dataSource(source), timestamp_in_us(timestamp_in_us_),
 	empty(false), hasValue(false), hasVariance(false) {}
 
+DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, unsigned long timestamp_in_us_) :
+	sourceID(ID), dataType(type), dataSource(source), timestamp_in_us(timestamp_in_us_),
+	empty(false), hasValue(true), hasVariance(true), value(data.vector), variance(data.variance) {}
+
 bool DataMsg::IsEmpty() const { return empty; }
 
 bool DataMsg::HasValue() const { return hasValue; }

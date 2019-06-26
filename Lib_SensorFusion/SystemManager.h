@@ -72,18 +72,9 @@ getMatrices(TIMEUPDATE/MEASUREMENTUPDATE, Ts, ...): get the actual matrices acco
 EvalNonLinPart(TIMEUPDATE/MEASUREMENTUPDATE, Ts, ...): computes the results of f(), g() functions
 */
 
-struct FilterCallData {
-	StatisticValue value;
-	System::SystemPtr ptr;
-	double t;
-	DataType type;
-	enum FilterCallType { PREDICTION, FILTERING, MEASUREMENT, ESTIMATION, GROUNDTRUTH } callType;
-	FilterCallData(const StatisticValue& value_, System::SystemPtr ptr_,
-		double t_, DataType type_, FilterCallType event_) :
-		value(value_), ptr(ptr_), t(t_), type(type_), callType(event_) {};
-};
+#include "DataMsg.h"
 
-class SystemManager : public CallbackHandler<const FilterCallData&> {
+class SystemManager : public CallbackHandler<const DataMsg&> {
 public:
 	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
 

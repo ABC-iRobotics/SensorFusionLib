@@ -2,6 +2,7 @@
 
 #include "defs.h"
 #include "TimeUS.h"
+#include "StatisticValue.h"
 
 class DataMsg {
 	DataType dataType;
@@ -17,7 +18,10 @@ class DataMsg {
 public:
 	DataMsg();
 
-	DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_ = TimeUS().TimeInUS());;
+	DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_ = TimeUS().TimeInUS());
+
+	DataMsg(unsigned char ID, DataType type, OperationType source,
+		StatisticValue data, unsigned long timestamp_in_us_ = TimeUS().TimeInUS());;
 
 	bool IsEmpty() const;
 

@@ -93,9 +93,11 @@ void Simulation_youBot_WAUKF() {
 		}
 
 		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts);
-		data = DataMsg(ins->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
-		data.SetValueVector(insphantom.Out());
-		filter->SetProperty(data);
+		{
+			data = DataMsg(ins->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
+			data.SetValueVector(insphantom.Out());
+			filter->SetProperty(data);
+		}
 		//std::cout << (*filter)(STATE).vector(9) << std::endl;
 
 
@@ -107,10 +109,11 @@ void Simulation_youBot_WAUKF() {
 		truth(4) = traj.y[n];
 		truth(5) = traj.phi[n];
 		truth(6) = 0;
-		plotter.Callback(FilterCallData(truth, youBot, n*traj.Ts, STATE, FilterCallData::GROUNDTRUTH));
-
-
-
+		{
+			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, n*traj.Ts*1e6);
+			data.SetValueVector(truth);
+			plotter.Callback(data);
+		}
 
 		filter->Step(traj.Ts);
 #ifdef FILTERPLOT

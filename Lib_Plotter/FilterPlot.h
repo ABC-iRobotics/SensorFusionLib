@@ -9,7 +9,7 @@ public:
 
 	~FilterPlot();
 
-	void Callback(const FilterCallData& data) override;
+	void Callback(const DataMsg& data) override;
 
 	void Update();
 
@@ -20,7 +20,9 @@ private:
 
 	DataType valueType;
 
-	System::SystemPtr ptr;
+	//System::SystemPtr ptr;
+
+	unsigned int ID;
 
 	unsigned int nViews;
 
@@ -30,11 +32,11 @@ private:
 
 	unsigned int _num(DataType valueType) const;
 
-	std::string _callTypeToString(FilterCallData::FilterCallType callType) const;
+	std::string _callTypeToString(OperationType callType) const;
 
-	unsigned int _index(DataType valueType, FilterCallData::FilterCallType callType) const;
+	unsigned int _index(DataType valueType, OperationType callType) const;
 
-	FilterCallData::FilterCallType _eventType(DataType valueType, unsigned int index) const;
+	OperationType _eventType(DataType valueType, unsigned int index) const;
 
 	cvplot::Color _color(unsigned int index) const;
 };
