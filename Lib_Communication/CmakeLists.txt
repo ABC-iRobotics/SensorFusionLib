@@ -7,6 +7,7 @@ find_path(flatbuffers_include_dir "")
 include_directories (
 		${Eigen_INCLUDE_DIRS}
 		${flatbuffers_include_dir}
+		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 
 # Add all header and cpp files in the directory to the project
@@ -27,7 +28,7 @@ set (SOURCES
 add_library (Lib_Communication STATIC ${SOURCES} ${HEADERS})
 
 # Add the dinamic library target to the project
-target_link_libraries (Lib_Communication Eigen3::Eigen cppzmq-static)
+target_link_libraries (Lib_Communication Eigen3::Eigen cppzmq-static Lib_Common)
 		
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

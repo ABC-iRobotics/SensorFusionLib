@@ -10,7 +10,7 @@ void FilterPlot::Callback(const FilterCallData & data) {
 	}
 }
 
-std::string SystemValueType2String(SystemValueType type) {
+std::string SystemValueType2String(DataType type) {
 	switch (type)
 	{
 	case NOISE:
@@ -26,7 +26,7 @@ std::string SystemValueType2String(SystemValueType type) {
 	}
 }
 
-FilterPlot::FilterPlot(SystemManager & filter, System::SystemPtr sys, SystemValueType type_, cvplot::Rect pose) :
+FilterPlot::FilterPlot(SystemManager & filter, System::SystemPtr sys, DataType type_, cvplot::Rect pose) :
 	FilterLog(filter), valueType(type_), ptr(sys), nViews(sys->getNumOf(type_)),
 	plotter(sys->getName() + ": " + SystemValueType2String(type_),
 	cvplot::Offset(pose.x, pose.y), cvplot::Size(pose.width, pose.height)) {
@@ -63,7 +63,7 @@ void FilterPlot::_plotValueAt(unsigned int index, const StatisticValue & value, 
 	}
 }
 
-unsigned int FilterPlot::_num(SystemValueType valueType) const {
+unsigned int FilterPlot::_num(DataType valueType) const {
 	if (valueType == STATE || valueType == OUTPUT)
 		return 3;
 	else return 3;
@@ -85,7 +85,7 @@ std::string FilterPlot::_callTypeToString(FilterCallData::FilterCallType callTyp
 	throw std::runtime_error(std::string("System::_callTypeToString(): Unhandled argument!\n"));
 }
 
-unsigned int FilterPlot::_index(SystemValueType valueType, FilterCallData::FilterCallType callType) const {
+unsigned int FilterPlot::_index(DataType valueType, FilterCallData::FilterCallType callType) const {
 	switch (valueType) {
 	case STATE:
 		switch (callType) {
@@ -121,7 +121,7 @@ unsigned int FilterPlot::_index(SystemValueType valueType, FilterCallData::Filte
 	throw std::runtime_error(std::string("System::_index(): Unhandled argument!\n"));
 }
 
-FilterCallData::FilterCallType FilterPlot::_eventType(SystemValueType valueType, unsigned int index) const {
+FilterCallData::FilterCallType FilterPlot::_eventType(DataType valueType, unsigned int index) const {
 	switch (valueType) {
 	case STATE:
 		switch (index) {

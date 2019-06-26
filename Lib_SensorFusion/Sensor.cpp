@@ -61,27 +61,27 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 		 OutputNonlinearPart(Ts, baseSystemState, baseSystemNoise, sensorState, sensorNoise);
  }
 
- Eigen::VectorXd Sensor::genNonlinearPart(EvalType type, double Ts, const Eigen::VectorXd & baseSystemState,
+ Eigen::VectorXd Sensor::genNonlinearPart(TimeUpdateType type, double Ts, const Eigen::VectorXd & baseSystemState,
 	 const Eigen::VectorXd & baseSystemIn, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorIn) const {
 	 switch (type) {
-	 case EVAL_STATEUPDATE:
+	 case STATE_UPDATE:
 		 return UpdateNonlinearPart(Ts, baseSystemState, baseSystemIn, sensorState, sensorIn);
-	 case EVAL_OUTPUT:
+	 case OUTPUT_UPDATE:
 		 return OutputNonlinearPart(Ts, baseSystemState, baseSystemIn, sensorState, sensorIn);
 	 }
 	 throw std::runtime_error(std::string("Sensor::genNonlinearPart(): Unknown input!"));
  }
 
- Eigen::VectorXi Sensor::genNonlinearBaseSystemDependency(EvalType outType, VariableType inType) const {
+ Eigen::VectorXi Sensor::genNonlinearBaseSystemDependency(TimeUpdateType outType, VariableType inType) const {
 	 switch (outType) {
-	 case EVAL_STATEUPDATE:
+	 case STATE_UPDATE:
 		 switch (inType) {
 		 case VAR_STATE:
 			 return getUpdateNonlinearX0Dependencies();
 		 case VAR_EXTERNAL:
 			 return getUpdateNonlinearW0Dependencies();
 		 }
-	 case EVAL_OUTPUT:
+	 case OUTPUT_UPDATE:
 		 switch (inType) {
 		 case VAR_STATE:
 			 return getOutputNonlinearX0Dependencies();
@@ -92,16 +92,16 @@ Eigen::VectorXi Sensor::getUpdateNonlinearW0Dependencies() const {
 	 throw std::runtime_error(std::string("Sensor::genNonlinearBaseSystemDependency(): Unknown input!"));
  }
 
- Eigen::VectorXi Sensor::genNonlinearSensorDependency(EvalType outType, VariableType inType) const {
+ Eigen::VectorXi Sensor::genNonlinearSensorDependency(TimeUpdateType outType, VariableType inType) const {
 	 switch (outType) {
-	 case EVAL_STATEUPDATE:
+	 case STATE_UPDATE:
 		 switch (inType) {
 		 case VAR_STATE:
 			 return getUpdateNonlinearXiDependencies();
 		 case VAR_EXTERNAL:
 			 return getUpdateNonlinearWiDependencies();
 		 }
-	 case EVAL_OUTPUT:
+	 case OUTPUT_UPDATE:
 		 switch (inType) {
 		 case VAR_STATE:
 			 return getOutputNonlinearXiDependencies();

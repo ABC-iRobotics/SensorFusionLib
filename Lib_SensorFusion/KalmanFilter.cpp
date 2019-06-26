@@ -12,10 +12,10 @@ KalmanFilter::~KalmanFilter()
 
 void KalmanFilter::Step(double dT) { // update, collect measurement, correction via Kalman-filtering
 	Eigen::MatrixXd sg1, sg2;
-	StatisticValue x_pred = Eval(EVAL_STATEUPDATE, dT, (*this)(STATE), (*this)(DISTURBANCE), sg1, sg2);
+	StatisticValue x_pred = Eval(STATE_UPDATE, dT, (*this)(STATE), (*this)(DISTURBANCE), sg1, sg2);
 	Eigen::MatrixXd Syxpred;
 	Eigen::VectorXd y_meas = (*this)(OUTPUT).vector;
-	StatisticValue y_pred = Eval(EVAL_OUTPUT, dT, x_pred, (*this)(NOISE), Syxpred, sg2);
+	StatisticValue y_pred = Eval(OUTPUT_UPDATE, dT, x_pred, (*this)(NOISE), Syxpred, sg2);
 
 	StepClock(dT);
 	PredictionDone(x_pred, y_pred);

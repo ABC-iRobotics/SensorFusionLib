@@ -4,7 +4,7 @@
 
 class FilterPlot : public FilterLog {
 public:
-	FilterPlot(SystemManager& filter, System::SystemPtr sys, SystemValueType type_,
+	FilterPlot(SystemManager& filter, System::SystemPtr sys, DataType type_,
 		cvplot::Rect pose = cvplot::Rect(60, 30, 500, 150));
 
 	~FilterPlot();
@@ -18,7 +18,7 @@ public:
 private:
 	cvplot::Plotter plotter;
 
-	SystemValueType valueType;
+	DataType valueType;
 
 	System::SystemPtr ptr;
 
@@ -28,13 +28,13 @@ private:
 
 	void _plotValueAt(unsigned int index, const StatisticValue& value, double t);
 
-	unsigned int _num(SystemValueType valueType) const;
+	unsigned int _num(DataType valueType) const;
 
 	std::string _callTypeToString(FilterCallData::FilterCallType callType) const;
 
-	unsigned int _index(SystemValueType valueType, FilterCallData::FilterCallType callType) const;
+	unsigned int _index(DataType valueType, FilterCallData::FilterCallType callType) const;
 
-	FilterCallData::FilterCallType _eventType(SystemValueType valueType, unsigned int index) const;
+	FilterCallData::FilterCallType _eventType(DataType valueType, unsigned int index) const;
 
 	cvplot::Color _color(unsigned int index) const;
 };

@@ -10,11 +10,13 @@ include_directories (
 		${PROJECT_SOURCE_DIR}/Lib_Plotter
 		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
 		${PROJECT_SOURCE_DIR}/Lib_GINOP
+		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 else()
 include_directories (
 		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
 		${PROJECT_SOURCE_DIR}/Lib_GINOP
+		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 endif()
 

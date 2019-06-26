@@ -5,6 +5,7 @@ find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 include_directories (
 		${Eigen_INCLUDE_DIRS}
 		${PROJECT_SOURCE_DIR}/Lib_Communication
+		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 
 # Add all header and cpp files in the directory to the project

@@ -3,40 +3,29 @@
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 include_directories (
-		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
-		${PROJECT_SOURCE_DIR}/Lib_Communication
 		${Eigen_INCLUDE_DIRS}
-		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	IMUSensor.h
-	INSSensor.h
-	AbsoluthePoseSensor.h
-	youBotSystem.h
-	FilteringManager.h
-	youBotINSGPS.h
-	Simulation.h
-	ZMQFilterLogger.h
+	StatisticValue.h
+	defs.h
+	DataMsg.h
+	Time.h
 	)
 	
 set (SOURCES
-	IMUSensor.cpp
-	INSSensor.cpp
-	AbsoluthePoseSensor.cpp
-	youBotSystem.cpp
-	FilteringManager.cpp
-	youBotINSGPS.cpp
-	Simulation.cpp
-	ZMQFilterLogger.cpp
+	StatisticValue.cpp
+	DataMsg.cpp
+	Time.cpp
 	)
+	
 
 # Add the dinamic library target to the project
-add_library (Lib_GINOP STATIC ${SOURCES} ${HEADERS})
+add_library (Lib_Common STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (Lib_GINOP Eigen3::Eigen Lib_SensorFusion Lib_Communication Lib_Common)
+target_link_libraries (Lib_Common Eigen3::Eigen)
 		
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

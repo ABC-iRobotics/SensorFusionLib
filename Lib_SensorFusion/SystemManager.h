@@ -75,10 +75,10 @@ struct FilterCallData {
 	StatisticValue value;
 	System::SystemPtr ptr;
 	double t;
-	SystemValueType type;
+	DataType type;
 	enum FilterCallType { PREDICTION, FILTERING, MEASUREMENT, ESTIMATION, GROUNDTRUTH } callType;
 	FilterCallData(const StatisticValue& value_, System::SystemPtr ptr_,
-		double t_, SystemValueType type_, FilterCallType event_) :
+		double t_, DataType type_, FilterCallType event_) :
 		value(value_), ptr(ptr_), t(t_), type(type_), callType(event_) {};
 };
 
@@ -95,12 +95,12 @@ public:
 		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_,
 			const Eigen::VectorXd& measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
 		virtual System::SystemPtr getPtr() const = 0;
-		StatisticValue operator()(SystemValueType type, bool forcedOutput = false) const; // returns th given value
-		size_t num(SystemValueType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
-		void setValue(const Eigen::VectorXd& value, SystemValueType type); // set the given value
-		void setVariance(const Eigen::MatrixXd& value, SystemValueType type); // set the given value
-		Eigen::VectorXd getValue(SystemValueType type) const;
-		Eigen::MatrixXd getVariance(SystemValueType type) const;
+		StatisticValue operator()(DataType type, bool forcedOutput = false) const; // returns th given value
+		size_t num(DataType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
+		void setValue(const Eigen::VectorXd& value, DataType type); // set the given value
+		void setVariance(const Eigen::MatrixXd& value, DataType type); // set the given value
+		Eigen::VectorXd getValue(DataType type) const;
+		Eigen::MatrixXd getVariance(DataType type) const;
 		void resetMeasurement();
 		bool available() const; // returns if is measurement available
 		virtual bool isBaseSystem() const = 0;
@@ -112,9 +112,9 @@ public:
 		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
 			MeasurementStatus measStatus_ = OBSOLETHE);
-		Eigen::VectorXi dep(EvalType outType, VariableType type,
+		Eigen::VectorXi dep(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
-		Eigen::MatrixXd getMatrix(double Ts, EvalType type,
+		Eigen::MatrixXd getMatrix(double Ts, TimeUpdateType type,
 			VariableType inType, bool forcedOutput = false) const;
 		BaseSystem::BaseSystemPtr getBaseSystemPtr() const;
 		System::SystemPtr getPtr() const override;
@@ -127,13 +127,13 @@ public:
 		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
 			MeasurementStatus measStatus_ = OBSOLETHE);
-		Eigen::VectorXi depSensor(EvalType outType, VariableType type,
+		Eigen::VectorXi depSensor(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
-		Eigen::VectorXi depBaseSystem(EvalType outType, VariableType type,
+		Eigen::VectorXi depBaseSystem(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
-		Eigen::MatrixXd getMatrixBaseSystem(double Ts, EvalType type,
+		Eigen::MatrixXd getMatrixBaseSystem(double Ts, TimeUpdateType type,
 			VariableType inType, bool forcedOutput = false) const;
-		Eigen::MatrixXd getMatrixSensor(double Ts, EvalType type, VariableType inType,
+		Eigen::MatrixXd getMatrixSensor(double Ts, TimeUpdateType type, VariableType inType,
 			bool forcedOutput = false) const;
 		Sensor::SensorPtr getSensorPtr() const;
 		System::SystemPtr getPtr() const override;;
@@ -150,24 +150,24 @@ public:
 
 	const SystemData* SystemByID(unsigned int ID) const;
 
-	size_t num(SystemValueType type, bool forcedOutput = false) const;
+	size_t num(DataType type, bool forcedOutput = false) const;
 
-	Eigen::VectorXi dep(EvalType outType, VariableType inType, bool forcedOutput = false) const;
+	Eigen::VectorXi dep(TimeUpdateType outType, VariableType inType, bool forcedOutput = false) const;
 
 	/* Get A,B, C,D matrices according to the available sensors*/
-	void getMatrices(EvalType out_, double Ts, Eigen::MatrixXd& A,
+	void getMatrices(TimeUpdateType out_, double Ts, Eigen::MatrixXd& A,
 		Eigen::MatrixXd& B, bool forcedOutput = false) const;
 
 	// could be faster....
-	Eigen::VectorXd EvalNonLinPart(double Ts, EvalType outType,
+	Eigen::VectorXd EvalNonLinPart(double Ts, TimeUpdateType outType,
 		const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput = false) const;
 
 	// This could be faster by implementing EvalNonLinPart and partitionate to matrices
-	StatisticValue Eval(EvalType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
+	StatisticValue Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
 	// Get the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	StatisticValue operator()(SystemValueType type, bool forcedOutput = false) const;
+	StatisticValue operator()(DataType type, bool forcedOutput = false) const;
 
 	std::ostream & print(std::ostream & stream) const;
 
@@ -180,12 +180,12 @@ public:
 		std::vector<size_t> ny;
 		std::vector<size_t> nv;
 		Partitioner(size_t N);
-		const std::vector<size_t>& n(SystemValueType type) const;
-		Eigen::VectorBlock<Eigen::VectorXd> PartValue(SystemValueType type,
+		const std::vector<size_t>& n(DataType type) const;
+		Eigen::VectorBlock<Eigen::VectorXd> PartValue(DataType type,
 			Eigen::VectorXd& value, int index) const;
-		Eigen::Block<Eigen::MatrixXd> PartVariance(SystemValueType type,
+		Eigen::Block<Eigen::MatrixXd> PartVariance(DataType type,
 			Eigen::MatrixXd& value, int index1, int index2) const;
-		Eigen::Block<Eigen::MatrixXd> PartVariance(SystemValueType type1, SystemValueType type2,
+		Eigen::Block<Eigen::MatrixXd> PartVariance(DataType type1, DataType type2,
 			Eigen::MatrixXd& value, int index1, int index2) const;
 	};
 
@@ -209,10 +209,10 @@ protected:
 	virtual void _setProperty(int systemID, SystemCallData call);
 
 	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	std::vector<Eigen::VectorXd> partitionate(SystemValueType type, const Eigen::VectorXd& value, bool forcedOutput = false) const;
+	std::vector<Eigen::VectorXd> partitionate(DataType type, const Eigen::VectorXd& value, bool forcedOutput = false) const;
 
 	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	std::vector<StatisticValue> partitionateWithStatistic(SystemValueType type, const StatisticValue& value, bool forcedOutput = false) const;
+	std::vector<StatisticValue> partitionateWithStatistic(DataType type, const StatisticValue& value, bool forcedOutput = false) const;
 
 	void resetMeasurement();
 

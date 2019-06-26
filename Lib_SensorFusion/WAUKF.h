@@ -48,11 +48,11 @@ private:
 	mapOfMatrixWindows noiseVarianceWindows;
 	mapOfMatrixWindows disturbanceVarianceWindows;
 
-	const mapOfVectorWindows& _getValueWindows(SystemValueType signal) const;
-	const mapOfMatrixWindows& _getVarianceWindows(SystemValueType signal) const;
-	bool _isEstimated(unsigned int systemID, SystemValueType signal, ValueType type) const;
+	const mapOfVectorWindows& _getValueWindows(DataType signal) const;
+	const mapOfMatrixWindows& _getVarianceWindows(DataType signal) const;
+	bool _isEstimated(unsigned int systemID, DataType signal, ValueType type) const;
 
-	StatisticValue _evalWithV0(EvalType outType, double Ts, const StatisticValue& state_,
+	StatisticValue _evalWithV0(TimeUpdateType outType, double Ts, const StatisticValue& state_,
 		const StatisticValue& in, Eigen::MatrixXd & S_out_x, Eigen::MatrixXd& S_out_in,
 		bool forcedOutput, StatisticValue& v0) const;
 };

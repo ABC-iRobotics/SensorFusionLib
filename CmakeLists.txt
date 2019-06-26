@@ -38,6 +38,7 @@ file(MAKE_DIRECTORY  ${CMAKE_BINARY_DIR}/dependencies)
 option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
 set(FILTERPLOT ${ADD_PLOTTER})
 
+add_subdirectory (Lib_Common)
 if (FILTERPLOT)
 	add_subdirectory (Lib_Plotter)
 endif()

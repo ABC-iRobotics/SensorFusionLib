@@ -5,19 +5,19 @@ System::System() {}
 
 System::~System() {}
 
-unsigned int System::getNumOf(SystemValueType type) const {
+unsigned int System::getNumOf(DataType type) const {
 	switch (type)
 	{
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		return getNumOfNoises();
 		break;
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		return getNumOfDisturbances();
 		break;
-	case SystemValueType::STATE:
+	case DataType::STATE:
 		return getNumOfStates();
 		break;
-	case SystemValueType::OUTPUT:
+	case DataType::OUTPUT:
 		return getNumOfOutputs();
 		break;
 	default:
@@ -32,7 +32,7 @@ void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(SystemCallData(sensor_output,SystemValueType::OUTPUT));
+	Call(SystemCallData(sensor_output,DataType::OUTPUT));
 }
 
 // Set changed disturbance characteristics
@@ -43,7 +43,7 @@ void System::SetDisturbanceValue(Eigen::VectorXd value) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(SystemCallData(value, SystemValueType::DISTURBANCE));
+	Call(SystemCallData(value, DataType::DISTURBANCE));
 }
 
 // Set changed disturbance characteristics
@@ -54,7 +54,7 @@ void System::SetDisturbanceVariance(Eigen::MatrixXd value) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(SystemCallData(value, SystemValueType::DISTURBANCE));
+	Call(SystemCallData(value, DataType::DISTURBANCE));
 }
 
 // Set changed noise characteristics
@@ -65,7 +65,7 @@ void System::SetNoiseValue(Eigen::VectorXd value) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(SystemCallData(value, SystemValueType::NOISE));
+	Call(SystemCallData(value, DataType::NOISE));
 }
 
 
@@ -89,7 +89,7 @@ void System::SetNoiseVariance(Eigen::MatrixXd value) const {
 		return;
 	}
 	// call the registered callbacks
-	Call(SystemCallData(value, SystemValueType::NOISE));
+	Call(SystemCallData(value, DataType::NOISE));
 }
 
 std::vector<std::string> System::getStateNames() const {
@@ -105,16 +105,16 @@ std::vector<std::string> System::getOutputNames() const {
 	return list("y", getNumOfOutputs());
 }
 
-std::vector<std::string> System::getNames(SystemValueType type) const {
+std::vector<std::string> System::getNames(DataType type) const {
 	switch (type)
 	{
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		return getNoiseNames();
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		return getDisturbanceNames();
-	case SystemValueType::STATE:
+	case DataType::STATE:
 		return getStateNames();
-	case SystemValueType::OUTPUT:
+	case DataType::OUTPUT:
 		return getOutputNames();
 	}
 	throw std::runtime_error(std::string("System::getNames(): Unhandled argument!\n"));
@@ -122,39 +122,39 @@ std::vector<std::string> System::getNames(SystemValueType type) const {
 std::string System::getName() const {
 	return "System";
 }
-SystemValueType System::getInputValueType(EvalType outType, VariableType inType) {
+DataType System::getInputValueType(TimeUpdateType outType, VariableType inType) {
 	if (inType == VAR_STATE)
-		return SystemValueType::STATE;
+		return DataType::STATE;
 	switch (outType) {
-	case EvalType::EVAL_OUTPUT:
-		return SystemValueType::NOISE;
-	case EvalType::EVAL_STATEUPDATE:
-		return SystemValueType::DISTURBANCE;
+	case TimeUpdateType::OUTPUT_UPDATE:
+		return DataType::NOISE;
+	case TimeUpdateType::STATE_UPDATE:
+		return DataType::DISTURBANCE;
 	}
 	throw std::runtime_error(std::string("System::getInputValueType(): Unknown input!"));
 }
-SystemValueType System::getOutputValueType(EvalType outType) {
+DataType System::getOutputValueType(TimeUpdateType outType) {
 	switch (outType) {
-	case EVAL_STATEUPDATE:
-		return SystemValueType::STATE;
-	case EVAL_OUTPUT:
-		return SystemValueType::OUTPUT;
+	case STATE_UPDATE:
+		return DataType::STATE;
+	case OUTPUT_UPDATE:
+		return DataType::OUTPUT;
 	}
 	throw std::runtime_error(std::string("System::getOutputValueType(): Unknown input!"));
 }
 void System::_systemTest() const {
-	if (getNames(SystemValueType::STATE).size() != getNumOf(SystemValueType::STATE))
+	if (getNames(DataType::STATE).size() != getNumOf(DataType::STATE))
 		throw std::runtime_error(std::string("System::_systemTest()"));
-	if (getNames(SystemValueType::OUTPUT).size() != getNumOf(SystemValueType::OUTPUT))
+	if (getNames(DataType::OUTPUT).size() != getNumOf(DataType::OUTPUT))
 		throw std::runtime_error(std::string("System::_systemTest()"));
-	if (getNames(SystemValueType::DISTURBANCE).size() != getNumOf(SystemValueType::DISTURBANCE))
+	if (getNames(DataType::DISTURBANCE).size() != getNumOf(DataType::DISTURBANCE))
 		throw std::runtime_error(std::string("System::_systemTest()"));
-	if (getNames(SystemValueType::NOISE).size() != getNumOf(SystemValueType::NOISE))
+	if (getNames(DataType::NOISE).size() != getNumOf(DataType::NOISE))
 		throw std::runtime_error(std::string("System::_systemTest()"));
 }
 
-SystemCallData::SystemCallData(Eigen::VectorXd value, SystemValueType type) :
+SystemCallData::SystemCallData(Eigen::VectorXd value, DataType type) :
 	value(value), signalType(type), valueType(VALUE) {}
 
-SystemCallData::SystemCallData(Eigen::MatrixXd variance, SystemValueType type) :
+SystemCallData::SystemCallData(Eigen::MatrixXd variance, DataType type) :
 	variance(variance), signalType(type), valueType(VARIANCE) {}

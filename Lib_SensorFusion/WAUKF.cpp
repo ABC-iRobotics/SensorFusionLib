@@ -1,7 +1,7 @@
 #include "WAUKF.h"
 #include "PartialCholevski.h"
 
-const WAUKF::mapOfVectorWindows & WAUKF::_getValueWindows(SystemValueType signal) const {
+const WAUKF::mapOfVectorWindows & WAUKF::_getValueWindows(DataType signal) const {
 	switch (signal) {
 	case DISTURBANCE:
 		return disturbanceValueWindows;
@@ -12,7 +12,7 @@ const WAUKF::mapOfVectorWindows & WAUKF::_getValueWindows(SystemValueType signal
 	}
 }
 
-const WAUKF::mapOfMatrixWindows & WAUKF::_getVarianceWindows(SystemValueType signal) const {
+const WAUKF::mapOfMatrixWindows & WAUKF::_getVarianceWindows(DataType signal) const {
 	switch (signal) {
 	case DISTURBANCE:
 		return disturbanceVarianceWindows;
@@ -23,7 +23,7 @@ const WAUKF::mapOfMatrixWindows & WAUKF::_getVarianceWindows(SystemValueType sig
 	}
 }
 
-bool WAUKF::_isEstimated(unsigned int systemID, SystemValueType signal, ValueType type) const {
+bool WAUKF::_isEstimated(unsigned int systemID, DataType signal, ValueType type) const {
 	switch (type) {
 	case VALUE: {
 		const mapOfVectorWindows& temp = _getValueWindows(signal);
@@ -66,10 +66,10 @@ WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_) : Syste
 	noiseValueWindows(mapOfVectorWindows()), disturbanceValueWindows(mapOfVectorWindows()),
 	noiseVarianceWindows(mapOfMatrixWindows()), disturbanceVarianceWindows(mapOfMatrixWindows()) {}
 
-StatisticValue WAUKF::_evalWithV0(EvalType outType, double Ts,
+StatisticValue WAUKF::_evalWithV0(TimeUpdateType outType, double Ts,
 	const StatisticValue & state_, const StatisticValue & in, Eigen::MatrixXd & S_out_x,
 	Eigen::MatrixXd & S_out_in, bool forcedOutput, StatisticValue & v0) const {
-	SystemValueType inType = System::getInputValueType(outType, VAR_EXTERNAL);
+	DataType inType = System::getInputValueType(outType, VAR_EXTERNAL);
 	Eigen::Index nX = num(STATE, forcedOutput);
 	Eigen::Index nIn = num(inType, forcedOutput);
 	// Get nonlinear dependencies
@@ -188,12 +188,12 @@ void WAUKF::Step(double dT) { // update, collect measurement, correction via Kal
 									 // Prediction
 	Eigen::MatrixXd sg1, sg2;
 	StatisticValue x_pred0, y_pred0;
-	StatisticValue x_pred = _evalWithV0(EVAL_STATEUPDATE, dT, (*this)(STATE),
-		(*this)(SystemValueType::DISTURBANCE), sg1, sg2, false, x_pred0);
+	StatisticValue x_pred = _evalWithV0(STATE_UPDATE, dT, (*this)(STATE),
+		(*this)(DataType::DISTURBANCE), sg1, sg2, false, x_pred0);
 	Eigen::MatrixXd Syxpred;
 	Eigen::VectorXd y_meas = (*this)(OUTPUT).vector;
-	StatisticValue y_pred = _evalWithV0(EVAL_OUTPUT, dT, x_pred,
-		(*this)(SystemValueType::NOISE), Syxpred, sg2, false, y_pred0);
+	StatisticValue y_pred = _evalWithV0(OUTPUT_UPDATE, dT, x_pred,
+		(*this)(DataType::NOISE), Syxpred, sg2, false, y_pred0);
 
 	StepClock(dT);
 	PredictionDone(x_pred, y_pred);
@@ -216,12 +216,12 @@ void WAUKF::Step(double dT) { // update, collect measurement, correction via Kal
 			Eigen::VectorXd value = newstate.vector - x_pred0.vector;
 			for (auto it = disturbanceValueWindows.begin(); it != disturbanceValueWindows.end(); it++) {
 				int index = _GetIndex(it->first);
-				Eigen::VectorXd v = pinvBbs * p.PartValue(SystemValueType::STATE, value, -1);// partx_[0];
+				Eigen::VectorXd v = pinvBbs * p.PartValue(DataType::STATE, value, -1);// partx_[0];
 				if (index != -1) { //basesystem
 					auto sys = Sensor(index);
-					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT, EVAL_STATEUPDATE, VAR_EXTERNAL, true);
+					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT, STATE_UPDATE, VAR_EXTERNAL, true);
 					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBi(dT);
-					v = pinvBi1 * (p.PartValue(SystemValueType::STATE, value, index) - Bi0 * v);
+					v = pinvBi1 * (p.PartValue(DataType::STATE, value, index) - Bi0 * v);
 				}
 				it->second.AddValue(v);
 				if (index != -1)
@@ -235,14 +235,14 @@ void WAUKF::Step(double dT) { // update, collect measurement, correction via Kal
 			value = newstate.variance + value * value.transpose() - x_pred0.variance;
 			for (auto it = disturbanceVarianceWindows.begin(); it != disturbanceVarianceWindows.end(); it++) {
 				int index = _GetIndex(it->first);
-				Eigen::MatrixXd v = pinvBbs * p.PartVariance(SystemValueType::STATE, value, -1, -1) * pinvBbs.transpose();
+				Eigen::MatrixXd v = pinvBbs * p.PartVariance(DataType::STATE, value, -1, -1) * pinvBbs.transpose();
 				if (index != -1) {
 					auto sys = Sensor(index);
-					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT, EVAL_STATEUPDATE, VAR_EXTERNAL, true);
-					Eigen::MatrixXd v2 = Bi0 * pinvBbs * p.PartVariance(SystemValueType::STATE, value, -1, index);
+					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT, STATE_UPDATE, VAR_EXTERNAL, true);
+					Eigen::MatrixXd v2 = Bi0 * pinvBbs * p.PartVariance(DataType::STATE, value, -1, index);
 					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBi(dT);
 					v = pinvBi1 * (Bi0*v*Bi0.transpose() - v2 - v2.transpose() +
-						p.PartVariance(SystemValueType::STATE, value, index, index))*pinvBi1.transpose();
+						p.PartVariance(DataType::STATE, value, index, index))*pinvBi1.transpose();
 				}
 				it->second.AddValue(DiagAndLimit(v, 0.00001));
 				Eigen::MatrixXd out = it->second.Value();
@@ -262,12 +262,12 @@ void WAUKF::Step(double dT) { // update, collect measurement, correction via Kal
 			for (auto it = noiseValueWindows.begin(); it != noiseValueWindows.end(); it++) {
 				int index = _GetIndex(it->first);
 				if (available(index)) {
-					Eigen::VectorXd v = pinvDbs * p.PartValue(SystemValueType::OUTPUT, value, -1);// partx_[0];
+					Eigen::VectorXd v = pinvDbs * p.PartValue(DataType::OUTPUT, value, -1);// partx_[0];
 					if (index != -1) { //basesystem
 						auto sys = Sensor(index);
-						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT, EVAL_OUTPUT, VAR_EXTERNAL, true);
+						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT, OUTPUT_UPDATE, VAR_EXTERNAL, true);
 						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDi(dT);
-						v = pinvDi1 * (p.PartValue(SystemValueType::OUTPUT, value, index) - Di0 * v);
+						v = pinvDi1 * (p.PartValue(DataType::OUTPUT, value, index) - Di0 * v);
 					}
 					it->second.AddValue(v);
 					if (index != -1)
@@ -285,7 +285,7 @@ void WAUKF::Step(double dT) { // update, collect measurement, correction via Kal
 					Eigen::MatrixXd v = pinvDbs * p.PartVariance(OUTPUT, value, -1, -1) * pinvDbs.transpose();
 					if (index != -1) { //basesystem
 						auto sys = Sensor(index);
-						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT, EVAL_OUTPUT, VAR_EXTERNAL, true);
+						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT, OUTPUT_UPDATE, VAR_EXTERNAL, true);
 						Eigen::MatrixXd v2 = Di0 * pinvDbs * p.PartVariance(OUTPUT, value, -1, index); // index sorrend?
 						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDi(dT);
 						v = pinvDi1 * (Di0*v*Di0.transpose() - v2 - v2.transpose() +

@@ -6,20 +6,20 @@ SystemManager::SystemData::SystemData(const StatisticValue& noise_,
 	MeasurementStatus measStatus_) :
 	noise(noise_), measurement(measurement_), disturbance(disturbance_), measStatus(measStatus_) {}
 
-StatisticValue SystemManager::SystemData::operator()(SystemValueType type, bool forcedOutput) const {
-	if (type== SystemValueType::DISTURBANCE) return disturbance;
+StatisticValue SystemManager::SystemData::operator()(DataType type, bool forcedOutput) const {
+	if (type== DataType::DISTURBANCE) return disturbance;
 	if (!(available() || forcedOutput)) return Eigen::VectorXd(0);
 	switch (type) {
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		return noise;
-	case SystemValueType::OUTPUT:
+	case DataType::OUTPUT:
 		return measurement;
 	default:
 		throw std::runtime_error(std::string("SystemManager::SystemData::operator() Only NOISE, DISTURBANCE and OUTPUT are available!"));
 	}
 }
 
-size_t SystemManager::SystemData::num(SystemValueType type, bool forcedOutput) const
+size_t SystemManager::SystemData::num(DataType type, bool forcedOutput) const
 {
 	if (available() || forcedOutput || type==STATE || type==DISTURBANCE || (isBaseSystem() && type==NOISE))
 		return getPtr()->getNumOf(type);
@@ -28,15 +28,15 @@ size_t SystemManager::SystemData::num(SystemValueType type, bool forcedOutput) c
 
 // return length of the given value
 
-void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, SystemValueType type) {
+void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, DataType type) {
 	switch (type) {
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		noise.vector = value;
 		break;
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		disturbance.vector = value;
 		break;
-	case SystemValueType::OUTPUT:
+	case DataType::OUTPUT:
 		measurement = value;
 		if (measStatus == OBSOLETHE)
 			measStatus = UPTODATE;
@@ -46,12 +46,12 @@ void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, SystemVa
 	}
 }
 
-void SystemManager::SystemData::setVariance(const Eigen::MatrixXd & value, SystemValueType type) {
+void SystemManager::SystemData::setVariance(const Eigen::MatrixXd & value, DataType type) {
 	switch (type) {
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		noise.variance = value;
 		break;
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		disturbance.variance = value;
 		break;
 	default:
@@ -61,26 +61,26 @@ void SystemManager::SystemData::setVariance(const Eigen::MatrixXd & value, Syste
 
 // set the given value
 
-Eigen::VectorXd SystemManager::SystemData::getValue(SystemValueType type) const {
+Eigen::VectorXd SystemManager::SystemData::getValue(DataType type) const {
 	switch (type) {
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		return noise.vector;
 		break;
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		return disturbance.vector;
-	case SystemValueType::OUTPUT:
+	case DataType::OUTPUT:
 		return measurement;
 	default:
 		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
 	}
 }
 
-Eigen::MatrixXd SystemManager::SystemData::getVariance(SystemValueType type) const {
+Eigen::MatrixXd SystemManager::SystemData::getVariance(DataType type) const {
 	switch (type) {
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		return noise.variance;
 		break;
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		return disturbance.variance;
 	default:
 		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
@@ -98,15 +98,15 @@ bool SystemManager::SystemData::available() const { return measStatus != OBSOLET
 
 SystemManager::Partitioner SystemManager::getPartitioner(bool forcedOutput) {
 	Partitioner p(nSensors() + 1);
-	p.nx[0] = BaseSystem().num(SystemValueType::STATE, forcedOutput);
-	p.ny[0] = BaseSystem().num(SystemValueType::OUTPUT, forcedOutput);
-	p.nw[0] = BaseSystem().num(SystemValueType::DISTURBANCE, forcedOutput);
-	p.nv[0] = BaseSystem().num(SystemValueType::NOISE, forcedOutput);
+	p.nx[0] = BaseSystem().num(DataType::STATE, forcedOutput);
+	p.ny[0] = BaseSystem().num(DataType::OUTPUT, forcedOutput);
+	p.nw[0] = BaseSystem().num(DataType::DISTURBANCE, forcedOutput);
+	p.nv[0] = BaseSystem().num(DataType::NOISE, forcedOutput);
 	for (size_t n = 0; n < nSensors(); n++) {
-		p.nx[n + 1] = Sensor(n).num(SystemValueType::STATE, forcedOutput);
-		p.ny[n + 1] = Sensor(n).num(SystemValueType::OUTPUT, forcedOutput);
-		p.nw[n + 1] = Sensor(n).num(SystemValueType::DISTURBANCE, forcedOutput);
-		p.nv[n + 1] = Sensor(n).num(SystemValueType::NOISE, forcedOutput);
+		p.nx[n + 1] = Sensor(n).num(DataType::STATE, forcedOutput);
+		p.ny[n + 1] = Sensor(n).num(DataType::OUTPUT, forcedOutput);
+		p.nw[n + 1] = Sensor(n).num(DataType::DISTURBANCE, forcedOutput);
+		p.nv[n + 1] = Sensor(n).num(DataType::NOISE, forcedOutput);
 	}
 	return p;
 }
@@ -151,7 +151,7 @@ void SystemManager::AddSensor(const SensorData & sensorData, const StatisticValu
 
 size_t SystemManager::nSensors() const { return sensorList.size(); }
 
-size_t SystemManager::num(SystemValueType type, bool forcedOutput) const {
+size_t SystemManager::num(DataType type, bool forcedOutput) const {
 	if (type == STATE) return state.Length();
 	size_t out = baseSystem.num(type, forcedOutput);
 	for (size_t i = 0; i < nSensors(); i++)
@@ -159,8 +159,8 @@ size_t SystemManager::num(SystemValueType type, bool forcedOutput) const {
 	return out;
 }
 
-Eigen::VectorXi SystemManager::dep(EvalType outType, VariableType inType, bool forcedOutput) const {
-	SystemValueType type = System::getInputValueType(outType, inType);
+Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, bool forcedOutput) const {
+	DataType type = System::getInputValueType(outType, inType);
 	Eigen::Index n = num(type, forcedOutput);
 	// Get nonlinear dependencies
 	Eigen::VectorXi dep = Eigen::VectorXi(n);
@@ -191,7 +191,7 @@ void SystemManager::_setProperty(int systemID, SystemCallData call) {
 		ptr->setValue(call.value, call.signalType);
 	else
 		ptr->setVariance(call.variance, call.signalType);
-	if (call.signalType == SystemValueType::OUTPUT)
+	if (call.signalType == DataType::OUTPUT)
 		Call(FilterCallData(call.value, ptr->getPtr(), this->t, call.signalType, FilterCallData::MEASUREMENT));
 }
 
@@ -211,7 +211,7 @@ SystemManager::SystemData * SystemManager::SystemByID(unsigned int ID) {
 	return &(sensorList[index]);
 }
 
-StatisticValue SystemManager::operator()(SystemValueType type, bool forcedOutput) const {
+StatisticValue SystemManager::operator()(DataType type, bool forcedOutput) const {
 	if (type == STATE)
 		return state;
 	size_t k = baseSystem.num(type, forcedOutput);
@@ -238,7 +238,7 @@ StatisticValue SystemManager::operator()(SystemValueType type, bool forcedOutput
 // OR
 // the noises for the basesystem and the active sensors
 
-std::vector<Eigen::VectorXd> SystemManager::partitionate(SystemValueType type, const Eigen::VectorXd& value, bool forcedOutput) const {
+std::vector<Eigen::VectorXd> SystemManager::partitionate(DataType type, const Eigen::VectorXd& value, bool forcedOutput) const {
 	std::vector<Eigen::VectorXd> out = std::vector<Eigen::VectorXd>();
 	size_t n = baseSystem.num(type, forcedOutput);
 	out.push_back(value.segment(0, n));
@@ -250,7 +250,7 @@ std::vector<Eigen::VectorXd> SystemManager::partitionate(SystemValueType type, c
 	return out;
 }
 
-std::vector<StatisticValue> SystemManager::partitionateWithStatistic(SystemValueType type, const StatisticValue& value, bool forcedOutput) const {
+std::vector<StatisticValue> SystemManager::partitionateWithStatistic(DataType type, const StatisticValue& value, bool forcedOutput) const {
 	std::vector<StatisticValue> out = std::vector<StatisticValue>();
 	size_t n = baseSystem.num(type, forcedOutput);
 	out.push_back(value.GetPart(0, n));
@@ -262,10 +262,10 @@ std::vector<StatisticValue> SystemManager::partitionateWithStatistic(SystemValue
 	return out;
 }
 
-void SystemManager::getMatrices(EvalType out_, double Ts, Eigen::MatrixXd & A,
+void SystemManager::getMatrices(TimeUpdateType out_, double Ts, Eigen::MatrixXd & A,
 	Eigen::MatrixXd & B, bool forcedOutput) const {
-	SystemValueType outValueType = System::getOutputValueType(out_);
-	SystemValueType inValueType = System::getInputValueType(out_, VAR_EXTERNAL);
+	DataType outValueType = System::getOutputValueType(out_);
+	DataType inValueType = System::getInputValueType(out_, VAR_EXTERNAL);
 	Eigen::Index nx = state.Length();
 	size_t n_in = baseSystem.num(inValueType, forcedOutput);
 	size_t n_out = baseSystem.num(outValueType, forcedOutput);
@@ -302,9 +302,9 @@ void SystemManager::getMatrices(EvalType out_, double Ts, Eigen::MatrixXd & A,
 // could be faster....
 
 Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
- EvalType outType, const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput) const {
-	SystemValueType intype = System::getInputValueType(outType, VAR_EXTERNAL);
-	SystemValueType outtype = System::getOutputValueType(outType);
+ TimeUpdateType outType, const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput) const {
+	DataType intype = System::getInputValueType(outType, VAR_EXTERNAL);
+	DataType outtype = System::getOutputValueType(outType);
 	size_t n_out = num(outtype, forcedOutput);
 	// Partitionate vectors
 	std::vector<Eigen::VectorXd> states = partitionate(STATE, state, forcedOutput);
@@ -313,13 +313,13 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
 	Eigen::VectorXd out = Eigen::VectorXd(n_out);
 	// Call the functions
 	size_t n;
-	if (outType == EVAL_STATEUPDATE || baseSystem.available() || forcedOutput) {
+	if (outType == STATE_UPDATE || baseSystem.available() || forcedOutput) {
 		n = baseSystem.num(outtype, forcedOutput);
 		out.segment(0, n) = baseSystem.getBaseSystemPtr()->genNonlinearPart(outType, Ts, states[0], ins[0]);
 	}
 	else n = 0;
 	for (size_t i = 0; i < nSensors(); i++)
-		if (outType == EVAL_STATEUPDATE || sensorList[i].available() || forcedOutput) {
+		if (outType == STATE_UPDATE || sensorList[i].available() || forcedOutput) {
 			size_t d = sensorList[i].num(outtype, forcedOutput);
 			out.segment(n, d) = sensorList[i].getSensorPtr()->genNonlinearPart(outType, Ts, states[0], ins[0], states[i+1], ins[i+1]);
 			n += d;
@@ -327,9 +327,9 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
 	return out;
 }
 
-StatisticValue SystemManager::Eval(EvalType outType, double Ts, const StatisticValue& state_,
+StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_,
 	const StatisticValue& in, Eigen::MatrixXd & S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput) const {
-	SystemValueType inType = System::getInputValueType(outType, VAR_EXTERNAL);
+	DataType inType = System::getInputValueType(outType, VAR_EXTERNAL);
 	Eigen::Index nX = num(STATE, forcedOutput);
 	Eigen::Index nIn = num(inType, forcedOutput);
 	// Get nonlinear dependencies
@@ -445,7 +445,7 @@ SystemManager::~SystemManager() {
 std::ostream & SystemManager::print(std::ostream & stream) const {
 	std::vector<Eigen::VectorXd> states = partitionate(STATE, state.vector);
 	Eigen::MatrixXd S1, S2;
-	StatisticValue output = Eval(EVAL_OUTPUT, 0.001, state, (*this)(NOISE, true), S1, S2, true);
+	StatisticValue output = Eval(OUTPUT_UPDATE, 0.001, state, (*this)(NOISE, true), S1, S2, true);
 	std::vector<Eigen::VectorXd> outputs = partitionate(OUTPUT, output.vector, true);
 
 	auto printSystem = [](std::ostream& stream, const SystemData* sys,
@@ -555,14 +555,14 @@ SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
 		throw std::runtime_error(std::string("BaseSystemData::BaseSystemData Wrong argument sizes"));
 }
 
-Eigen::VectorXi SystemManager::BaseSystemData::dep(EvalType outType, VariableType type, bool forcedOutput) const {
-	if (outType == EVAL_STATEUPDATE || available() || forcedOutput)
+Eigen::VectorXi SystemManager::BaseSystemData::dep(TimeUpdateType outType, VariableType type, bool forcedOutput) const {
+	if (outType == STATE_UPDATE || available() || forcedOutput)
 		return ptr->genNonlinearDependency(outType, type);
 	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type), true));
 }
 
-Eigen::MatrixXd SystemManager::BaseSystemData::getMatrix(double Ts, EvalType type, VariableType inType, bool forcedOutput) const {
-	if (type == EVAL_OUTPUT && !(available() || forcedOutput)) {
+Eigen::MatrixXd SystemManager::BaseSystemData::getMatrix(double Ts, TimeUpdateType type, VariableType inType, bool forcedOutput) const {
+	if (type == OUTPUT_UPDATE && !(available() || forcedOutput)) {
 		switch (inType) {
 		case VAR_STATE:
 			return Eigen::MatrixXd(0, ptr->getNumOfStates());
@@ -571,14 +571,14 @@ Eigen::MatrixXd SystemManager::BaseSystemData::getMatrix(double Ts, EvalType typ
 		}
 	}
 	switch (type) {
-	case EVAL_STATEUPDATE:
+	case STATE_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
 			return ptr->getA(Ts);
 		case VAR_EXTERNAL:
 			return ptr->getB(Ts);
 		}
-	case EVAL_OUTPUT:
+	case OUTPUT_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
 			return ptr->getC(Ts);
@@ -605,23 +605,23 @@ SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, const StatisticVal
 		throw std::runtime_error(std::string("SensorData::SensorData Wrong argument sizes"));
 }
 
-Eigen::VectorXi SystemManager::SensorData::depSensor(EvalType outType,
+Eigen::VectorXi SystemManager::SensorData::depSensor(TimeUpdateType outType,
 	VariableType type, bool forcedOutput) const {
-	if (outType == EVAL_STATEUPDATE || available() || forcedOutput)
+	if (outType == STATE_UPDATE || available() || forcedOutput)
 		return ptr->genNonlinearSensorDependency(outType, type);
 	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type)));
 }
 
-Eigen::VectorXi SystemManager::SensorData::depBaseSystem(EvalType outType,
+Eigen::VectorXi SystemManager::SensorData::depBaseSystem(TimeUpdateType outType,
 	VariableType type, bool forcedOutput) const {
-	if (outType == EVAL_STATEUPDATE || available() || forcedOutput)
+	if (outType == STATE_UPDATE || available() || forcedOutput)
 		return ptr->genNonlinearBaseSystemDependency(outType, type);
 	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type)));
 }
 
-Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, EvalType type,
+Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, TimeUpdateType type,
 	VariableType inType, bool forcedOutput) const {
-	if (type == EVAL_OUTPUT && !(available() || forcedOutput)) {
+	if (type == OUTPUT_UPDATE && !(available() || forcedOutput)) {
 		switch (inType) {
 		case VAR_STATE:
 			return Eigen::MatrixXd(0, ptr->getNumOfBaseSystemStates());
@@ -630,14 +630,14 @@ Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, EvalTy
 		}
 	}
 	switch (type) {
-	case EVAL_STATEUPDATE:
+	case STATE_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
 			return ptr->getA0(Ts);
 		case VAR_EXTERNAL:
 			return ptr->getB0(Ts);
 		}
-	case EVAL_OUTPUT:
+	case OUTPUT_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
 			return ptr->getC0(Ts);
@@ -649,18 +649,18 @@ Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, EvalTy
 }
 
 Eigen::MatrixXd SystemManager::SensorData::getMatrixSensor(double Ts,
-	EvalType type, VariableType inType, bool forcedOutput) const {
-	if (type == EVAL_OUTPUT && !(available() || forcedOutput))
-		return Eigen::MatrixXd(0, num(System::getInputValueType(EVAL_OUTPUT, inType)));
+	TimeUpdateType type, VariableType inType, bool forcedOutput) const {
+	if (type == OUTPUT_UPDATE && !(available() || forcedOutput))
+		return Eigen::MatrixXd(0, num(System::getInputValueType(OUTPUT_UPDATE, inType)));
 	switch (type) {
-	case EVAL_STATEUPDATE:
+	case STATE_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
 			return ptr->getAi(Ts);
 		case VAR_EXTERNAL:
 			return ptr->getBi(Ts);
 		}
-	case EVAL_OUTPUT:
+	case OUTPUT_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
 			return ptr->getCi(Ts);
@@ -681,22 +681,22 @@ SystemManager::Partitioner::Partitioner(size_t N) : nx(std::vector<size_t>(N)),
 nw(std::vector<size_t>(N)), ny(std::vector<size_t>(N)),
 nv(std::vector<size_t>(N)) {}
 
-const std::vector<size_t>& SystemManager::Partitioner::n(SystemValueType type) const {
+const std::vector<size_t>& SystemManager::Partitioner::n(DataType type) const {
 	switch (type) {
-	case SystemValueType::NOISE:
+	case DataType::NOISE:
 		return nv;
-	case SystemValueType::DISTURBANCE:
+	case DataType::DISTURBANCE:
 		return nw;
-	case SystemValueType::STATE:
+	case DataType::STATE:
 		return nx;
-	case SystemValueType::OUTPUT:
+	case DataType::OUTPUT:
 		return ny;
 	default:
 		throw std::runtime_error(std::string("Partitioner::n(): Unknown argument!"));
 	}
 }
 
-Eigen::VectorBlock<Eigen::VectorXd> SystemManager::Partitioner::PartValue(SystemValueType type, Eigen::VectorXd & value, int index) const { //index=-1: basesystem, index=0 sensor0....
+Eigen::VectorBlock<Eigen::VectorXd> SystemManager::Partitioner::PartValue(DataType type, Eigen::VectorXd & value, int index) const { //index=-1: basesystem, index=0 sensor0....
 	auto n_ = n(type);
 	//if (index == -1) return value.segment(0, n_[0]);
 	size_t n0 = 0;
@@ -705,7 +705,7 @@ Eigen::VectorBlock<Eigen::VectorXd> SystemManager::Partitioner::PartValue(System
 	return value.segment(n0, n_[index + 1]);
 }
 
-Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(SystemValueType type, Eigen::MatrixXd & value, int index1, int index2) const {
+Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(DataType type, Eigen::MatrixXd & value, int index1, int index2) const {
 	auto n_ = n(type);
 	//if (index == -1) return value.segment(0, n_[0]);
 	size_t n01 = 0, n02 = 0;
@@ -716,7 +716,7 @@ Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(SystemVal
 	return value.block(n01, n02, n_[index1 + 1], n_[index2 + 1]);
 }
 
-Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(SystemValueType type1, SystemValueType type2, Eigen::MatrixXd & value, int index1, int index2) const {
+Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(DataType type1, DataType type2, Eigen::MatrixXd & value, int index1, int index2) const {
 	const std::vector<size_t>& n1_ = n(type1);
 	const std::vector<size_t>& n2_ = n(type2);
 	//if (index == -1) return value.segment(0, n_[0]);

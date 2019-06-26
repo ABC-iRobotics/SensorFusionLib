@@ -4,13 +4,13 @@ find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 include_directories (
 		${Eigen_INCLUDE_DIRS}
+		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	BaseSystem.h
-	Sensor.h 
-	StatisticValue.h 
+	Sensor.h
 	System.h 
 	CallbackHandler.h
 	SystemManager.h
@@ -23,8 +23,7 @@ set (HEADERS
 	
 set (SOURCES
 	BaseSystem.cpp
-	Sensor.cpp 
-	StatisticValue.cpp
+	Sensor.cpp
 	System.cpp
 	SystemManager.cpp
 	PartialCholevski.cpp
@@ -39,7 +38,7 @@ set (SOURCES
 add_library (Lib_SensorFusion STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (Lib_SensorFusion Eigen3::Eigen
+target_link_libraries (Lib_SensorFusion Eigen3::Eigen Lib_Common
 		)
 		
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

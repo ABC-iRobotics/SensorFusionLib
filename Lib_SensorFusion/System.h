@@ -1,22 +1,20 @@
 #pragma once
-
+#include "defs.h"
 #include "StatisticValue.h"
 #include "CallbackHandler.h"
 #include <string>
 
-enum SystemValueType { NOISE, DISTURBANCE, STATE, OUTPUT };
 
-enum EvalType { EVAL_STATEUPDATE, EVAL_OUTPUT };
 
 enum VariableType { VAR_STATE, VAR_EXTERNAL };
 
 struct SystemCallData {
 	Eigen::VectorXd value;
 	Eigen::MatrixXd variance;
-	SystemValueType signalType;
+	DataType signalType;
 	ValueType valueType;
-	SystemCallData(Eigen::VectorXd value, SystemValueType type);
-	SystemCallData(Eigen::MatrixXd variance, SystemValueType type);
+	SystemCallData(Eigen::VectorXd value, DataType type);
+	SystemCallData(Eigen::MatrixXd variance, DataType type);
 };
 
 class System : public CallbackHandler<SystemCallData> {
@@ -45,7 +43,7 @@ public:
 
 	~System();
 
-	unsigned int getNumOf(SystemValueType type) const;
+	unsigned int getNumOf(DataType type) const;
 
 	// Forward the actual output via the callbacks
 	void MeasurementDone(Eigen::VectorXd sensor_output) const;
@@ -62,13 +60,13 @@ public:
 	// Set changed noise characteristics
 	void SetNoiseVariance(Eigen::MatrixXd value) const;
 
-	std::vector<std::string> getNames(SystemValueType type) const;
+	std::vector<std::string> getNames(DataType type) const;
 
 	typedef std::shared_ptr<System> SystemPtr;
 
-	static SystemValueType getInputValueType(EvalType outType, VariableType inType);
+	static DataType getInputValueType(TimeUpdateType outType, VariableType inType);
 
-	static SystemValueType getOutputValueType(EvalType outType);
+	static DataType getOutputValueType(TimeUpdateType outType);
 
 protected:
 	void _systemTest() const;

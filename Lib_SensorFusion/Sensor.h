@@ -65,13 +65,13 @@ public:
 
 	virtual bool isCompatible(BaseSystem::BaseSystemPtr ptr) const = 0;
 
-	Eigen::VectorXd genNonlinearPart(EvalType type, double Ts, const Eigen::VectorXd& baseSystemState,
+	Eigen::VectorXd genNonlinearPart(TimeUpdateType type, double Ts, const Eigen::VectorXd& baseSystemState,
 		const Eigen::VectorXd& baseSystemIn, const Eigen::VectorXd& sensorState,
 		const Eigen::VectorXd& sensorIn) const;
 
-	Eigen::VectorXi genNonlinearBaseSystemDependency(EvalType outType, VariableType inType) const;
+	Eigen::VectorXi genNonlinearBaseSystemDependency(TimeUpdateType outType, VariableType inType) const;
 
-	Eigen::VectorXi genNonlinearSensorDependency(EvalType outType, VariableType inType) const;
+	Eigen::VectorXi genNonlinearSensorDependency(TimeUpdateType outType, VariableType inType) const;
 
 	typedef std::shared_ptr<Sensor> SensorPtr;
 
