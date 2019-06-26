@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sensor.h"
+#include "DataMsg.h"
 
 /* SystemManager: to manage the basesystem and randomly available sensor results
 ----------------------------------------------------------
@@ -197,6 +198,8 @@ public:
 
 	typedef std::shared_ptr<SystemManager> SystemManagerPtr;
 
+	virtual void SetProperty(const DataMsg& data);
+
 protected:
 	int _GetIndex(unsigned int ID) const; // returns -1 for the basesystem!
 	BaseSystemData & BaseSystem();
@@ -205,8 +208,6 @@ protected:
 	StatisticValue& State();
 	SystemData* SystemByID(unsigned int ID);
 	const SensorData& Sensor(size_t index) const;
-
-	virtual void _setProperty(int systemID, SystemCallData call);
 
 	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
 	std::vector<Eigen::VectorXd> partitionate(DataType type, const Eigen::VectorXd& value, bool forcedOutput = false) const;

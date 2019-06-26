@@ -23,14 +23,16 @@ const WAUKF::mapOfMatrixWindows & WAUKF::_getVarianceWindows(DataType signal) co
 	}
 }
 
-bool WAUKF::_isEstimated(unsigned int systemID, DataType signal, ValueType type) const {
-	switch (type) {
+bool WAUKF::_isEstimated(unsigned int systemID, DataType type, ValueType valueorvariance) const {
+	if (type == STATE || type == OUTPUT)
+		return false;
+	switch (valueorvariance) {
 	case VALUE: {
-		const mapOfVectorWindows& temp = _getValueWindows(signal);
+		const mapOfVectorWindows& temp = _getValueWindows(type);
 		return temp.find(systemID) != temp.end();
 	}
 	case VARIANCE: {
-		const mapOfMatrixWindows& temp = _getVarianceWindows(signal);
+		const mapOfMatrixWindows& temp = _getVarianceWindows(type);
 		return temp.find(systemID) != temp.end();
 	}
 	default:
@@ -306,7 +308,11 @@ void WAUKF::Step(double dT) { // update, collect measurement, correction via Kal
 	resetMeasurement();
 }
 
-void WAUKF::_setProperty(int systemID, SystemCallData call) {
-	if (!_isEstimated(systemID, call.signalType, call.valueType))
-		SystemManager::_setProperty(systemID, call);
+void WAUKF::SetProperty(const DataMsg& data) {
+	auto data_ = data;
+	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VALUE))
+		data_.ClearValue();
+	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VARIANCE))
+		data_.ClearVariance();
+	SystemManager::SetProperty(data_);
 }

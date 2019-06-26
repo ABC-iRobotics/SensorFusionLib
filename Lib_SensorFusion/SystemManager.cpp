@@ -117,6 +117,18 @@ bool SystemManager::available(int index) const {
 	return Sensor(index).available();
 }
 
+void SystemManager::SetProperty(const DataMsg & data) {
+	SystemData* ptr = this->SystemByID(data.GetSourceID());
+	if (data.HasValue())
+		ptr->setValue(data.GetValue(), data.GetDataType());
+	if (data.HasVariance()) {
+		auto type = data.GetDataType();
+		if (type == OUTPUT)
+			type = NOISE;
+		ptr->setVariance(data.GetVariance(), type);
+	}
+}
+
 int SystemManager::_GetIndex(unsigned int ID) const {
 	if (ID == baseSystem.getPtr()->getID())
 		return -1;
@@ -140,11 +152,6 @@ void SystemManager::AddSensor(const SensorData & sensorData, const StatisticValu
 		sensorList.push_back(sensorData);
 		// Add the initial state values and variances to the state/variance matrix
 		state.Add(sensorState);
-		// Set callbacks
-		unsigned int sensorID = sensorData.getPtr()->getID();
-		sensorData.getPtr()->AddCallback([this, sensorID](SystemCallData call) {
-			_setProperty(sensorID, call);
-		}, ID);
 	}
 	else throw std::runtime_error(std::string("SystemManager::AddSensor(): Not compatible sensor tried to be added!\n"));
 }
@@ -184,16 +191,6 @@ Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, 
 }
 
 const SystemManager::SensorData& SystemManager::Sensor(size_t index) const { return sensorList[index]; }
-
-void SystemManager::_setProperty(int systemID, SystemCallData call) {
-	SystemData* ptr = this->SystemByID(systemID);
-	if (call.valueType == VALUE)
-		ptr->setValue(call.value, call.signalType);
-	else
-		ptr->setVariance(call.variance, call.signalType);
-	if (call.signalType == DataType::OUTPUT)
-		Call(FilterCallData(call.value, ptr->getPtr(), this->t, call.signalType, FilterCallData::MEASUREMENT));
-}
 
 SystemManager::SensorData & SystemManager::Sensor(size_t index) { return sensorList[index]; }
 
@@ -429,17 +426,9 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
 	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data), t(0) {
-		unsigned int systemID = data.getPtr()->getID();
-		// set callback
-		data.getPtr()->AddCallback([this, systemID](SystemCallData call) {
-			_setProperty(systemID, call);
-		}, ID);
 }
 
 SystemManager::~SystemManager() {
-	baseSystem.getPtr()->DeleteCallback(ID);
-	for (size_t i = 0; i < sensorList.size(); i++)
-		sensorList[i].getPtr()->DeleteCallback(ID);
 }
 
 std::ostream & SystemManager::print(std::ostream & stream) const {

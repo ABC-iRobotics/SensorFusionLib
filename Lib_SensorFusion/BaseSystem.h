@@ -9,7 +9,7 @@
 
 class BaseSystem : public System {
 public:
-	BaseSystem() {};
+	BaseSystem(unsigned int ID) : System(ID) {};
 
 	// The dynamics can be defined by the linear coefficient matrices and the nonlinearpart
 	// x(k) = A * x(k-1) + B * w(k) + UpdateNonlinPart(x(k-1), w(k)));

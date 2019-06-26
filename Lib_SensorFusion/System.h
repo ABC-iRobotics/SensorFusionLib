@@ -17,8 +17,11 @@ struct SystemCallData {
 	SystemCallData(Eigen::MatrixXd variance, DataType type);
 };
 
-class System : public CallbackHandler<SystemCallData> {
+class System {
+	unsigned int ID;
 public:
+	unsigned int getID() const { return ID; }
+
 	// Functions to override
 	virtual unsigned int getNumOfStates() const = 0;
 
@@ -39,26 +42,11 @@ public:
 	virtual std::string getName() const;
 
 	// Functions defined (based on them)
-	System();
+	System(unsigned int ID);
 
 	~System();
 
 	unsigned int getNumOf(DataType type) const;
-
-	// Forward the actual output via the callbacks
-	void MeasurementDone(Eigen::VectorXd sensor_output) const;
-
-	// Set changed disturbance characteristics
-	void SetDisturbanceValue(Eigen::VectorXd value) const;
-
-	// Set changed disturbance characteristics
-	void SetDisturbanceVariance(Eigen::MatrixXd value) const;
-
-	// Set changed noise characteristics
-	void SetNoiseValue(Eigen::VectorXd value) const;
-
-	// Set changed noise characteristics
-	void SetNoiseVariance(Eigen::MatrixXd value) const;
 
 	std::vector<std::string> getNames(DataType type) const;
 

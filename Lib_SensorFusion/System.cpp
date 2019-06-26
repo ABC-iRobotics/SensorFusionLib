@@ -1,7 +1,7 @@
 #include "System.h"
 #include <iostream>
 
-System::System() {}
+System::System(unsigned int ID_) : ID(ID_) {}
 
 System::~System() {}
 
@@ -26,70 +26,12 @@ unsigned int System::getNumOf(DataType type) const {
 		break;
 	}
 }
-void System::MeasurementDone(Eigen::VectorXd sensor_output) const {
-	if (sensor_output.size() != getNumOfOutputs()) {
-		std::cout << "(System::MeasurementDone) Wrong value size! Returned without setting...\n";
-		return;
-	}
-	// call the registered callbacks
-	Call(SystemCallData(sensor_output,DataType::OUTPUT));
-}
-
-// Set changed disturbance characteristics
-
-void System::SetDisturbanceValue(Eigen::VectorXd value) const {
-	if (value.size() != getNumOfDisturbances()) {
-		std::cout << "(System::SetDisturbanceValue) Wrong value size! Returned without setting...\n";
-		return;
-	}
-	// call the registered callbacks
-	Call(SystemCallData(value, DataType::DISTURBANCE));
-}
-
-// Set changed disturbance characteristics
-
-void System::SetDisturbanceVariance(Eigen::MatrixXd value) const {
-	if (value.cols() != getNumOfDisturbances() || value.rows() != getNumOfDisturbances()) {
-		std::cout << "(System::SetDisturbanceVariance) Wrong value size! Returned without setting...\n";
-		return;
-	}
-	// call the registered callbacks
-	Call(SystemCallData(value, DataType::DISTURBANCE));
-}
-
-// Set changed noise characteristics
-
-void System::SetNoiseValue(Eigen::VectorXd value) const {
-	if (value.size() != getNumOfNoises()) {
-		std::cout << "(System::SetNoiseValue) Wrong value size! Returned without setting...\n";
-		return;
-	}
-	// call the registered callbacks
-	Call(SystemCallData(value, DataType::NOISE));
-}
-
-
 
 std::vector<std::string> list(std::string fp, unsigned int n) {
 	std::vector<std::string> out = std::vector<std::string>();
 	for (unsigned int i = 0; i < n; i++)
 		out.push_back(fp + "_" + std::to_string(i+1));
 	return out;
-}
-
-// Set changed noise characteristics
-
-
-
-// Set changed noise characteristics
-
-void System::SetNoiseVariance(Eigen::MatrixXd value) const {
-	if (value.cols() != getNumOfNoises() || value.rows() != getNumOfNoises()) {
-		std::cout << "(System::SetNoiseVariance) Wrong value size! Returned without setting...\n";
-		return;
-	}
-	// call the registered callbacks
-	Call(SystemCallData(value, DataType::NOISE));
 }
 
 std::vector<std::string> System::getStateNames() const {

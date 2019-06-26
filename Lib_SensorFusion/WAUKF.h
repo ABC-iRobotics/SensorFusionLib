@@ -36,8 +36,7 @@ public:
 	// TODO: perform further tests on the adaptive methods
 	void Step(double dT) override;
 
-protected:
-	void _setProperty(int systemID, SystemCallData call) override;
+	void SetProperty(const DataMsg& data) override;
 
 private:
 	typedef std::map<unsigned int, MAWindow<Eigen::VectorXd>> mapOfVectorWindows;
