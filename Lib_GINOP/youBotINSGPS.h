@@ -12,7 +12,7 @@ public:
 		WAUKF::WAUKFPtr waukf;
 
 		//youbot
-		BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.1, 0.4, 0.25, 0.05);
+		BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.1, 0.4, 0.25, 0.05, 0);
 		{
 			youBot->systemTest();
 			// Init state (vx,vy,om,x,y,phi,null)
@@ -26,12 +26,12 @@ public:
 			SystemManager::BaseSystemData data2 = SystemManager::BaseSystemData(youBot,
 				initNoise, initDist, constantMeasurement, SystemManager::MeasurementStatus::CONSTANT);
 			waukf = std::make_shared<WAUKF>(data2, initState);
-			_addSystem(0, youBot);
+			_addSystem(youBot);
 		}
 
 		//ins
 		{
-			Sensor::SensorPtr ins = std::make_shared<INSSensor>(youBot);
+			Sensor::SensorPtr ins = std::make_shared<INSSensor>(youBot,2);
 			ins->systemTest();
 			// Init state (xs,ys,dphi)
 			Eigen::VectorXd x0 = Eigen::VectorXd::Zero(3);
@@ -45,11 +45,11 @@ public:
 			waukf->AddSensor(data, initState);
 			waukf->SetDisturbanceValueWindowing(ins, 100);
 			waukf->SetDisturbanceVarianceWindowing(ins, 100);
-			_addSystem(2, ins);
+			_addSystem(ins);
 		}
 		// GPS
 		{
-			Sensor::SensorPtr absPose = std::make_shared<AbsoluthePoseSensor>(youBot, true);
+			Sensor::SensorPtr absPose = std::make_shared<AbsoluthePoseSensor>(youBot, 1, true);
 			absPose->systemTest();
 			// Init state (x,y,phi)
 			StatisticValue initState = StatisticValue(0);
@@ -62,7 +62,7 @@ public:
 			waukf->AddSensor(data, initState);
 			waukf->SetNoiseVarianceWindowing(absPose, 100);
 			//waukf->SetNoiseValueWindowing(absPose, 100);
-			_addSystem(1, absPose);
+			_addSystem(absPose);
 		}
 		filter = waukf;
 		if (port_logger >=0)

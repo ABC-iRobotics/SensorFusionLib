@@ -11,19 +11,21 @@ class FilteringManager {
 
 	ZMQFilterLogger* zmqLogger;
 
-	std::map<unsigned int, System::SystemPtr> systems; // ID - Systems
+	std::vector<System::SystemPtr> systems;
+
+	//std::map<unsigned int, System::SystemPtr> systems; // ID - Systems
 
 	const double Ts_max; // in seconds
 
 protected:
 	SystemManager::SystemManagerPtr filter;
 
-	void _addSystem(unsigned int zmqID, System::SystemPtr systemptr);
+	void _addSystem(System::SystemPtr systemptr);
 
-	void _processMSG(const SystemDataMsg& msg);
+	void _processMSG(const DataMsg & data);
 
 	bool _getandprocessMsg_Wait(unsigned int waitinms=50) {
-		SystemDataMsg msg;
+		DataMsg msg;
 		bool success = zmqSub.RecvMsg_Wait(msg,waitinms);
 		if (success)
 			_processMSG(msg);
@@ -31,7 +33,7 @@ protected:
 	}
 
 	bool _getandprocessMsg_DontWait() {
-		SystemDataMsg msg;
+		DataMsg msg;
 		bool success = zmqSub.RecvMsg_DontWait(msg);
 		if (success)
 			_processMSG(msg);

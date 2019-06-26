@@ -25,7 +25,7 @@ private:
 	double dGeomR;
 
 public:
-	youBotSystem(double Tdyn, double L, double W, double R);
+	youBotSystem(double Tdyn, double L, double W, double R, unsigned int ID);
 
 	unsigned int getNumOfDisturbances() const override;
 

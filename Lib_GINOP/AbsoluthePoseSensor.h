@@ -6,7 +6,7 @@ class AbsoluthePoseSensor : public Sensor {
 	bool withOrientation;
 
 public:
-	AbsoluthePoseSensor(BaseSystem::BaseSystemPtr ptr, bool withOrientation = true);
+	AbsoluthePoseSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID, bool withOrientation = true);
 
 	~AbsoluthePoseSensor();
 

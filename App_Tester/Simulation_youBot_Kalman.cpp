@@ -6,6 +6,7 @@
 #include "INSSensor.h"
 #include "AbsoluthePoseSensor.h"
 
+
 #ifdef FILTERPLOT
 #include "FilterPlot.h"
 #endif
@@ -23,7 +24,7 @@ void simulation_youbot_Kalman() {
 	// Init sensor system
 	KalmanFilter::KalmanFilterPtr filter;
 	//youbot
-	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.2, 0.4, 0.25, 0.05);
+	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.2, 0.4, 0.25, 0.05, 0);
 	youBot->systemTest();
 	{
 		// Init state (vx,vy,om,x,y,phi,null)
@@ -40,7 +41,7 @@ void simulation_youbot_Kalman() {
 	}
 
 	//ins
-	Sensor::SensorPtr ins = std::make_shared<INSSensor>(youBot);
+	Sensor::SensorPtr ins = std::make_shared<INSSensor>(youBot, 2);
 	ins->systemTest();
 	{
 		// Init state (xs,ys,dphi)
@@ -55,7 +56,7 @@ void simulation_youbot_Kalman() {
 		filter->AddSensor(data, initState);
 	}
 
-	Sensor::SensorPtr absPose = std::make_shared<AbsoluthePoseSensor>(youBot, true);
+	Sensor::SensorPtr absPose = std::make_shared<AbsoluthePoseSensor>(youBot, 1, true);
 	absPose->systemTest();
 	{
 		// Init state (x,y,phi)
@@ -75,15 +76,22 @@ void simulation_youbot_Kalman() {
 #endif
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {
-		youBot->SetDisturbanceValue(youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]));
+		DataMsg data(youBot->getID(), DISTURBANCE, SENSOR, n*traj.Ts*1e6);
+		data.SetValueVector(youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]));
+		filter->SetProperty(data);
+
 		std::cout << (*filter)(STATE).vector.transpose() << std::endl;
-		if (n % 30 == 0)
-			absPose->MeasurementDone(GPS.update(traj.x[n], traj.y[n], traj.phi[n]));
+		if (n % 30 == 0) {
+			data = DataMsg(absPose->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
+			data.SetValueVector(GPS.update(traj.x[n], traj.y[n], traj.phi[n]));
+			filter->SetProperty(data);
+		}
 
 		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts);
-		ins->MeasurementDone(insphantom.Out());
-
-		//std::cout << (*filter)(STATE).vector(9) << std::endl;
+		data = DataMsg(ins->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
+		data.SetValueVector(insphantom.Out());
+		filter->SetProperty(data);
+		std::cout << (*filter)(STATE).vector(9) << std::endl;
 
 		filter->Step(traj.Ts);
 #ifdef FILTERPLOT

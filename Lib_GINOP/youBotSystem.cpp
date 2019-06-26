@@ -1,6 +1,6 @@
 #include "youBotSystem.h"
 
-youBotSystem::youBotSystem(double Tdyn, double L, double W, double R) :
+youBotSystem::youBotSystem(double Tdyn, double L, double W, double R, unsigned int ID) : BaseSystem(ID),
 	dTdyn(Tdyn), dGeomL(L), dGeomR(R), dGeomW(W) {}
 
 unsigned int youBotSystem::getNumOfDisturbances() const { return 4; }

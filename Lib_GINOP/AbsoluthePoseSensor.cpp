@@ -1,7 +1,7 @@
 #include "AbsoluthePoseSensor.h"
 
-AbsoluthePoseSensor::AbsoluthePoseSensor(BaseSystem::BaseSystemPtr ptr, bool withOrientation) :
-	Sensor(ptr), withOrientation(withOrientation) {}
+AbsoluthePoseSensor::AbsoluthePoseSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID, bool withOrientation) :
+	Sensor(ptr, ID), withOrientation(withOrientation) {}
 
 AbsoluthePoseSensor::~AbsoluthePoseSensor() {}
 

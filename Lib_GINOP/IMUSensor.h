@@ -22,7 +22,7 @@
 class IMUSensor : public Sensor
 {
 public:
-	IMUSensor(BaseSystem::BaseSystemPtr ptr) : Sensor(ptr) {};
+	IMUSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID) : Sensor(ptr, ID) {};
 
 	unsigned int getNumOfStates() const;
 

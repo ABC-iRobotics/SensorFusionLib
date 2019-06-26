@@ -7,29 +7,23 @@ class ZMQFilterLogger : public FilterLog {
 	ZMQPublisher zmqPub;
 
 	void Callback(const FilterCallData& data) override {
-		SystemDataMsg::ContentTypes type;
-		switch (data.type)
-		{
-		case STATE:
-			if (data.callType == FilterCallData::PREDICTION)
-				type = SystemDataMsg::FROMFILTER_PREDICTEDSTATE;
-			else
-				type = SystemDataMsg::FROMFILTER_FILTEREDSTATE;
+		OperationType source;
+		switch (data.callType) {
+		case FilterCallData::PREDICTION:
+			source = FILTER_TIME_UPDATE;
 			break;
-		case OUTPUT:
-			if (data.callType == FilterCallData::PREDICTION)
-				type = SystemDataMsg::FROMFILTER_PREDICTEDOUTPUT;
-			if (data.callType == FilterCallData::MEASUREMENT)
-				type = SystemDataMsg::FROMFILTER_MEASUREDOUTPUT;
+		case FilterCallData::FILTERING:
+			source = FILTER_MEAS_UPDATE;
 			break;
-		case DISTURBANCE:
-			type = SystemDataMsg::FROMFILTER_USEDDISTURBANCE;
+		case FilterCallData::MEASUREMENT:
+			source = SENSOR;
 			break;
-		case NOISE:
-			type = SystemDataMsg::FROMFILTER_USEDNOISE;
+		case FilterCallData::ESTIMATION:
+		default:
+			source = FILTER_PARAM_ESTIMATION;
 			break;
 		}
-		SystemDataMsg msg(0, type, data.t*1e6);
+		DataMsg msg(0, data.type, source, data.t*1e6);
 		msg.SetValueVector(data.value.vector);
 		msg.SetVarianceMatrix(data.value.variance);
 		zmqPub.SendMsg(msg);

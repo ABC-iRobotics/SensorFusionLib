@@ -17,7 +17,7 @@
 class INSSensor : public Sensor
 {
 public:
-	INSSensor(BaseSystem::BaseSystemPtr ptr) : Sensor(ptr) {};
+	INSSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID) : Sensor(ptr, ID) {};
 
 	unsigned int getNumOfStates() const;
 

@@ -25,20 +25,20 @@ int main() {
 		else printf("-");
 		{
 			Eigen::VectorXd w_youbot = youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]);
-			SystemDataMsg msg(0, SystemDataMsg::TOFILTER_DISTURBANCE, getTimeInMicroseconds());
+			DataMsg msg(0, DISTURBANCE, SENSOR, getTimeInMicroseconds());
 			msg.SetValueVector(w_youbot);
 			pub.SendMsg(msg);
 		}
 		if (n % 30 == 0) {
 			Eigen::VectorXd y_GPS = GPS.update(traj.x[n], traj.y[n], traj.phi[n]);
-			SystemDataMsg msg(1, SystemDataMsg::TOFILTER_MEASUREMENT, getTimeInMicroseconds());
+			DataMsg msg(1, OUTPUT, SENSOR, getTimeInMicroseconds());
 			msg.SetValueVector(y_GPS);
 			pub.SendMsg(msg);
 		}
 		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts);
 		{
 			Eigen::VectorXd y_ins = insphantom.Out();
-			SystemDataMsg msg(2, SystemDataMsg::TOFILTER_MEASUREMENT, getTimeInMicroseconds());
+			DataMsg msg(2, OUTPUT, SENSOR, getTimeInMicroseconds());
 			msg.SetValueVector(y_ins);
 			pub.SendMsg(msg);
 		}
