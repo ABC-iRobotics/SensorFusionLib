@@ -2,10 +2,10 @@
 #include "ZMQPublisher.h"
 
 int main() {
-	
+
 	ZMQPublisher pub(5555);
 
-	DataMsg msg(5, STATE, SENSOR, getTimeInMicroseconds());
+	DataMsg msg(5, STATE, SENSOR);
 	msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(4, 4));
 	Eigen::VectorXd v0 = Eigen::VectorXd::Ones(4);
 	v0[3] = 2;
@@ -15,7 +15,7 @@ int main() {
 
 	int i = 0;
 	while (true) {
-		msg = DataMsg(i, STATE, SENSOR, getTimeInMicroseconds());
+		msg = DataMsg(i, STATE, SENSOR);
 		msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(4, 4)*i);
 		pub.SendMsg(msg);
 		msg.print();

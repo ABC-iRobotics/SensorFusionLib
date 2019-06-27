@@ -35,20 +35,20 @@ void Trajectory::add(double ax, double ay, double eps) {
 	double om = last_element(omega);
 	double ph = last_element(phi);
 
-	vx_local.push_back(vx + Ts * (ax + om * vy));
-	vy_local.push_back(vy + Ts * (ay - om * vx));
-	omega.push_back(om + Ts * eps);
+	vx_local.push_back(vx + Ts.TimeInS() * (ax + om * vy));
+	vy_local.push_back(vy + Ts.TimeInS() * (ay - om * vx));
+	omega.push_back(om + Ts.TimeInS() * eps);
 
-	x.push_back(last_element(x) + Ts * (vx * cos(ph) - vy * sin(ph)));
-	y.push_back(last_element(y) + Ts * (vy * cos(ph) + vx * sin(ph)));
-	phi.push_back(last_element(phi) + om * Ts + eps * Ts*Ts / 2);
+	x.push_back(last_element(x) + Ts.TimeInS() * (vx * cos(ph) - vy * sin(ph)));
+	y.push_back(last_element(y) + Ts.TimeInS() * (vy * cos(ph) + vx * sin(ph)));
+	phi.push_back(last_element(phi) + om * Ts.TimeInS() + eps * Ts.TimeInS()*Ts.TimeInS() / 2);
 }
 
 size_t Trajectory::length() const {
 	return x.size();
 }
 
-Trajectory::Trajectory(double Ts_) : Ts(Ts_) {
+Trajectory::Trajectory(TimeMicroSec Ts_) : Ts(Ts_) {
 	x = Values(); y = Values(); phi = Values();
 	vx_local = Values(); vy_local = Values(); omega = Values();
 	ax_local = Values(); ay_local = Values(); epsilon = Values();
@@ -56,7 +56,7 @@ Trajectory::Trajectory(double Ts_) : Ts(Ts_) {
 
 Trajectory genTrajectory() {
 	double Ts = 0.01;
-	Trajectory traj(Ts);
+	Trajectory traj(Ts*1e6);
 	for (unsigned int n = 0; n < (0.5 / Ts); n++)
 		traj.add(0, 0, 0);
 	for (unsigned int n = 0; n < (1. / Ts); n++)

@@ -185,7 +185,7 @@ public:
 
 	bool available(int index) const;
 
-	virtual void Step(double Ts) = 0;
+	virtual void Step(TimeMicroSec Ts) = 0;
 
 	typedef std::shared_ptr<SystemManager> SystemManagerPtr;
 
@@ -212,7 +212,7 @@ protected:
 
 	void FilteringDone(const StatisticValue& state) const;
 
-	void StepClock(double dt);
+	void StepClock(TimeMicroSec dt);
 
 private:
 
@@ -222,7 +222,7 @@ private:
 
 	StatisticValue state;
 
-	double t; // clock
+	TimeMicroSec time;
 
 public:
 	typedef std::function<void(const DataMsg& data)> Callback;

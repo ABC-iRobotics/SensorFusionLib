@@ -34,7 +34,7 @@ public:
 	typedef std::shared_ptr<WAUKF> WAUKFPtr;
 
 	// TODO: perform further tests on the adaptive methods
-	void Step(double dT) override;
+	void Step(TimeMicroSec dT) override;
 
 	void SetProperty(const DataMsg& data) override;
 

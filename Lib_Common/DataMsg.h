@@ -1,7 +1,7 @@
 #pragma once
 
 #include "defs.h"
-#include "TimeUS.h"
+#include "TimeMicroSec.h"
 #include "StatisticValue.h"
 
 class DataMsg {
@@ -13,15 +13,15 @@ class DataMsg {
 	bool hasValue;
 	Eigen::MatrixXd variance;
 	bool hasVariance;
-	unsigned long timestamp_in_us;
+	TimeMicroSec time;
 
 public:
 	DataMsg();
 
-	DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_ = TimeUS().TimeInUS());
+	DataMsg(unsigned char ID, DataType type, OperationType source, TimeMicroSec time_ = TimeMicroSec());
 
 	DataMsg(unsigned char ID, DataType type, OperationType source,
-		StatisticValue data, unsigned long timestamp_in_us_ = TimeUS().TimeInUS());;
+		StatisticValue data, TimeMicroSec time_ = TimeMicroSec());;
 
 	bool IsEmpty() const;
 
@@ -43,7 +43,7 @@ public:
 
 	OperationType GetDataSourceType() const;
 
-	unsigned long GetTimeInUs() const;
+	TimeMicroSec GetTime() const;
 
 	void print() const;
 

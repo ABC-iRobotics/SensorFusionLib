@@ -50,7 +50,7 @@ protected:
 public:
 
 	void run() {
-		unsigned long t_last = getTimeInMicroseconds();
+		TimeMicroSec t_last;
 		// törölni minden várakozó üzenetet?
 
 		while (true) {
@@ -58,8 +58,8 @@ public:
 			bool msgs = _getandprocessMsg_Wait((unsigned int)(Ts_max * 1000));
 			while (msgs) // ha van, megnézzük van-e még
 				msgs = _getandprocessMsg_DontWait();
-			unsigned long t_filt = getTimeInMicroseconds();
-			filter->Step(double(t_last - t_filt) / 1e6); // gyorsan léptetni a fúziót - az eltelt idõnek megfelelõen...
+			TimeMicroSec t_filt;
+			filter->Step(t_last - t_filt); // gyorsan léptetni a fúziót - az eltelt idõnek megfelelõen...
 			t_last = t_filt;
 		}
 	}

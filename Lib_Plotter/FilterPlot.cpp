@@ -13,7 +13,7 @@ void FilterPlot::Callback(const DataMsg & data) {
 				v = StatisticValue(Eigen::VectorXd::Zero(data.GetVariance().rows()));
 			if (data.HasVariance())
 				v.variance = data.GetVariance();
-			_plotValueAt(index, v, double(data.GetTimeInUs())*1e-6);
+			_plotValueAt(index, v, data.GetTime().TimeInS());
 		}
 	}
 }

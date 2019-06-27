@@ -2,8 +2,6 @@
 
 #include "DataMsg.h"
 
-unsigned long getTimeInMicroseconds();
-
 class Buffer {
 public:
 	Buffer();

@@ -16,29 +16,29 @@ int main() {
 	AbsSensor GPS(GPSnoise);
 
 	//Simulate youBot and sensors, send data
-	unsigned long t0_ms = getTimeInMicroseconds();
+	TimeMicroSec t0;
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {
-		unsigned long t_ms = t0_ms + n * traj.Ts*1e6;
-		if (t_ms >= getTimeInMicroseconds())
-			std::this_thread::sleep_for(std::chrono::duration<unsigned long, std::micro>(t_ms - getTimeInMicroseconds()));
+		TimeMicroSec t = t0 + traj.Ts * n;
+		if (t >= TimeMicroSec())
+			(t - TimeMicroSec()).Sleep_for();
 		else printf("-");
 		{
 			Eigen::VectorXd w_youbot = youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]);
-			DataMsg msg(0, DISTURBANCE, SENSOR, getTimeInMicroseconds());
+			DataMsg msg(0, DISTURBANCE, SENSOR);
 			msg.SetValueVector(w_youbot);
 			pub.SendMsg(msg);
 		}
 		if (n % 30 == 0) {
 			Eigen::VectorXd y_GPS = GPS.update(traj.x[n], traj.y[n], traj.phi[n]);
-			DataMsg msg(1, OUTPUT, SENSOR, getTimeInMicroseconds());
+			DataMsg msg(1, OUTPUT, SENSOR);
 			msg.SetValueVector(y_GPS);
 			pub.SendMsg(msg);
 		}
-		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts);
+		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts.TimeInS());
 		{
 			Eigen::VectorXd y_ins = insphantom.Out();
-			DataMsg msg(2, OUTPUT, SENSOR, getTimeInMicroseconds());
+			DataMsg msg(2, OUTPUT, SENSOR);
 			msg.SetValueVector(y_ins);
 			pub.SendMsg(msg);
 		}

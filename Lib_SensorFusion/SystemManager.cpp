@@ -439,7 +439,7 @@ void SystemManager::ClearCallback() {
 }
 
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
-	sensorList(SensorList()), state(state_), baseSystem(data), t(0),
+	sensorList(SensorList()), state(state_), baseSystem(data), time(0),
 	hasCallback(false) {
 }
 
@@ -525,35 +525,33 @@ void SystemManager::PredictionDone(const StatisticValue& state, const StatisticV
 	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
 	std::vector<StatisticValue> vOutput = partitionateWithStatistic(OUTPUT, output);
 	
-	Call(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE, vState[0], t*1e6));
-	Call(DataMsg(baseSystem.getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, baseSystem(DISTURBANCE), t*1e6));
+	Call(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE, vState[0], time));
+	Call(DataMsg(baseSystem.getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, baseSystem(DISTURBANCE), time));
 	if (baseSystem.available()) {
-		Call(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, vOutput[0], t*1e6));
-		Call(DataMsg(baseSystem.getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, baseSystem(NOISE), t*1e6));
+		Call(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, vOutput[0], time));
+		Call(DataMsg(baseSystem.getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, baseSystem(NOISE), time));
 	}
 	for (int i = 0; i < nSensors(); i++) {
-		Call(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE, vState[i + 1], t*1e6));
-		Call(DataMsg(sensorList[i].getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, sensorList[i](DISTURBANCE), t*1e6));
+		Call(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE, vState[i + 1], time));
+		Call(DataMsg(sensorList[i].getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, sensorList[i](DISTURBANCE), time));
 		if (sensorList[i].available()) {
-			Call(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, vOutput[i + 1], t*1e6));
-			Call(DataMsg(sensorList[i].getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, sensorList[i](NOISE), t*1e6));
+			Call(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, vOutput[i + 1], time));
+			Call(DataMsg(sensorList[i].getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, sensorList[i](NOISE), time));
 		}
 	}
 }
 
 void SystemManager::FilteringDone(const StatisticValue& state) const {
-	std::vector<Eigen::VectorXd> vState = partitionate(STATE, state.vector);
-	DataMsg data(baseSystem.getPtr()->getID(), STATE, FILTER_MEAS_UPDATE, t*1e6);
-	data.SetValueVector(vState[0]);
+	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
+	DataMsg data(baseSystem.getPtr()->getID(), STATE, FILTER_MEAS_UPDATE, vState[0], time);
 	Call(data);
 	for (int i = 0; i < nSensors(); i++) {
-		DataMsg data(sensorList[i].getPtr()->getID(), STATE, FILTER_MEAS_UPDATE, t*1e6);
-		data.SetValueVector(vState[i+1]);
+		DataMsg data(sensorList[i].getPtr()->getID(), STATE, FILTER_MEAS_UPDATE, vState[i+1], time);
 		Call(data);
 	}
 }
 
-void SystemManager::StepClock(double dt) { t += dt; }
+void SystemManager::StepClock(TimeMicroSec dt) { time += dt; }
 
 SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
 	const StatisticValue& noise_, const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,

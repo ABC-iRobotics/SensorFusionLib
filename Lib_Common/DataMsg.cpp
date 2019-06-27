@@ -1,14 +1,14 @@
 #include "DataMsg.h"
 
-#include "TimeUS.h"
+#include "TimeMicroSec.h"
 #include <iostream>
 
-DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, unsigned long timestamp_in_us_) :
-	sourceID(ID), dataType(type), dataSource(source), timestamp_in_us(timestamp_in_us_),
+DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, TimeMicroSec time_) :
+	sourceID(ID), dataType(type), dataSource(source), time(time_),
 	empty(false), hasValue(false), hasVariance(false) {}
 
-DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, unsigned long timestamp_in_us_) :
-	sourceID(ID), dataType(type), dataSource(source), timestamp_in_us(timestamp_in_us_),
+DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, TimeMicroSec time_) :
+	sourceID(ID), dataType(type), dataSource(source), time(time_),
 	empty(false), hasValue(true), hasVariance(true), value(data.vector), variance(data.variance) {}
 
 bool DataMsg::IsEmpty() const { return empty; }
@@ -31,10 +31,10 @@ DataType DataMsg::GetDataType() const { return dataType; }
 
 OperationType DataMsg::GetDataSourceType() const { return dataSource; }
 
-unsigned long DataMsg::GetTimeInUs() const { return timestamp_in_us; }
+TimeMicroSec DataMsg::GetTime() const { return time; }
 
 void DataMsg::print() const {
-	auto t = TimeUS();
+	auto t = TimeMicroSec();
 	if (IsEmpty()) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
@@ -71,7 +71,7 @@ void DataMsg::print() const {
 	default:
 		break;
 	}
-	printf("\n Age: %f [ms]\n", (t - TimeUS(timestamp_in_us)).TimeInS());
+	printf("\n Age: %f [ms]\n", (t - TimeMicroSec(time)).TimeInS());
 	if (hasValue)
 		std::cout << "Value:\n" << value << std::endl;
 	if (hasVariance)

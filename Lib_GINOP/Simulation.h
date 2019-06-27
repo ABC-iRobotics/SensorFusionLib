@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 #include "Eigen/Dense"
-
+#include "TimeMicroSec.h"
 
 struct Random {
 	static std::default_random_engine generator;
@@ -17,14 +17,14 @@ typedef std::vector<double> Values;
 double last_element(const Values& v);
 
 struct Trajectory {
-	double Ts;
+	TimeMicroSec Ts;
 	Values x, y, phi;
 	Values vx_local, vy_local, omega;
 	Values ax_local, ay_local, epsilon;
 
 	void add(double ax, double ay, double eps);
 	size_t length() const;
-	Trajectory(double Ts_);
+	Trajectory(TimeMicroSec Ts_);
 };
 
 Trajectory genTrajectory();
@@ -51,10 +51,3 @@ struct AbsSensor {
 	AbsSensor(double s) : disturbance(3,s) {};
 	Eigen::VectorXd update(double x, double y, double phi);;
 };
-
-/*
-void FilterCallback(FilterCallData data) {
-	if (data.callType == FilterCallData::FILTERING && data.type == STATE) {
-		std::cout << data.value.vector.transpose() << std::endl;
-	}
-}*/

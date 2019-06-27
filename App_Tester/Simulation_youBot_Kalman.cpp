@@ -78,23 +78,21 @@ void simulation_youbot_Kalman() {
 #endif
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {
-		DataMsg data(youBot->getID(), DISTURBANCE, SENSOR, n*traj.Ts*1e6);
+		DataMsg data(youBot->getID(), DISTURBANCE, SENSOR, traj.Ts*n);
 		data.SetValueVector(youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]));
 		filter->SetProperty(data);
 
-		std::cout << (*filter)(STATE).vector.transpose() << std::endl;
 		if (n % 30 == 0)
 		{
-			data = DataMsg(absPose->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
+			data = DataMsg(absPose->getID(), OUTPUT, SENSOR, traj.Ts*n);
 			data.SetValueVector(GPS.update(traj.x[n], traj.y[n], traj.phi[n]));
 			filter->SetProperty(data);
 		}
 
-		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts);
-		data = DataMsg(ins->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
+		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts.TimeInS());
+		data = DataMsg(ins->getID(), OUTPUT, SENSOR, traj.Ts*n);
 		data.SetValueVector(insphantom.Out());
 		filter->SetProperty(data);
-		std::cout << (*filter)(STATE).vector(9) << std::endl;
 
 		Eigen::VectorXd truth(7);
 		truth(0) = traj.vx_local[n];
@@ -105,7 +103,7 @@ void simulation_youbot_Kalman() {
 		truth(5) = traj.phi[n];
 		truth(6) = 0;
 		{
-			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, n*traj.Ts*1e6);
+			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n);
 			data.SetValueVector(truth);
 			plotter.Callback(data);
 		}

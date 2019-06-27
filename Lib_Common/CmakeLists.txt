@@ -11,13 +11,13 @@ set (HEADERS
 	StatisticValue.h
 	defs.h
 	DataMsg.h
-	TimeUS.h
+	TimeMicroSec.h
 	)
 	
 set (SOURCES
 	StatisticValue.cpp
 	DataMsg.cpp
-	TimeUS.cpp
+	TimeMicroSec.cpp
 	)
 	
 
