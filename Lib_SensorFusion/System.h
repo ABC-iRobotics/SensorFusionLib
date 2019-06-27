@@ -1,10 +1,7 @@
 #pragma once
 #include "defs.h"
 #include "StatisticValue.h"
-#include "CallbackHandler.h"
 #include <string>
-
-
 
 enum VariableType { VAR_STATE, VAR_EXTERNAL };
 

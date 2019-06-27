@@ -3,9 +3,18 @@
 std::vector<FilterPlot*> FilterPlot::toUpdate = std::vector<FilterPlot*>();
 
 void FilterPlot::Callback(const DataMsg & data) {
-	if (ID == 0 && data.GetDataType() == valueType) { // TODO - sourceID
+	if (ID == data.GetSourceID() && data.GetDataType() == valueType) {
 		unsigned int index = _index(valueType, data.GetDataSourceType());
-		_plotValueAt(index, data.GetValue(), double(data.GetTimeInUs())*1e-6);
+		if (data.HasValue() || data.HasVariance()) {
+			StatisticValue v;
+			if (data.HasValue())
+				v = data.GetValue();
+			else
+				v = StatisticValue(Eigen::VectorXd::Zero(data.GetVariance().rows()));
+			if (data.HasVariance())
+				v.variance = data.GetVariance();
+			_plotValueAt(index, v, double(data.GetTimeInUs())*1e-6);
+		}
 	}
 }
 
@@ -23,28 +32,6 @@ std::string SystemValueType2String(DataType type) {
 	default:
 		return "";
 	}
-}
-
-FilterPlot::FilterPlot(SystemManager & filter, System::SystemPtr sys, DataType type_, cvplot::Rect pose) :
-	FilterLog(filter), valueType(type_), ID(sys->getID()), nViews(sys->getNumOf(type_)),
-	plotter(sys->getName() + ": " + SystemValueType2String(type_),
-	cvplot::Offset(pose.x, pose.y), cvplot::Size(pose.width, pose.height)) {
-	// Create plots, set number of serieses	
-	std::vector<std::string> viewNames = sys->getNames(valueType);
-	unsigned int nSeries = _num(type_);
-	std::vector<std::string> seriesNames = std::vector<std::string>();
-	for (unsigned int i = 0; i < nSeries; i++)
-		seriesNames.push_back(_callTypeToString(_eventType(type_, i)));
-	for (unsigned int i = 0; i < nViews; i++) {
-		plotter.addPlot(viewNames[i], nSeries, seriesNames, i == 0);
-		// set linetypes
-		for (unsigned int j = 0; j < nSeries; j++) {
-			plotter.setLineType(i, j, cvplot::Dots);
-			plotter.setLineColor(i, j, _color(j));
-		}
-		plotter.updatePlot(i);
-	}
-	toUpdate.push_back(this);
 }
 
 void FilterPlot::Update() {
@@ -164,6 +151,28 @@ cvplot::Color FilterPlot::_color(unsigned int index) const {
 	}
 }
 
+FilterPlot::FilterPlot(unsigned int systemID, std::string systemName, std::vector<std::string> valueNames, DataType type_, cvplot::Rect pose) :
+	valueType(type_), ID(systemID), nViews(valueNames.size()),
+	plotter(systemName + ": " + SystemValueType2String(type_),
+		cvplot::Offset(pose.x, pose.y), cvplot::Size(pose.width, pose.height)) {
+	// Create plots, set number of serieses	
+	std::vector<std::string> viewNames = valueNames;
+	unsigned int nSeries = _num(type_);
+	std::vector<std::string> seriesNames = std::vector<std::string>();
+	for (unsigned int i = 0; i < nSeries; i++)
+		seriesNames.push_back(_callTypeToString(_eventType(type_, i)));
+	for (unsigned int i = 0; i < nViews; i++) {
+		plotter.addPlot(viewNames[i], nSeries, seriesNames, i == 0);
+		// set linetypes
+		for (unsigned int j = 0; j < nSeries; j++) {
+			plotter.setLineType(i, j, cvplot::Dots);
+			plotter.setLineColor(i, j, _color(j));
+		}
+		plotter.updatePlot(i);
+	}
+	toUpdate.push_back(this);
+}
+
 FilterPlot::~FilterPlot() {
 	for (auto i = toUpdate.begin(); i != toUpdate.end(); i++)
 		if (*i == this) {
@@ -175,4 +184,10 @@ FilterPlot::~FilterPlot() {
 void FilterPlot::UpdateWindows() {
 	for (size_t i = 0; i < toUpdate.size(); i++)
 		toUpdate[i]->Update();
+}
+
+void FilterPlot::AddData(const DataMsg & data) {
+	//data.print();
+	for (unsigned int i = 0; i < toUpdate.size(); i++)
+		toUpdate[i]->Callback(data);
 }

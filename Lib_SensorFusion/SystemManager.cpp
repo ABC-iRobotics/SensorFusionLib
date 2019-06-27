@@ -424,8 +424,23 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 	return StatisticValue(y, Sy);
 }
 
+void SystemManager::Call(const DataMsg & data) const {
+	if (hasCallback)
+		callback(data);
+}
+
+void SystemManager::SetCallback(Callback callback_) {
+	hasCallback = true;
+	callback = callback_;
+}
+
+void SystemManager::ClearCallback() {
+	hasCallback = false;
+}
+
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
-	sensorList(SensorList()), state(state_), baseSystem(data), t(0) {
+	sensorList(SensorList()), state(state_), baseSystem(data), t(0),
+	hasCallback(false) {
 }
 
 SystemManager::~SystemManager() {

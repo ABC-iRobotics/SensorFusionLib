@@ -66,7 +66,7 @@ public:
 		}
 		filter = waukf;
 		if (port_logger >=0)
-			SetZMQLogger(*filter, port_logger);
+			SetZMQLogger(port_logger);
 	}
 
 	~youBotINSGPS();

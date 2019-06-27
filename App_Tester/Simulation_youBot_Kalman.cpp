@@ -24,11 +24,11 @@ void simulation_youbot_Kalman() {
 	// Init sensor system
 	KalmanFilter::KalmanFilterPtr filter;
 	//youbot
-	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.2, 0.4, 0.25, 0.05, 0);
+	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.1, 0.4, 0.25, 0.05, 0);
 	youBot->systemTest();
 	{
 		// Init state (vx,vy,om,x,y,phi,null)
-		StatisticValue initState = StatisticValue(Eigen::VectorXd::Zero(7), Eigen::MatrixXd::Identity(7, 7)*1.1);
+		StatisticValue initState = StatisticValue(Eigen::VectorXd::Zero(7), Eigen::MatrixXd::Identity(7, 7)*1);
 		// Init noise ()
 		StatisticValue initNoise(0);
 		// Init disturbance (FL,FR,BL,BR) : must be updated later
@@ -69,10 +69,12 @@ void simulation_youbot_Kalman() {
 		filter->AddSensor(data, initState);
 	}
 
+	filter->SetCallback(FilterPlot::AddData);
+
 #ifdef FILTERPLOT
-	FilterPlot plotter(*filter, youBot, STATE);
-	//FilterPlot plotter2(*filter, absPose, OUTPUT);
-	FilterPlot plotter3(*filter, ins, OUTPUT);
+	FilterPlot plotter(youBot->getID(), youBot->getName(), youBot->getStateNames(), STATE);
+	//FilterPlot plotter2(youBot->getID(), youBot->getName(), youBot->getDisturbanceNames(), DISTURBANCE);
+	//FilterPlot plotter3(ins->getID(), ins->getName(), ins->getOutputNames(), OUTPUT);
 #endif
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {
@@ -81,7 +83,8 @@ void simulation_youbot_Kalman() {
 		filter->SetProperty(data);
 
 		std::cout << (*filter)(STATE).vector.transpose() << std::endl;
-		if (n % 30 == 0) {
+		if (n % 30 == 0)
+		{
 			data = DataMsg(absPose->getID(), OUTPUT, SENSOR, n*traj.Ts*1e6);
 			data.SetValueVector(GPS.update(traj.x[n], traj.y[n], traj.phi[n]));
 			filter->SetProperty(data);
@@ -93,9 +96,23 @@ void simulation_youbot_Kalman() {
 		filter->SetProperty(data);
 		std::cout << (*filter)(STATE).vector(9) << std::endl;
 
+		Eigen::VectorXd truth(7);
+		truth(0) = traj.vx_local[n];
+		truth(1) = traj.vy_local[n];
+		truth(2) = traj.omega[n];
+		truth(3) = traj.x[n];
+		truth(4) = traj.y[n];
+		truth(5) = traj.phi[n];
+		truth(6) = 0;
+		{
+			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, n*traj.Ts*1e6);
+			data.SetValueVector(truth);
+			plotter.Callback(data);
+		}
+
 		filter->Step(traj.Ts);
 #ifdef FILTERPLOT
-		if (n % 100 == 0)
+		if (n % 2 == 0)
 			FilterPlot::UpdateWindows();
 #endif
 	}

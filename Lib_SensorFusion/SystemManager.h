@@ -74,7 +74,7 @@ EvalNonLinPart(TIMEUPDATE/MEASUREMENTUPDATE, Ts, ...): computes the results of f
 
 #include "DataMsg.h"
 
-class SystemManager : public CallbackHandler<const DataMsg&> {
+class SystemManager {
 public:
 	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
 
@@ -223,6 +223,18 @@ private:
 	StatisticValue state;
 
 	double t; // clock
+
+public:
+	typedef std::function<void(const DataMsg& data)> Callback;
+
+private:
+	Callback callback;
+	bool hasCallback;
+	void Call(const DataMsg& data) const;
+public:
+	void SetCallback(Callback callback_);
+
+	void ClearCallback();
 };
 
 

@@ -3,17 +3,13 @@
 #include "ZMQSubscriber.h"
 #include "ZMQPublisher.h"
 #include "SystemManager.h"
-#include "ZMQFilterLogger.h"
-#include <map>
+#include <vector>
 
 class FilteringManager {
 	ZMQSubscriber zmqSub;
-
-	ZMQFilterLogger* zmqLogger;
+	ZMQPublisher* zmqPub;
 
 	std::vector<System::SystemPtr> systems;
-
-	//std::map<unsigned int, System::SystemPtr> systems; // ID - Systems
 
 	const double Ts_max; // in seconds
 
@@ -40,10 +36,15 @@ protected:
 		return success;
 	}
 
-	FilteringManager(double Ts_max_s, int port);
+	FilteringManager(double Ts_max_s, int port) :
+		zmqPub(NULL), Ts_max(Ts_max_s), zmqSub(port),
+		systems(std::vector<System::SystemPtr>()) {}
 
-	void SetZMQLogger(SystemManager& filter, int port) {
-		zmqLogger = new ZMQFilterLogger(filter, port);
+	void SetZMQLogger(int port) {
+		zmqPub = new ZMQPublisher(port);
+		filter->SetCallback([this](const DataMsg& data) {
+			zmqPub->SendMsg(data);
+		});
 	}
 
 public:
@@ -64,16 +65,7 @@ public:
 	}
 
 	~FilteringManager() {
-		if (!zmqLogger)
-			delete zmqLogger;
+		if (!zmqPub)
+			delete zmqPub;
 	}
-
-	// ráregisztrálni callback-et a szûrõre, h továbbítsa az adatokat zmq-n?
-
-	// log?
-
-	// külön init
-	// start szál, ami fut magának...
-
-	// megjelenítés blokkolás nélkül?
 };

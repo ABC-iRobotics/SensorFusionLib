@@ -73,11 +73,11 @@ void Simulation_youBot_WAUKF() {
 		//filter->SetNoiseValueWindowing(absPose, 100);
 	}
 
+	filter->SetCallback(FilterPlot::AddData);
+
 #ifdef FILTERPLOT
-	FilterPlot plotter(*filter, youBot, STATE);
-	//FilterPlot plotter1(*filter, ins, STATE);
-	FilterPlot plotter2(*filter, absPose, OUTPUT);
-	FilterPlot plotter3(*filter, ins, OUTPUT);
+	FilterPlot plotter(youBot->getID(), youBot->getName(), youBot->getStateNames(), STATE);
+	FilterPlot plotter3(ins->getID(), ins->getName(), ins->getOutputNames(), OUTPUT);
 #endif
 	// Simulation
 	for (size_t n = 0; n < traj.length(); n++) {

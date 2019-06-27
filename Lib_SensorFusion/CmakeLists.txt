@@ -11,12 +11,10 @@ include_directories (
 set (HEADERS
 	BaseSystem.h
 	Sensor.h
-	System.h 
-	CallbackHandler.h
+	System.h
 	SystemManager.h
 	PartialCholevski.h
 	KalmanFilter.h
-	FilterLog.h
 	WAUKF.h
 	pinv.h
 	)
@@ -28,7 +26,6 @@ set (SOURCES
 	SystemManager.cpp
 	PartialCholevski.cpp
 	KalmanFilter.cpp
-	FilterLog.cpp
 	WAUKF.cpp
 	pinv.cpp
 	)

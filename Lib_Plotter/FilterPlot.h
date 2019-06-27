@@ -1,26 +1,27 @@
 #pragma once
-#include "FilterLog.h"
 #include "Plotter.h"
+#include "DataMsg.h"
+#include <string>
 
-class FilterPlot : public FilterLog {
+class FilterPlot {
 public:
-	FilterPlot(SystemManager& filter, System::SystemPtr sys, DataType type_,
+	FilterPlot(unsigned int systemID, std::string systemName, std::vector<std::string> valueNames, DataType type_,
 		cvplot::Rect pose = cvplot::Rect(60, 30, 500, 150));
 
 	~FilterPlot();
 
-	void Callback(const DataMsg& data) override;
+	void Callback(const DataMsg& data);
 
 	void Update();
 
 	static void UpdateWindows();
 
+	static void AddData(const DataMsg& data);
+
 private:
 	cvplot::Plotter plotter;
 
 	DataType valueType;
-
-	//System::SystemPtr ptr;
 
 	unsigned int ID;
 
