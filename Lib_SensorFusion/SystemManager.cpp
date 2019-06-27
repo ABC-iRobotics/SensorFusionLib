@@ -425,7 +425,7 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 }
 
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
-	sensorList(SensorList()), state(state_), ID(getUID()), baseSystem(data), t(0) {
+	sensorList(SensorList()), state(state_), baseSystem(data), t(0) {
 }
 
 SystemManager::~SystemManager() {

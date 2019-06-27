@@ -215,7 +215,6 @@ protected:
 	void StepClock(double dt);
 
 private:
-	unsigned int ID; // unique ID for identifying callbacks
 
 	typedef std::vector<SensorData> SensorList;
 	SensorList sensorList;
