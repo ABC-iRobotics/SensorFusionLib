@@ -27,7 +27,7 @@ Buffer::Buffer(const DataMsg & data) {
 		float* v = new float[N];
 		for (unsigned int i = 0; i < N; i++)
 			v[i] = (float)value[i];
-		fbb_value = fbb.CreateVector<float>(v, 4);
+		fbb_value = fbb.CreateVector<float>(v, N);
 	}
 
 	flatbuffers::Offset<flatbuffers::Vector<float>> fbb_variance;
