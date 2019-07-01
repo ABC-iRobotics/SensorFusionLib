@@ -261,10 +261,9 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 		Eigen::MatrixXd pinvDbs = BaseSystem().getBaseSystemPtr()->getPInvD(dT.TimeInS());
 		{ //Noise value estimation
 			Eigen::VectorXd value = y_meas.vector - y_pred0.vector;
-			auto party_ = partitionate(OUTPUT, y_meas.vector - y_pred0.vector);
 			for (auto it = noiseValueWindows.begin(); it != noiseValueWindows.end(); it++) {
 				int index = _GetIndex(it->first);
-				if (available(index)) {
+				if (isAvailable(index)) {
 					Eigen::VectorXd v = pinvDbs * p.PartValue(DataType::OUTPUT, value, -1);// partx_[0];
 					if (index != -1) { //basesystem
 						auto sys = Sensor(index);
@@ -284,7 +283,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 			Eigen::MatrixXd value = epsilon * epsilon.transpose() - y_pred0.variance;
 			for (auto it = noiseVarianceWindows.begin(); it != noiseVarianceWindows.end(); it++) {
 				int index = _GetIndex(it->first);
-				if (available(index)) {
+				if (isAvailable(index)) {
 					Eigen::MatrixXd v = pinvDbs * p.PartVariance(OUTPUT, value, -1, -1) * pinvDbs.transpose();
 					if (index != -1) { //basesystem
 						auto sys = Sensor(index);

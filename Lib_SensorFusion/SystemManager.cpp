@@ -107,7 +107,7 @@ bool SystemManager::SystemData::available() const { return measStatus != OBSOLET
 
 // returns if is measurement available
 
-SystemManager::Partitioner SystemManager::getPartitioner(bool forcedOutput) {
+SystemManager::Partitioner SystemManager::getPartitioner(bool forcedOutput) const {
 	Partitioner p(nSensors() + 1);
 	p.nx[0] = BaseSystem().num(DataType::STATE, forcedOutput);
 	p.ny[0] = BaseSystem().num(DataType::OUTPUT, forcedOutput);
@@ -122,7 +122,7 @@ SystemManager::Partitioner SystemManager::getPartitioner(bool forcedOutput) {
 	return p;
 }
 
-bool SystemManager::available(int index) const {
+bool SystemManager::isAvailable(int index) const {
 	if (index == -1)
 		return BaseSystem().available();
 	return Sensor(index).available();
@@ -234,38 +234,6 @@ StatisticValue SystemManager::operator()(DataType type, bool forcedOutput) const
 }
 
 /* Get A,B, C,D matrices according to the available sensors*/
-
-
-// Partitionate back the STATE, DISTURBANCE vectors
-// OR
-// the measured OUTPUT for the available (=not obsolethe) systems (sensors & basesystem)
-// OR
-// the noises for the basesystem and the active sensors
-
-std::vector<Eigen::VectorXd> SystemManager::partitionate(DataType type, const Eigen::VectorXd& value, bool forcedOutput) const {
-	std::vector<Eigen::VectorXd> out = std::vector<Eigen::VectorXd>();
-	size_t n = baseSystem.num(type, forcedOutput);
-	out.push_back(value.segment(0, n));
-	for (size_t i = 0; i<nSensors(); i++) {
-		size_t d = sensorList[i].num(type, forcedOutput);
-		out.push_back(value.segment(n, d));
-		n += d;
-	}
-	return out;
-}
-
-std::vector<StatisticValue> SystemManager::partitionateWithStatistic(DataType type, const StatisticValue& value, bool forcedOutput) const {
-	std::vector<StatisticValue> out = std::vector<StatisticValue>();
-	size_t n = baseSystem.num(type, forcedOutput);
-	out.push_back(value.GetPart(0, n));
-	for (size_t i = 0; i < nSensors(); i++) {
-		size_t d = sensorList[i].num(type, forcedOutput);
-		out.push_back(value.GetPart(n, d));
-		n += d;
-	}
-	return out;
-}
-
 void SystemManager::getMatrices(TimeUpdateType out_, double Ts, Eigen::MatrixXd & A,
 	Eigen::MatrixXd & B, bool forcedOutput) const {
 	DataType outValueType = System::getOutputValueType(out_);
@@ -311,21 +279,24 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
 	DataType outtype = System::getOutputValueType(outType);
 	size_t n_out = num(outtype, forcedOutput);
 	// Partitionate vectors
-	std::vector<Eigen::VectorXd> states = partitionate(STATE, state, forcedOutput);
-	std::vector<Eigen::VectorXd> ins = partitionate(intype, in, forcedOutput);
+	auto partitioner = getPartitioner(forcedOutput);
 	// Return value
 	Eigen::VectorXd out = Eigen::VectorXd(n_out);
 	// Call the functions
 	size_t n;
+	auto xbase = partitioner.PartValue(STATE, state, -1);
+	auto inbase = partitioner.PartValue(intype, in, -1);
 	if (outType == STATE_UPDATE || baseSystem.available() || forcedOutput) {
 		n = baseSystem.num(outtype, forcedOutput);
-		out.segment(0, n) = baseSystem.getBaseSystemPtr()->genNonlinearPart(outType, Ts, states[0], ins[0]);
+		out.segment(0, n) = baseSystem.getBaseSystemPtr()->genNonlinearPart(outType, Ts, xbase, inbase);
 	}
 	else n = 0;
 	for (size_t i = 0; i < nSensors(); i++)
 		if (outType == STATE_UPDATE || sensorList[i].available() || forcedOutput) {
 			size_t d = sensorList[i].num(outtype, forcedOutput);
-			out.segment(n, d) = sensorList[i].getSensorPtr()->genNonlinearPart(outType, Ts, states[0], ins[0], states[i+1], ins[i+1]);
+			auto xi = partitioner.PartValue(STATE, state, i);
+			auto ini = partitioner.PartValue(intype, in, i);
+			out.segment(n, d) = sensorList[i].getSensorPtr()->genNonlinearPart(outType, Ts, xbase, inbase, xi, ini);
 			n += d;
 		}
 	return out;
@@ -446,7 +417,7 @@ void SystemManager::ClearCallback() {
 }
 
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
-	sensorList(SensorList()), state(state_), baseSystem(data), time(0),
+	sensorList(std::vector<SensorData>()), state(state_), baseSystem(data), time(0),
 	hasCallback(false) {
 }
 
@@ -454,11 +425,10 @@ SystemManager::~SystemManager() {
 }
 
 std::ostream & SystemManager::print(std::ostream & stream) const {
-	std::vector<Eigen::VectorXd> states = partitionate(STATE, state.vector);
+	// Partitionate vectors
+	auto partitioner = getPartitioner(true);
 	Eigen::MatrixXd S1, S2;
 	StatisticValue output = Eval(OUTPUT_UPDATE, 0.001, state, (*this)(NOISE, true), S1, S2, true);
-	std::vector<Eigen::VectorXd> outputs = partitionate(OUTPUT, output.vector, true);
-
 	auto printSystem = [](std::ostream& stream, const SystemData* sys,
 		const Eigen::VectorXd& state, const Eigen::VectorXd& output) {
 		auto printRowVector = [](std::ostream& stream, const Eigen::VectorXd& v, const std::vector<std::string>& names) {
@@ -488,10 +458,12 @@ std::ostream & SystemManager::print(std::ostream & stream) const {
 	};
 
 	stream << "Basesystem: ";
-	printSystem(stream, &baseSystem, states[0], outputs[0]);
+	printSystem(stream, &baseSystem, partitioner.PartValue(STATE, state.vector,-1),
+		partitioner.PartValue(OUTPUT, output.vector, -1));
 	for (unsigned int sensor_i = 0; sensor_i < nSensors(); sensor_i++) {
 		stream << "Sensor " << sensor_i << ": ";
-		printSystem(stream, &sensorList[sensor_i], states[sensor_i + 1], outputs[sensor_i + 1]);
+		printSystem(stream, &sensorList[sensor_i], partitioner.PartValue(STATE, state.vector, sensor_i),
+			partitioner.PartValue(OUTPUT, output.vector, sensor_i));
 	}
 	// STATE variances
 	stream << "Variance matrix of the state:\n";
@@ -529,31 +501,35 @@ void SystemManager::resetMeasurement() {
 }
 
 void SystemManager::PredictionDone(const StatisticValue& state, const StatisticValue& output) const {
-	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
-	std::vector<StatisticValue> vOutput = partitionateWithStatistic(OUTPUT, output);
-	
-	Call(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE, vState[0], time));
+	auto p = getPartitioner();
+	Call(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE,
+		p.PartStatisticValue(STATE, state, -1), time));
 	Call(DataMsg(baseSystem.getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, baseSystem(DISTURBANCE), time));
 	if (baseSystem.available()) {
-		Call(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, vOutput[0], time));
+		Call(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, 
+			p.PartStatisticValue(OUTPUT, output, -1), time));
 		Call(DataMsg(baseSystem.getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, baseSystem(NOISE), time));
 	}
 	for (int i = 0; i < nSensors(); i++) {
-		Call(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE, vState[i + 1], time));
+		Call(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE, 
+			p.PartStatisticValue(STATE, state, i), time));
 		Call(DataMsg(sensorList[i].getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, sensorList[i](DISTURBANCE), time));
 		if (sensorList[i].available()) {
-			Call(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, vOutput[i + 1], time));
+			Call(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE,
+				p.PartStatisticValue(OUTPUT, output, i), time));
 			Call(DataMsg(sensorList[i].getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, sensorList[i](NOISE), time));
 		}
 	}
 }
 
 void SystemManager::FilteringDone(const StatisticValue& state) const {
-	std::vector<StatisticValue> vState = partitionateWithStatistic(STATE, state);
-	DataMsg data(baseSystem.getPtr()->getID(), STATE, FILTER_MEAS_UPDATE, vState[0], time);
+	auto p = getPartitioner();
+	DataMsg data(baseSystem.getPtr()->getID(), STATE, FILTER_MEAS_UPDATE,
+		p.PartStatisticValue(STATE, state, -1), time);
 	Call(data);
 	for (int i = 0; i < nSensors(); i++) {
-		DataMsg data(sensorList[i].getPtr()->getID(), STATE, FILTER_MEAS_UPDATE, vState[i+1], time);
+		DataMsg data(sensorList[i].getPtr()->getID(), STATE, FILTER_MEAS_UPDATE,
+			p.PartStatisticValue(STATE, state, i), time);
 		Call(data);
 	}
 }
@@ -727,6 +703,17 @@ const std::vector<size_t>& SystemManager::Partitioner::n(DataType type) const {
 	}
 }
 
+Eigen::VectorXd SystemManager::Partitioner::PartValue(DataType type, const Eigen::VectorXd & value, int index) const {
+	return Eigen::VectorXd(PartValue(type, const_cast<Eigen::VectorXd&>(value), index));
+	/*
+	auto n_ = n(type);
+	//if (index == -1) return value.segment(0, n_[0]);
+	size_t n0 = 0;
+	for (int i = 0; i < index + 1; i++)
+	n0 += n_[i];
+	return value.segment(n0, n_[index + 1]);*/
+}
+
 Eigen::VectorBlock<Eigen::VectorXd> SystemManager::Partitioner::PartValue(DataType type, Eigen::VectorXd & value, int index) const { //index=-1: basesystem, index=0 sensor0....
 	auto n_ = n(type);
 	//if (index == -1) return value.segment(0, n_[0]);
@@ -747,6 +734,10 @@ Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(DataType 
 	return value.block(n01, n02, n_[index1 + 1], n_[index2 + 1]);
 }
 
+Eigen::MatrixXd SystemManager::Partitioner::PartVariance(DataType type, const Eigen::MatrixXd & value, int index1, int index2) const {
+	return Eigen::MatrixXd(PartVariance(type, const_cast<Eigen::MatrixXd&>(value), index1, index2));
+}
+
 Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(DataType type1, DataType type2, Eigen::MatrixXd & value, int index1, int index2) const {
 	const std::vector<size_t>& n1_ = n(type1);
 	const std::vector<size_t>& n2_ = n(type2);
@@ -757,4 +748,9 @@ Eigen::Block<Eigen::MatrixXd> SystemManager::Partitioner::PartVariance(DataType 
 	for (int i = 0; i < index2 + 1; i++)
 		n02 += n2_[i];
 	return value.block(n01, n02, n1_[index1 + 1], n2_[index2 + 1]);
+}
+
+StatisticValue SystemManager::Partitioner::PartStatisticValue(DataType type, const StatisticValue & value, int index) const {
+	return StatisticValue(PartValue(type, value.vector, index),
+		PartVariance(type, value.variance, index, index));
 }

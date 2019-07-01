@@ -38,7 +38,7 @@ C = | Cbs  0   0 ... 0   | D = | Dbs  0   0  ... 0  |
 ---If there are sensors without uptodate output:
 
 Output vector: y = [ y_bs' y_s1' ... y_sn' ]' y_i = [] if there is not uptodate measurement
-Noise vector: v = [ v_bs' v_s1' ... v_sn' ]' v_si = [] if there is not updtodate measurement
+Noise vector: v = [ v_bs' v_s1' ... v_sn' ]' v_si = [] if there is not uptodate measurement
 
 y(k) = C*x(k) + D*v(k) + g(x(k),v(k));
 where
@@ -82,9 +82,9 @@ public:
 		MeasurementStatus measStatus;
 		StatisticValue noise, disturbance, measurement;
 	public:
+		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_, unsigned int outputSize);
 		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_,
 			const StatisticValue& measurement_, MeasurementStatus measStatus_);
-		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_, unsigned int outputSize);
 		virtual System::SystemPtr getPtr() const = 0;
 		StatisticValue operator()(DataType type, bool forcedOutput = false) const; // returns th given value
 		size_t num(DataType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
@@ -101,10 +101,10 @@ public:
 		BaseSystem::BaseSystemPtr ptr;
 	public:
 		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
+			const StatisticValue& disturbance_);
+		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const StatisticValue& measurement_ ,
 			MeasurementStatus measStatus_);
-		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
-			const StatisticValue& disturbance_);
 		Eigen::VectorXi dep(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
 		Eigen::MatrixXd getMatrix(double Ts, TimeUpdateType type,
@@ -118,10 +118,10 @@ public:
 		Sensor::SensorPtr ptr;
 	public:
 		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
+			const StatisticValue& disturbance_);
+		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const StatisticValue& measurement_,
 			MeasurementStatus measStatus_);
-		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
-			const StatisticValue& disturbance_);
 		Eigen::VectorXi depSensor(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
 		Eigen::VectorXi depBaseSystem(TimeUpdateType outType, VariableType type,
@@ -135,11 +135,36 @@ public:
 		bool isBaseSystem() const override;
 	};
 
+	/// Initialization:
+
 	// Constructor: the basesystem  must be given as an input
 	SystemManager(const BaseSystemData& data, const StatisticValue& state_);
 
+	// Destructor
+	~SystemManager();
+
+	typedef std::shared_ptr<SystemManager> SystemManagerPtr;
+
+	/// Usage:
+
 	// Add a sensor
 	void AddSensor(const SensorData& sensorData, const StatisticValue& sensorState);
+
+	// The filtering function to be defined
+	virtual void Step(TimeMicroSec Ts) = 0;
+
+	// The function to inject data (meas. results, noise, disturbance value and/or variances)
+	virtual void SetProperty(const DataMsg& data);
+
+	/// To set callback for filtering results
+
+	typedef std::function<void(const DataMsg& data)> Callback;
+
+	void SetCallback(Callback callback_);
+
+	void ClearCallback();
+
+	/// Getters:
 
 	size_t nSensors() const;
 
@@ -153,6 +178,13 @@ public:
 	void getMatrices(TimeUpdateType out_, double Ts, Eigen::MatrixXd& A,
 		Eigen::MatrixXd& B, bool forcedOutput = false) const;
 
+	// Get the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
+	StatisticValue operator()(DataType type, bool forcedOutput = false) const;
+
+	std::ostream & print(std::ostream & stream) const;
+
+	/// Eval model
+
 	// could be faster....
 	Eigen::VectorXd EvalNonLinPart(double Ts, TimeUpdateType outType,
 		const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput = false) const;
@@ -161,14 +193,13 @@ public:
 	StatisticValue Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
-	// Get the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	StatisticValue operator()(DataType type, bool forcedOutput = false) const;
-
-	std::ostream & print(std::ostream & stream) const;
-
-	// Destructor
-	~SystemManager();
-
+protected:
+	// Partitionate back the STATE, DISTURBANCE vectors
+	// OR
+	// the measured OUTPUT for the available (=not obsolethe) systems (sensors & basesystem)
+	// OR
+	// the noises for the basesystem and the active sensors
+	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
 	struct Partitioner {
 		std::vector<size_t> nx;
 		std::vector<size_t> nw;
@@ -178,68 +209,50 @@ public:
 		const std::vector<size_t>& n(DataType type) const;
 		Eigen::VectorBlock<Eigen::VectorXd> PartValue(DataType type,
 			Eigen::VectorXd& value, int index) const;
+		Eigen::VectorXd PartValue(DataType type,
+			const Eigen::VectorXd& value, int index) const;
 		Eigen::Block<Eigen::MatrixXd> PartVariance(DataType type,
 			Eigen::MatrixXd& value, int index1, int index2) const;
+		Eigen::MatrixXd PartVariance(DataType type,
+			const Eigen::MatrixXd& value, int index1, int index2) const;
 		Eigen::Block<Eigen::MatrixXd> PartVariance(DataType type1, DataType type2,
 			Eigen::MatrixXd& value, int index1, int index2) const;
+		StatisticValue PartStatisticValue(DataType type, const StatisticValue& value, int index) const;
 	};
+	Partitioner getPartitioner(bool forcedOutput = false) const;
 
-	Partitioner getPartitioner(bool forcedOutput = false);
+	// Get index for an ID, it returns -1 for the basesystem!
+	int _GetIndex(unsigned int ID) const;
 
-	bool available(int index) const;
-
-	virtual void Step(TimeMicroSec Ts) = 0;
-
-	typedef std::shared_ptr<SystemManager> SystemManagerPtr;
-
-	virtual void SetProperty(const DataMsg& data);
-
-protected:
-	int _GetIndex(unsigned int ID) const; // returns -1 for the basesystem!
+	// Returns the basesystemdata ref.
 	BaseSystemData & BaseSystem();
 	const BaseSystemData & BaseSystem() const;
 	SensorData & Sensor(size_t index);
 	StatisticValue& State();
 	SystemData* SystemByID(unsigned int ID);
 	const SensorData& Sensor(size_t index) const;
+	bool isAvailable(int index) const;
 
-	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	std::vector<Eigen::VectorXd> partitionate(DataType type, const Eigen::VectorXd& value, bool forcedOutput = false) const;
-
-	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
-	std::vector<StatisticValue> partitionateWithStatistic(DataType type, const StatisticValue& value, bool forcedOutput = false) const;
-
+	// Set 'UPTODATE' meas. statuses to 'OBSOLETHE'
 	void resetMeasurement();
 
+	// Call it with predicition results to forward them to the set callback
 	void PredictionDone(const StatisticValue& state, const StatisticValue& output) const;
 
+	// Call it with filtering results to forward them to the set callback
 	void FilteringDone(const StatisticValue& state) const;
 
+	// To step the inner clock in the overridden Step() function
 	void StepClock(TimeMicroSec dt);
 
-private:
-
-	typedef std::vector<SensorData> SensorList;
-	SensorList sensorList;
-	BaseSystemData baseSystem;
-
-	StatisticValue state;
-
-	TimeMicroSec time;
-
-public:
-	typedef std::function<void(const DataMsg& data)> Callback;
-
-private:
-	Callback callback;
-	bool hasCallback;
-protected:
+	// Call the callback if it is set
 	void Call(const DataMsg& data) const;
-public:
-	void SetCallback(Callback callback_);
 
-	void ClearCallback();
+private:
+	BaseSystemData baseSystem;
+	std::vector<SensorData> sensorList;
+	StatisticValue state;
+	TimeMicroSec time;
+	bool hasCallback;
+	Callback callback;
 };
-
-
-
