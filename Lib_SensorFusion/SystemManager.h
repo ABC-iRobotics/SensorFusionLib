@@ -80,12 +80,11 @@ public:
 
 	class SystemData {
 		MeasurementStatus measStatus;
-		StatisticValue noise;
-		StatisticValue disturbance;
-		Eigen::VectorXd measurement;
+		StatisticValue noise, disturbance, measurement;
 	public:
 		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_,
-			const Eigen::VectorXd& measurement_ = Eigen::VectorXd(), MeasurementStatus measStatus_ = OBSOLETHE);
+			const StatisticValue& measurement_, MeasurementStatus measStatus_);
+		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_, unsigned int outputSize);
 		virtual System::SystemPtr getPtr() const = 0;
 		StatisticValue operator()(DataType type, bool forcedOutput = false) const; // returns th given value
 		size_t num(DataType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
@@ -102,8 +101,10 @@ public:
 		BaseSystem::BaseSystemPtr ptr;
 	public:
 		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
-			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
-			MeasurementStatus measStatus_ = OBSOLETHE);
+			const StatisticValue& disturbance_, const StatisticValue& measurement_ ,
+			MeasurementStatus measStatus_);
+		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
+			const StatisticValue& disturbance_);
 		Eigen::VectorXi dep(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
 		Eigen::MatrixXd getMatrix(double Ts, TimeUpdateType type,
@@ -117,8 +118,10 @@ public:
 		Sensor::SensorPtr ptr;
 	public:
 		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
-			const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_ = Eigen::VectorXd(),
-			MeasurementStatus measStatus_ = OBSOLETHE);
+			const StatisticValue& disturbance_, const StatisticValue& measurement_,
+			MeasurementStatus measStatus_);
+		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
+			const StatisticValue& disturbance_);
 		Eigen::VectorXi depSensor(TimeUpdateType outType, VariableType type,
 			bool forcedOutput = false) const;
 		Eigen::VectorXi depBaseSystem(TimeUpdateType outType, VariableType type,
@@ -230,6 +233,7 @@ public:
 private:
 	Callback callback;
 	bool hasCallback;
+protected:
 	void Call(const DataMsg& data) const;
 public:
 	void SetCallback(Callback callback_);

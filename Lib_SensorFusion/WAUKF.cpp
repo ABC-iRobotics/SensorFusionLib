@@ -193,16 +193,17 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 	StatisticValue x_pred = _evalWithV0(STATE_UPDATE, dT.TimeInS(), (*this)(STATE),
 		(*this)(DataType::DISTURBANCE), sg1, sg2, false, x_pred0);
 	Eigen::MatrixXd Syxpred;
-	Eigen::VectorXd y_meas = (*this)(OUTPUT).vector;
+	StatisticValue y_meas = (*this)(OUTPUT);
 	StatisticValue y_pred = _evalWithV0(OUTPUT_UPDATE, dT.TimeInS(), x_pred,
 		(*this)(DataType::NOISE), Syxpred, sg2, false, y_pred0);
 
 	StepClock(dT);
 	PredictionDone(x_pred, y_pred);
 	// Kalman-filtering
-	Eigen::MatrixXd K = Syxpred.transpose() * y_pred.variance.inverse();
+	Eigen::MatrixXd Syy = y_pred.variance + y_meas.variance;
+	Eigen::MatrixXd K = Syxpred.transpose() * Syy.inverse();
 	Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
-	StatisticValue newstate = StatisticValue(x_pred.vector + K * (y_meas - y_pred.vector),
+	StatisticValue newstate = StatisticValue(x_pred.vector + K * (y_meas.vector - y_pred.vector),
 		(Sxnew + Sxnew.transpose()) / 2.);
 
 	FilteringDone(newstate);
@@ -210,7 +211,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 
 	// Statistics estimation
 	Partitioner p = getPartitioner();
-	Eigen::VectorXd epsilon = y_meas - y_pred.vector;
+	Eigen::VectorXd epsilon = y_meas.vector - y_pred.vector;
 	// DISTURBANCE
 	{
 		Eigen::MatrixXd pinvBbs = BaseSystem().getBaseSystemPtr()->getPInvB(dT.TimeInS());
@@ -259,8 +260,8 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 	{
 		Eigen::MatrixXd pinvDbs = BaseSystem().getBaseSystemPtr()->getPInvD(dT.TimeInS());
 		{ //Noise value estimation
-			Eigen::VectorXd value = y_meas - y_pred0.vector;
-			auto party_ = partitionate(OUTPUT, y_meas - y_pred0.vector);
+			Eigen::VectorXd value = y_meas.vector - y_pred0.vector;
+			auto party_ = partitionate(OUTPUT, y_meas.vector - y_pred0.vector);
 			for (auto it = noiseValueWindows.begin(); it != noiseValueWindows.end(); it++) {
 				int index = _GetIndex(it->first);
 				if (available(index)) {
@@ -295,7 +296,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 					}
 					it->second.AddValue(v);
 					Eigen::MatrixXd res = DiagAndLimit(it->second.Value(), 0.00001);
-					std::cout << "S_vv_0: \n" << res << std::endl;
+					//std::cout << "S_vv_0: \n" << res << std::endl;
 					if (index != -1)
 						Sensor(index).setVariance(res, NOISE);
 					else

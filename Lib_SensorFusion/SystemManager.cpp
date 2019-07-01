@@ -2,7 +2,11 @@
 #include "PartialCholevski.h"
 
 SystemManager::SystemData::SystemData(const StatisticValue& noise_,
-	const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
+	const StatisticValue& disturbance_, unsigned int outputSize) :
+	noise(noise_), measurement(StatisticValue(outputSize)), disturbance(disturbance_), measStatus(OBSOLETHE) {}
+
+SystemManager::SystemData::SystemData(const StatisticValue& noise_,
+	const StatisticValue& disturbance_, const StatisticValue& measurement_,
 	MeasurementStatus measStatus_) :
 	noise(noise_), measurement(measurement_), disturbance(disturbance_), measStatus(measStatus_) {}
 
@@ -29,6 +33,8 @@ size_t SystemManager::SystemData::num(DataType type, bool forcedOutput) const
 // return length of the given value
 
 void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, DataType type) {
+	if (value.size() != num(type, true))
+		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument size\n"));
 	switch (type) {
 	case DataType::NOISE:
 		noise.vector = value;
@@ -37,7 +43,7 @@ void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, DataType
 		disturbance.vector = value;
 		break;
 	case DataType::OUTPUT:
-		measurement = value;
+		measurement.vector = value;
 		if (measStatus == OBSOLETHE)
 			measStatus = UPTODATE;
 		break;
@@ -47,12 +53,17 @@ void SystemManager::SystemData::setValue(const Eigen::VectorXd & value, DataType
 }
 
 void SystemManager::SystemData::setVariance(const Eigen::MatrixXd & value, DataType type) {
+	if (value.rows() != num(type, true) || value.cols() != num(type, true))
+		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument size\n"));
 	switch (type) {
 	case DataType::NOISE:
 		noise.variance = value;
 		break;
 	case DataType::DISTURBANCE:
 		disturbance.variance = value;
+		break;
+	case DataType::OUTPUT:
+		measurement.variance = value;
 		break;
 	default:
 		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
@@ -69,7 +80,7 @@ Eigen::VectorXd SystemManager::SystemData::getValue(DataType type) const {
 	case DataType::DISTURBANCE:
 		return disturbance.vector;
 	case DataType::OUTPUT:
-		return measurement;
+		return measurement.vector;
 	default:
 		throw std::runtime_error(std::string("SystemData::setValue(): Wrong argument\n"));
 	}
@@ -121,12 +132,8 @@ void SystemManager::SetProperty(const DataMsg & data) {
 	SystemData* ptr = this->SystemByID(data.GetSourceID());
 	if (data.HasValue())
 		ptr->setValue(data.GetValue(), data.GetDataType());
-	if (data.HasVariance()) {
-		auto type = data.GetDataType();
-		if (type == OUTPUT)
-			type = NOISE;
-		ptr->setVariance(data.GetVariance(), type);
-	}
+	if (data.HasVariance())
+		ptr->setVariance(data.GetVariance(), data.GetDataType());
 }
 
 int SystemManager::_GetIndex(unsigned int ID) const {
@@ -554,12 +561,20 @@ void SystemManager::FilteringDone(const StatisticValue& state) const {
 void SystemManager::StepClock(TimeMicroSec dt) { time += dt; }
 
 SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
-	const StatisticValue& noise_, const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
+	const StatisticValue& noise_, const StatisticValue& disturbance_, const StatisticValue& measurement_,
 	MeasurementStatus measStatus_) : ptr(ptr_),
 	SystemData(noise_, disturbance_, measurement_, measStatus_) {
 	if (noise_.Length() != ptr_->getNumOfNoises() ||
 		disturbance_.Length() != ptr_->getNumOfDisturbances() ||
-		(measStatus_ != OBSOLETHE && measurement_.size() != ptr_->getNumOfOutputs()))
+		measurement_.Length() != ptr_->getNumOfOutputs())
+		throw std::runtime_error(std::string("BaseSystemData::BaseSystemData Wrong argument sizes"));
+}
+
+SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
+	const StatisticValue& noise_, const StatisticValue& disturbance_) : ptr(ptr_),
+	SystemData(noise_, disturbance_, ptr_->getNumOfOutputs()) {
+	if (noise_.Length() != ptr_->getNumOfNoises() ||
+		disturbance_.Length() != ptr_->getNumOfDisturbances())
 		throw std::runtime_error(std::string("BaseSystemData::BaseSystemData Wrong argument sizes"));
 }
 
@@ -604,12 +619,20 @@ System::SystemPtr SystemManager::BaseSystemData::getPtr() const { return ptr; }
 bool SystemManager::BaseSystemData::isBaseSystem() const { return true; }
 
 SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
-	const StatisticValue& disturbance_, const Eigen::VectorXd& measurement_,
+	const StatisticValue& disturbance_) : ptr(ptr_),
+	SystemData(noise_, disturbance_, ptr_->getNumOfOutputs()) {
+	if (noise_.Length() != ptr_->getNumOfNoises() ||
+		disturbance_.Length() != ptr_->getNumOfDisturbances())
+		throw std::runtime_error(std::string("SensorData::SensorData Wrong argument sizes"));
+}
+
+SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
+	const StatisticValue& disturbance_, const StatisticValue& measurement_,
 	MeasurementStatus measStatus_) : ptr(ptr_),
 	SystemData(noise_, disturbance_, measurement_, measStatus_) {
 	if (noise_.Length() != ptr_->getNumOfNoises() ||
 		disturbance_.Length() != ptr_->getNumOfDisturbances() ||
-		(measStatus_ != OBSOLETHE && measurement_.size() != ptr_->getNumOfOutputs()))
+		measurement_.Length() != ptr_->getNumOfOutputs())
 		throw std::runtime_error(std::string("SensorData::SensorData Wrong argument sizes"));
 }
 
