@@ -56,7 +56,7 @@ Trajectory::Trajectory(TimeMicroSec Ts_) : Ts(Ts_) {
 
 Trajectory genTrajectory() {
 	double Ts = 0.01;
-	Trajectory traj(Ts*1e6);
+	Trajectory traj(TimeMicroSec(Ts*1e6));
 	for (unsigned int n = 0; n < (0.5 / Ts); n++)
 		traj.add(0, 0, 0);
 	for (unsigned int n = 0; n < (1. / Ts); n++)

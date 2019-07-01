@@ -59,7 +59,7 @@ public:
 			while (msgs) // ha van, megnézzük van-e még
 				msgs = _getandprocessMsg_DontWait();
 			TimeMicroSec t_filt;
-			filter->Step(t_last - t_filt); // gyorsan léptetni a fúziót - az eltelt idõnek megfelelõen...
+			filter->Step(t_filt- t_last); // gyorsan léptetni a fúziót - az eltelt idõnek megfelelõen...
 			t_last = t_filt;
 		}
 	}
