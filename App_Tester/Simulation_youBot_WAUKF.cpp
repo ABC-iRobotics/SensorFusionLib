@@ -72,10 +72,10 @@ void Simulation_youBot_WAUKF() {
 		filter->SetNoiseVarianceWindowing(absPose, 100);
 		//filter->SetNoiseValueWindowing(absPose, 100);
 	}
-
+#ifdef FILTERPLOT
 	filter->SetCallback(FilterPlot::AddDataToWindows);
 
-#ifdef FILTERPLOT
+
 	FilterPlot plotter(youBot->getID(), youBot->getName(), youBot->getStateNames(), STATE);
 	FilterPlot plotter3(ins->getID(), ins->getName(), ins->getOutputNames(), OUTPUT);
 #endif
@@ -109,7 +109,9 @@ void Simulation_youBot_WAUKF() {
 		{
 			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n);
 			data.SetValueVector(truth);
+#ifdef FILTERPLOT
 			plotter.AddDataToThis(data);
+#endif
 		}
 
 		filter->Step(traj.Ts);

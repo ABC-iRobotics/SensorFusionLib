@@ -68,10 +68,8 @@ void simulation_youbot_Kalman() {
 		SystemManager::SensorData data = SystemManager::SensorData(absPose, initNoise, initDist);
 		filter->AddSensor(data, initState);
 	}
-
-	filter->SetCallback(FilterPlot::AddDataToWindows);
-
 #ifdef FILTERPLOT
+	filter->SetCallback(FilterPlot::AddDataToWindows);
 	FilterPlot plotter(youBot->getID(), youBot->getName(), youBot->getStateNames(), STATE);
 	//FilterPlot plotter2(youBot->getID(), youBot->getName(), youBot->getDisturbanceNames(), DISTURBANCE);
 	//FilterPlot plotter3(ins->getID(), ins->getName(), ins->getOutputNames(), OUTPUT);
@@ -105,7 +103,9 @@ void simulation_youbot_Kalman() {
 		{
 			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n);
 			data.SetValueVector(truth);
+#ifdef FILTERPLOT
 			plotter.AddDataToThis(data);
+#endif
 		}
 
 		filter->Step(traj.Ts);
