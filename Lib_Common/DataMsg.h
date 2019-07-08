@@ -4,6 +4,10 @@
 #include "TimeMicroSec.h"
 #include "StatisticValue.h"
 
+/*! \brief General message format containing a StatisticValue, a timestamp and information about its DataType and source
+*
+* Its used in Lib_SensorFusion, Lib_Communication and Lib_Plotter as well
+*/
 class DataMsg {
 	DataType dataType;
 	OperationType dataSource;
@@ -16,39 +20,40 @@ class DataMsg {
 	TimeMicroSec time;
 
 public:
-	DataMsg();
-
-	DataMsg(unsigned char ID, DataType type, OperationType source, TimeMicroSec time_ = TimeMicroSec());
+	DataMsg(); /*!< Empty constructor */
 
 	DataMsg(unsigned char ID, DataType type, OperationType source,
-		StatisticValue data, TimeMicroSec time_ = TimeMicroSec());;
+		TimeMicroSec time_ = TimeMicroSec()); /*!< Constructor where the data can be set later*/
 
-	bool IsEmpty() const;
+	DataMsg(unsigned char ID, DataType type, OperationType source,
+		StatisticValue data, TimeMicroSec time_ = TimeMicroSec()); /*!< Constructor */
 
-	bool HasValue() const;
+	bool IsEmpty() const; /*!< To check if the instance is empty */
 
-	bool HasVariance() const;
+	bool HasValue() const; /*!< To check if value vector was set */
 
-	void ClearValue();
+	bool HasVariance() const; /*!< To check if covariance matrix was set */
 
-	void ClearVariance();
+	void ClearValue();  /*!< To remove the stored value vector */
 
-	Eigen::VectorXd GetValue() const;
+	void ClearVariance();  /*!< To remove the stored variance vector */
 
-	Eigen::MatrixXd GetVariance() const;
+	Eigen::VectorXd GetValue() const;  /*!< To get the stored value vector */
 
-	unsigned char GetSourceID() const;
+	Eigen::MatrixXd GetVariance() const; /*!< To get the stored variance vector */
 
-	DataType GetDataType() const;
+	unsigned char GetSourceID() const; /*!< To get source ID */
 
-	OperationType GetDataSourceType() const;
+	DataType GetDataType() const; /*!< To get DataType */
 
-	TimeMicroSec GetTime() const;
+	OperationType GetDataSourceType() const; /*!< To get the type of the source as an OperationType */
 
-	void print() const;
+	TimeMicroSec GetTime() const;  /*!< To get its timestamp */
 
-	void SetVarianceMatrix(const Eigen::MatrixXd& m);
+	void print() const; /*!< To show its content */
 
-	void SetValueVector(const Eigen::VectorXd& v);
+	void SetVarianceMatrix(const Eigen::MatrixXd& m); /*!< To set covariance matrix */
+
+	void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
 };
 

@@ -2,7 +2,7 @@
 
 #include "Simulation_youbot_Kalman.h"
 #include "KalmanFilter.h"
-#include "youBotSystem.h"
+#include "KUKAyouBot.h"
 #include "INSSensor.h"
 #include "AbsoluthePoseSensor.h"
 
@@ -24,7 +24,7 @@ void simulation_youbot_Kalman() {
 	// Init sensor system
 	KalmanFilter::KalmanFilterPtr filter;
 	//youbot
-	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.1, 0.4, 0.25, 0.05, 0);
+	BaseSystem::BaseSystemPtr youBot = std::make_shared<KUKAyouBot>(0.1, 0.4, 0.25, 0.05, 0);
 	youBot->systemTest();
 	{
 		// Init state (vx,vy,om,x,y,phi,null)
@@ -69,7 +69,7 @@ void simulation_youbot_Kalman() {
 		filter->AddSensor(data, initState);
 	}
 
-	filter->SetCallback(FilterPlot::AddData);
+	filter->SetCallback(FilterPlot::AddDataToWindows);
 
 #ifdef FILTERPLOT
 	FilterPlot plotter(youBot->getID(), youBot->getName(), youBot->getStateNames(), STATE);
@@ -105,7 +105,7 @@ void simulation_youbot_Kalman() {
 		{
 			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n);
 			data.SetValueVector(truth);
-			plotter.Callback(data);
+			plotter.AddDataToThis(data);
 		}
 
 		filter->Step(traj.Ts);

@@ -2,7 +2,7 @@
 
 #include "Simulation_youbot_WAUKF.h"
 #include "WAUKF.h"
-#include "youBotSystem.h"
+#include "KUKAyouBot.h"
 #include "INSSensor.h"
 #include "AbsoluthePoseSensor.h"
 
@@ -23,7 +23,7 @@ void Simulation_youBot_WAUKF() {
 	// Init sensor system
 	WAUKF::WAUKFPtr filter;
 	//youbot
-	BaseSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0.1, 0.4, 0.25, 0.05, 0);
+	BaseSystem::BaseSystemPtr youBot = std::make_shared<KUKAyouBot>(0.1, 0.4, 0.25, 0.05, 0);
 	youBot->systemTest();
 	{
 		// Init state (vx,vy,om,x,y,phi,null)
@@ -73,7 +73,7 @@ void Simulation_youBot_WAUKF() {
 		//filter->SetNoiseValueWindowing(absPose, 100);
 	}
 
-	filter->SetCallback(FilterPlot::AddData);
+	filter->SetCallback(FilterPlot::AddDataToWindows);
 
 #ifdef FILTERPLOT
 	FilterPlot plotter(youBot->getID(), youBot->getName(), youBot->getStateNames(), STATE);
@@ -109,7 +109,7 @@ void Simulation_youBot_WAUKF() {
 		{
 			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n);
 			data.SetValueVector(truth);
-			plotter.Callback(data);
+			plotter.AddDataToThis(data);
 		}
 
 		filter->Step(traj.Ts);

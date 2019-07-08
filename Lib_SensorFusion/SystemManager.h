@@ -3,256 +3,322 @@
 #include "Sensor.h"
 #include "DataMsg.h"
 
-/* SystemManager: to manage the basesystem and randomly available sensor results
-----------------------------------------------------------
----Time update model:
-
-System statevector: x = [ x_bs' x_s1' ... x_sn' ]'
-Disturbance vector: w = [ w_bs' w_s1' ... w_sn' ]'
-
-x(k) = A*x(k-1) + B*w(k) + f(x(k-1), w(k))
-where
-f() depends only on the entries of x, w values given by "dep" vectors
-A = | Abs  0   0 ... 0   | B = | Bbs  0   0  ... 0  |
-    | Abs1 As1 0 ... 0   |     | Bbs1 Bs1 0  ... 0  |
-	| Abs2 0   As2 . 0   |     | Bbs2 0   Bs2... 0  |
-	| .    .   . ... .   |     | .    .   .  ... .  |
-	| Absn 0   0 ... Asn |     | Bbsn .   .  ... Bsn|
-
-----------------------------------------------------------
----The measurementupdate model if every sensor output are available:
-
-Output vector: y = [ y_bs' y_s1' ... y_sn' ]'
-Noise vector: v = [ v_bs' v_s1' ... v_sn' ]'
-
-y(k) = C*x(k) + D*v(k) + g(x(k),v(k));
-where
-f() depends only on the entries of x, w values given by "dep" vectors
-C = | Cbs  0   0 ... 0   | D = | Dbs  0   0  ... 0  |
-	| Cbs1 Cs1 0 ... 0   |     | Dbs1 Ds1 0  ... 0  |
-	| Cbs2 0   Cs2 . 0   |     | Dbs2 0   Ds2... 0  |
-	| .    .   . ... .   |     | .    .   .  ... .  |
-	| Cbsn 0   0 ... Csn |     | Dbsn .   .  ... Dsn|
-
-----------------------------------------------------------
----If there are sensors without uptodate output:
-
-Output vector: y = [ y_bs' y_s1' ... y_sn' ]' y_i = [] if there is not uptodate measurement
-Noise vector: v = [ v_bs' v_s1' ... v_sn' ]' v_si = [] if there is not uptodate measurement
-
-y(k) = C*x(k) + D*v(k) + g(x(k),v(k));
-where
-f() depends only on the entries of x, w values given by "dep" vectors
-C = | Cbs  0   0 ... 0   | D = | Dbs  0   0  ... 0  |
-	| Cbs1 Cs1 0 ... 0   |     | Dbs1 Ds1 0  ... 0  |
-	| Cbs2 0   Cs2 . 0   |     | Dbs2 0   Ds2... 0  |
-	| .    .   . ... .   |     | .    .   .  ... .  |
-	| Cbsn 0   0 ... Csn |     | Dbsn .   .  ... Dsn|
-where
-the row of C, D block matrices that corresponds to basesystem/sensor with obsolethe measurement has row-size 0,
-the column of the D block matrix that corresponds to a sensor with obsolethe measurement has column-size 0,
-
-----------------------------------------------------------
----Functionality:
-
-- Build the system:
-Constructor: Initiate with a basesystem and its state
-AddSensor: Add a sensor and its state
-
-- Usage:
-System::SaveMeasurement: By calling  on the basesystem/sensors, it will saved in the system
-operator(): to get the merged STATE, OUTPUT, DISTURBANCE, NOISE values according to the actual models
-Eval(TIMEUPDATE/MEASUREMENTUPDATE, Ts, state, input): from the statistic values computes the output and its variance
-print(std::ostream): prints the model details and actual properties 
-
-details:
-num(): get number of STATE, OUTPUT, DISTURBANCE, NOISE values according to the actual models
-dep(TIMEUPDATE/MEASUREMENTUPDATE): get number of STATE, OUTPUT, DISTURBANCE, NOISE values according to the actual models
-getMatrices(TIMEUPDATE/MEASUREMENTUPDATE, Ts, ...): get the actual matrices according to the actual models
-EvalNonLinPart(TIMEUPDATE/MEASUREMENTUPDATE, Ts, ...): computes the results of f(), g() functions
-*/
-
-#include "DataMsg.h"
-
+/*! \brief The class provides functions to build complex asynchronous multisensor models and wrap them into a simple nonlinear model
+*
+* The \f$ \mathbf x \f$ state vector, \f$ \mathbf y \f$ output vector,
+*  \f$ \mathbf w \f$ disturbance vector and \f$ \mathbf v \f$ noise vector are used according to the time update model, see the following description
+*
+* ----------------------------------------------------------
+* Time update model: state update equation
+*
+* \f$ \mathbf x_k = \mathbf A\cdot \mathbf x_{k-1} + \mathbf B
+ \cdot \mathbf w_k + \mathbf f( \mathbf x_{k-1}, \mathbf w_k) \f$
+*
+* where
+*  - the state vector: \f$ \mathbf x = \begin{bmatrix}	\mathbf x_{bs} \\ \mathbf x_{s1} \\ \mathbf x_{s2} \\ 	\vdots \\ \mathbf x_{sn}	\end{bmatrix} \f$
+*  - the disturbance vector: 
+*  \f$ \mathbf w = \begin{bmatrix}
+*	\mathbf w_{bs} \\ \mathbf w_{s1} \\ \mathbf w_{s2} \\ \vdots \\ \mathbf w_{sn}
+*	\end{bmatrix}\f$
+*  - \f$ \mathbf f( \mathbf x_{k-1}, \mathbf w_k) \f$ denotes the nonlinear part. 
+*    The 'dep(STATE_UPDATE,VAR_STATE)' returns if it depends on the elements of \f$ \mathbf x \f$, 
+*    the 'dep(STATE_UPDATE,VAR_EXTERNAL)' returns if it depends on the elements of \f$ \mathbf w \f$
+*  - the system matrices: \f$ \mathbf A = \begin{bmatrix}
+	\mathbf A_{bs} & \mathbf 0 & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf A'_{s1} & \mathbf A_{s1} & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf A'_{s2} & \mathbf 0 & \mathbf A_{s2}  & \dots & \mathbf 0 \\
+	\vdots & \vdots & \vdots &  & \vdots \\
+	\mathbf A'_{sn} & \mathbf 0 & \mathbf 0  & \dots & \mathbf A_{sn} \\
+	\end{bmatrix}\f$, \f$ \mathbf B =  \begin{bmatrix}
+	\mathbf B_{bs} & \mathbf 0 & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf B'_{s1} & \mathbf B_{s1} & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf B'_{s2} & \mathbf 0 & \mathbf B_{s2}  & \dots & \mathbf 0 \\
+	\vdots & \vdots & \vdots &  & \vdots \\
+	\mathbf B'_{sn} & \mathbf 0 & \mathbf 0  & \dots & \mathbf B_{sn} \\
+	\end{bmatrix}\f$
+*
+* ----------------------------------------------------------
+* Time update model: output equation
+*
+* \f$ \mathbf y_k = \mathbf C\cdot \mathbf x_{k} + \mathbf D
+ \cdot \mathbf v_k + \mathbf g( \mathbf x_{k}, \mathbf v_k) \f$
+*
+* where
+*  - the output vector: \f$ \mathbf y = \begin{bmatrix}
+	\mathbf y_{bs} \\ \mathbf y_{s1} \\ \mathbf y_{s2} \\ \vdots \\ \mathbf y_{sn}
+	\end{bmatrix} \f$,  where \f$ \mathbf y_i = [] \f$ if the basesystem / i-th sensor it is not uptodate
+*  - the noise vector: \f$ \begin{bmatrix}
+	\mathbf v_{bs} \\ \mathbf v_{s1} \\ \mathbf v_{s2} \\ \vdots \\ \mathbf v_{sn}
+	\end{bmatrix} \f$, where \f$ \mathbf v_{si} = [] \f$ if the i-th sensor it is not uptodate
+*  - \f$ \mathbf g( \mathbf x_{k}, \mathbf v_k) \f$ denotes the nonlinear part. 
+*    The 'dep(OUTPUT_UPDATE,VAR_STATE)' returns if it depends on the elements of \f$ \mathbf x \f$, 
+*    the 'dep(OUTPUT_UPDATE,VAR_EXTERNAL)' returns if it depends on the elements of \f$ \mathbf v \f$
+*  - the system matrices: \f$ \mathbf C = \begin{bmatrix}
+	\mathbf C_{bs} & \mathbf 0 & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf C'_{s1} & \mathbf C_{s1} & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf C'_{s2} & \mathbf 0 & \mathbf C_{s2}  & \dots & \mathbf 0 \\
+	\vdots & \vdots & \vdots &  & \vdots \\
+	\mathbf C'_{sn} & \mathbf 0 & \mathbf 0  & \dots & \mathbf C_{sn} \\
+	\end{bmatrix}\f$, \f$ \mathbf D =  \begin{bmatrix}
+	\mathbf D_{bs} & \mathbf 0 & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf D'_{s1} & \mathbf D_{s1} & \mathbf 0 & \dots & \mathbf 0 \\
+	\mathbf D'_{s2} & \mathbf 0 & \mathbf D_{s2}  & \dots & \mathbf 0 \\
+	\vdots & \vdots & \vdots &  & \vdots \\
+	\mathbf D'_{sn} & \mathbf 0 & \mathbf 0  & \dots & \mathbf D_{sn} \\
+	\end{bmatrix} \f$
+* where
+* the block matrices of C, D  that corresponds to basesystem/sensor with obsolethe measurement has row-size 0,
+* the block matrices of D that corresponds to a sensor with obsolethe measurement has column-size 0,
+*
+* ----------------------------------------------------------
+* Usage:
+*
+* - Define a subclass by implementing filtering and time update into overridden function Step().
+* - Build the system:
+*
+* -- Constructor: Initiate with a BaseSystemData instance and its state
+*
+* -- AddSensors: provide a SensorData instance and its state
+*
+* - Call:
+*
+* -- SetProperty() with data incoming from sensors
+*
+* -- Step(Ts) for filtering
+* - Get the results or register a Callback via SetCallback()
+ */
 class SystemManager {
 public:
-	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT };
+/*! \brief If constant value is guessed as the \f$ \mathbf y_i \f$ output of a system, its status is CONSTANT, othervise OBSOLETHE / UPTODATE.
+*
+*
+*/
+	enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT }; /*!<   */
 
+/*! \brief The class handles the common properties of basesystems and sensors
+*
+*/
 	class SystemData {
-		MeasurementStatus measStatus;
-		StatisticValue noise, disturbance, measurement;
-	public:
+		MeasurementStatus measStatus;/*!< Status of the set measurement value */
+		StatisticValue noise;		/*!< The known value & uncertaintie of the noise  */
+		StatisticValue disturbance;	/*!< The known value & uncertaintie of the disturbance */
+		StatisticValue measurement; /*!< The known value & uncertaintie of the measurement */
+	protected:
 		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_, unsigned int outputSize);
+					/*!< Constructor without providing measurement result */
 		SystemData(const StatisticValue& noise_, const StatisticValue& disturbance_,
-			const StatisticValue& measurement_, MeasurementStatus measStatus_);
-		virtual System::SystemPtr getPtr() const = 0;
-		StatisticValue operator()(DataType type, bool forcedOutput = false) const; // returns th given value
-		size_t num(DataType type, bool forcedOutput = false) const; // return length of the given value accroding to the measStatus
-		void setValue(const Eigen::VectorXd& value, DataType type); // set the given value
-		void setVariance(const Eigen::MatrixXd& value, DataType type); // set the given value
-		Eigen::VectorXd getValue(DataType type) const;
-		Eigen::MatrixXd getVariance(DataType type) const;
-		void resetMeasurement();
-		bool available() const; // returns if is measurement available
-		virtual bool isBaseSystem() const = 0;
+			const StatisticValue& measurement_, MeasurementStatus measStatus_); /*!< Constructor. */
+	public:
+		virtual System::SystemPtr getPtr() const = 0;  /*!< Virtual SystemPtr getter. */
+		StatisticValue operator()(DataType type, bool forcedOutput = false) const;  /*!< Returns the state, output, noise or disturbance of the system . */
+		size_t num(DataType type, bool forcedOutput = false) const;
+		 /*!< Returns the number of states, outputs, noises or disturbances of the system . */
+		void setValue(const Eigen::VectorXd& value, DataType type);
+		 /*!< Set the state/output/disturbance/noise vector. */ 
+		void setVariance(const Eigen::MatrixXd& value, DataType type);
+		 /*!< Set the state/output/disturbance/noise covariance matrix. */ 
+		Eigen::VectorXd getValue(DataType type) const;  /*!< Returns the state/output/disturbance/noise vector. */
+		Eigen::MatrixXd getVariance(DataType type) const;  /*!< Returns the state/output/disturbance/noise covariance matrix. */
+		void resetMeasurement(); /*!< Set the measurement status OBSOLETHE from UPTODATE. */ 
+		bool available() const;  /*!< Returns true if there is an available measurement result*/
+		virtual bool isBaseSystem() const = 0;  /*!< To check if it is for a basesystem or a sensor. */
 	};
 
+/*! \brief The class handles the properties of basesystems
+*
+*/
 	class BaseSystemData : public SystemData {
-		BaseSystem::BaseSystemPtr ptr;
+		BaseSystem::BaseSystemPtr ptr; /*!< Stores the shared pointer to the BaseSystem instance*/ 
 	public:
 		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
-			const StatisticValue& disturbance_);
+			const StatisticValue& disturbance_); /*!< Constructor without providing measurement result */
 		BaseSystemData(BaseSystem::BaseSystemPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const StatisticValue& measurement_ ,
-			MeasurementStatus measStatus_);
+			MeasurementStatus measStatus_); /*!< Constructor. */
 		Eigen::VectorXi dep(TimeUpdateType outType, VariableType type,
-			bool forcedOutput = false) const;
+			bool forcedOutput = false) const; /*!< Returns if the nonlinear part of STATE_UPDATE/OUTPUT_UPDATE depends on the elements of STATE or DISTURBANCE/NOISE values */
 		Eigen::MatrixXd getMatrix(double Ts, TimeUpdateType type,
-			VariableType inType, bool forcedOutput = false) const;
-		BaseSystem::BaseSystemPtr getBaseSystemPtr() const;
-		System::SystemPtr getPtr() const override;
-		bool isBaseSystem() const override;
+			VariableType inType, bool forcedOutput = false) const; /*!< Returns \f$\mathbf A_{bs} \f$, \f$\mathbf B_{bs} \f$, \f$\mathbf C_{bs} \f$, \f$\mathbf D_{bs} \f$ matrices  according to the measurement status and the forcedoutput flag */
+		BaseSystem::BaseSystemPtr getBaseSystemPtr() const; /*!< BaseSystemPtr getter. */
+		System::SystemPtr getPtr() const override;  /*!< SystemPtr getter. */
+		bool isBaseSystem() const override; /*!< To check if it is for a basesystem or a sensor. */
 	};
 
+/*! \brief The class handles the properties of sensors
+*
+*/
 	class SensorData : public SystemData {
-		Sensor::SensorPtr ptr;
+		Sensor::SensorPtr ptr; /*!< Stores the shared pointer to the Sensor instance*/ 
 	public:
 		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
-			const StatisticValue& disturbance_);
+			const StatisticValue& disturbance_); /*!< Constructor without providing measurement result */
 		SensorData(Sensor::SensorPtr ptr_, const StatisticValue& noise_,
 			const StatisticValue& disturbance_, const StatisticValue& measurement_,
-			MeasurementStatus measStatus_);
+			MeasurementStatus measStatus_); /*!< Constructor. */
 		Eigen::VectorXi depSensor(TimeUpdateType outType, VariableType type,
-			bool forcedOutput = false) const;
+			bool forcedOutput = false) const; /*!< Returns if the nonlinear part of STATE_UPDATE/OUTPUT_UPDATE depends on the elements of sensor STATE or DISTURBANCE/NOISE values */
 		Eigen::VectorXi depBaseSystem(TimeUpdateType outType, VariableType type,
-			bool forcedOutput = false) const;
+			bool forcedOutput = false) const; /*!< Returns if the nonlinear part of STATE_UPDATE/OUTPUT_UPDATE depends on the elements of basesystem STATE or DISTURBANCE/NOISE values */
 		Eigen::MatrixXd getMatrixBaseSystem(double Ts, TimeUpdateType type,
-			VariableType inType, bool forcedOutput = false) const;
+			VariableType inType, bool forcedOutput = false) const; /*!< Returns \f$\mathbf A'_{si} \f$, \f$\mathbf B'_{si} \f$, \f$\mathbf C'_{si} \f$, \f$\mathbf D'_{si} \f$ matrices  according to the measurement status and the forcedoutput flag */
 		Eigen::MatrixXd getMatrixSensor(double Ts, TimeUpdateType type, VariableType inType,
-			bool forcedOutput = false) const;
-		Sensor::SensorPtr getSensorPtr() const;
-		System::SystemPtr getPtr() const override;;
-		bool isBaseSystem() const override;
+			bool forcedOutput = false) const;  /*!< Returns \f$\mathbf A_{si} \f$, \f$\mathbf B_{si} \f$, \f$\mathbf C_{si} \f$, \f$\mathbf D_{si} \f$ matrices  according to the measurement status and the forcedoutput flag */
+		Sensor::SensorPtr getSensorPtr() const; /*!< SensorPtr getter. */
+		System::SystemPtr getPtr() const override; /*!< SystemPtr getter. */
+		bool isBaseSystem() const override; /*!< To check if it is for a basesystem or a sensor. */
 	};
 
-	/// Initialization:
 
-	// Constructor: the basesystem  must be given as an input
+	/*! \brief Constructor: a BaseSystemData class and its initial state, covariance matrix  must be given as inputs
+*
+*  The function performs System::Selftest on the system
+*/ 
 	SystemManager(const BaseSystemData& data, const StatisticValue& state_);
 
-	// Destructor
+	/*! \brief Destructor.
+	*
+	*/ 
 	~SystemManager();
 
-	typedef std::shared_ptr<SystemManager> SystemManagerPtr;
+	typedef std::shared_ptr<SystemManager> SystemManagerPtr; /*!< Shared pointer type for SystemManager class */
 
-	/// Usage:
-
-	// Add a sensor
+	/*! \brief Add a sensor: a SensorData class and its initial state, covariance matrix  must be given as inputs
+	*
+	* The function performs System::Selftest on the sensor, and check its compatibility to the basesystem
+	*/
 	void AddSensor(const SensorData& sensorData, const StatisticValue& sensorState);
 
-	// The filtering function to be defined
+/*! \brief Virtual function for filtering function including time update & measurement update
+	*
+	* It must call SystemManager::StepClock, SystemManager::PredictionDone, SystemManager::FilteringDone protected functions
+	*/
 	virtual void Step(TimeMicroSec Ts) = 0;
 
-	// The function to inject data (meas. results, noise, disturbance value and/or variances)
+/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
+	*
+	*/
 	virtual void SetProperty(const DataMsg& data);
 
-	/// To set callback for filtering results
+	typedef std::function<void(const DataMsg& data)> Callback; /*!< Callback that can be set to handle results of time update & filtering update */
 
-	typedef std::function<void(const DataMsg& data)> Callback;
+	void SetCallback(Callback callback_); /*!< Set callback that is called during time update & filtering update */
 
-	void SetCallback(Callback callback_);
+	void ClearCallback(); /*!< Remove callback that is called during time update & filtering update */
 
-	void ClearCallback();
+	size_t nSensors() const; /*!< Get number of sensor installed */
 
-	/// Getters:
+	const SystemData* SystemByID(unsigned int ID) const;  /*!< Get const pointer for a SystemData by ID */
 
-	size_t nSensors() const;
-
-	const SystemData* SystemByID(unsigned int ID) const;
-
+/*! \brief Get the current number of states, outputs, noises or disturbances of the system 
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	size_t num(DataType type, bool forcedOutput = false) const;
 
+/*! \brief Get the if the nonlinear part of STATE_UPDATE / OUTPUT_UPDATE depends on the elements of
+* states, outputs, noises or disturbances of the system according to the measurement statuses of the systems
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	Eigen::VectorXi dep(TimeUpdateType outType, VariableType inType, bool forcedOutput = false) const;
 
-	/* Get A,B, C,D matrices according to the available sensors*/
+/*! \brief Get the A,B, C,D matrices of the system according to the measurement statuses of the systems
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	void getMatrices(TimeUpdateType out_, double Ts, Eigen::MatrixXd& A,
 		Eigen::MatrixXd& B, bool forcedOutput = false) const;
 
-	// Get the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
+/*! \brief Get STATE, DISTURBANCE, measured OUTPUT, NOISE vectors of the system according to the measurement statuses of the systems
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	StatisticValue operator()(DataType type, bool forcedOutput = false) const;
 
-	std::ostream & print(std::ostream & stream) const;
+	std::ostream & print(std::ostream & stream) const;  /*!<  Print the current status of the system. */
 
-	/// Eval model
-
-	// could be faster....
+	/*! \brief Evaluate the nonlinear part of the STATE_UPDATE/OUTPUT_UPDATE with given Ts, state vector and disturbance/noise values according to the measurement statuses of the systems
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	Eigen::VectorXd EvalNonLinPart(double Ts, TimeUpdateType outType,
 		const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput = false) const;
 
-	// This could be faster by implementing EvalNonLinPart and partitionate to matrices
+/*! \brief Evaluate the STATE_UPDATE/OUTPUT_UPDATE with given Ts, state vector&variances and disturbance/noise vectors&variances according to the measurement statuses of the systems
+	*
+	* Returns the computed vector&variance, and it cross-variance matrices with the state (S_out_x) and the disturbance/noise (S_out_in)
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	StatisticValue Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 		Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
 protected:
-	// Partitionate back the STATE, DISTURBANCE vectors
-	// OR
-	// the measured OUTPUT for the available (=not obsolethe) systems (sensors & basesystem)
-	// OR
-	// the noises for the basesystem and the active sensors
-	// Partitionate back the STATE, DISTURBANCE, measured OUTPUT, NOISE vectors for the basesystem and the active sensors
+/*! \brief Simple class to fasten up the partitioning of state/output/disturbance/noise vectors and covariance matrixes for systems, sensors according to the measurement statuses of the systems
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	struct Partitioner {
-		std::vector<size_t> nx;
-		std::vector<size_t> nw;
-		std::vector<size_t> ny;
-		std::vector<size_t> nv;
-		Partitioner(size_t N);
-		const std::vector<size_t>& n(DataType type) const;
+		std::vector<size_t> nx;  /*!< Number of states of the systems */
+		std::vector<size_t> nw;  /*!< Number of disturbances of the systems */
+		std::vector<size_t> ny;  /*!< Number of outputs of the systems */
+		std::vector<size_t> nv;  /*!< Number of noises of the systems */
+		Partitioner(size_t N); /*!< Constructor. N is the number of systems */
+		const std::vector<size_t>& n(DataType type) const; /*!< Get number of states/outputs/dist.-es/noises */
 		Eigen::VectorBlock<Eigen::VectorXd> PartValue(DataType type,
-			Eigen::VectorXd& value, int index) const;
+			Eigen::VectorXd& value, int index) const;  /*!< Partitionate a vector */
 		Eigen::VectorXd PartValue(DataType type,
-			const Eigen::VectorXd& value, int index) const;
+			const Eigen::VectorXd& value, int index) const;  /*!< Partitionate a const vector */
 		Eigen::Block<Eigen::MatrixXd> PartVariance(DataType type,
-			Eigen::MatrixXd& value, int index1, int index2) const;
+			Eigen::MatrixXd& value, int index1, int index2) const;   /*!< Partitionate a variance matrix */
 		Eigen::MatrixXd PartVariance(DataType type,
-			const Eigen::MatrixXd& value, int index1, int index2) const;
+			const Eigen::MatrixXd& value, int index1, int index2) const; /*!< Partitionate a const variance matrix */
 		Eigen::Block<Eigen::MatrixXd> PartVariance(DataType type1, DataType type2,
-			Eigen::MatrixXd& value, int index1, int index2) const;
-		StatisticValue PartStatisticValue(DataType type, const StatisticValue& value, int index) const;
+			Eigen::MatrixXd& value, int index1, int index2) const; /*!< Partitionate a cross-variance matrix */
+		StatisticValue PartStatisticValue(DataType type, const StatisticValue& value, int index) const; /*!< Constructor */
 	};
+
+	/*! \brief Get Partitioner struct according to the current measurement statuses of the systems
+	*
+	* By using forcedOutput=true input, it assumes UPTODATE measurements
+	*/
 	Partitioner getPartitioner(bool forcedOutput = false) const;
 
-	// Get index for an ID, it returns -1 for the basesystem!
+/*! \brief Get index for a (user defined) systemID. It returns -1 for the basesystem!
+	*
+	* 
+	*/
 	int _GetIndex(unsigned int ID) const;
 
-	// Returns the basesystemdata ref.
-	BaseSystemData & BaseSystem();
-	const BaseSystemData & BaseSystem() const;
-	SensorData & Sensor(size_t index);
-	StatisticValue& State();
-	SystemData* SystemByID(unsigned int ID);
-	const SensorData& Sensor(size_t index) const;
-	bool isAvailable(int index) const;
+	BaseSystemData & BaseSystem();   /*!< Returns a BaseSystemData ref for an index */
 
-	// Set 'UPTODATE' meas. statuses to 'OBSOLETHE'
-	void resetMeasurement();
+	const BaseSystemData & BaseSystem() const;   /*!< Returns a const BaseSystemData ref for an index */
 
-	// Call it with predicition results to forward them to the set callback
-	void PredictionDone(const StatisticValue& state, const StatisticValue& output) const;
+	SensorData & Sensor(size_t index);   /*!< Returns a SensorData ref for an index */
 
-	// Call it with filtering results to forward them to the set callback
-	void FilteringDone(const StatisticValue& state) const;
+	StatisticValue& State();   /*!< Returns ref of the state value  */
 
-	// To step the inner clock in the overridden Step() function
-	void StepClock(TimeMicroSec dt);
+	SystemData* SystemByID(unsigned int ID);   /*!< Returns a SystemData* for an ID */
 
-	// Call the callback if it is set
-	void Call(const DataMsg& data) const;
+	const SensorData& Sensor(size_t index) const;   /*!< Returns a const SensorData ref for an index */
+
+	bool isAvailable(int index) const;   /*!< Returns if the system with the given index is available */
+
+	void resetMeasurement();   /*!< Set 'UPTODATE' meas. statuses to 'OBSOLETHE' */
+
+	void PredictionDone(const StatisticValue& state, const StatisticValue& output) const;   /*!< Call it with predicition results to forward them to the set callback */
+
+	void FilteringDone(const StatisticValue& state) const; /*!< Call it with filtering results to forward them to the set callback */
+
+	void StepClock(TimeMicroSec dt); /*!< To step the inner clock in the overridden Step() function */
+
+	void Call(const DataMsg& data) const; /*!< Call the callback if it is set */
 
 private:
-	BaseSystemData baseSystem;
-	std::vector<SensorData> sensorList;
-	StatisticValue state;
-	TimeMicroSec time;
-	bool hasCallback;
-	Callback callback;
+	BaseSystemData baseSystem; /*!< Stores the data related to the basesystem */
+	std::vector<SensorData> sensorList;  /*!< Stores the data related to the sensors */
+	StatisticValue state;  /*!< Stores the state of the system */
+	TimeMicroSec time;  /*!< Time, initialized to zero, incremented by Step(Ts) via StepClock(Ts) */
+	bool hasCallback;  /*!< If callback was set */
+	Callback callback;  /*!< The callback if it was set */
 };

@@ -1,4 +1,5 @@
 #include "ZMQPublisher.h"
+#include "msg2buf.h"
 #include <string>
 #include <iostream>
 #include <thread>
@@ -7,6 +8,10 @@ ZMQPublisher::ZMQPublisher(int port) : context(1), socket(context, ZMQ_PUB) {
 	std::string protocol = "tcp://*:" + std::to_string(port);
 	socket.bind(protocol.c_str());
 }
+
+/*!< Constructor: initializes a zmq context and a publisher socket (tcp://localhost:port)*/
+
+ZMQPublisher::~ZMQPublisher() {}
 
 void ZMQPublisher::SendString() {
 	const char str[50] = "Mukodes teszt...";

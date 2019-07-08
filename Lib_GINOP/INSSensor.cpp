@@ -1,49 +1,52 @@
 #include "INSSensor.h"
-#include "youBotSystem.h"
+#include "KUKAyouBot.h"
+#include "truck.h"
 
-Eigen::MatrixXd INSSensor::getA0(double Ts) const {
+Eigen::MatrixXd INSSensor::getAs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 7);
 }
 
-Eigen::MatrixXd INSSensor::getAi(double Ts) const {
+Eigen::MatrixXd INSSensor::getAs(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
-Eigen::MatrixXd INSSensor::getB0(double Ts) const {
+Eigen::MatrixXd INSSensor::getBs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 4);
 }
 
-Eigen::MatrixXd INSSensor::getBi(double Ts) const {
+Eigen::MatrixXd INSSensor::getBs(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
-Eigen::MatrixXd INSSensor::getPInvBi(double Ts) const {
+Eigen::MatrixXd INSSensor::getPInvBs(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
-Eigen::MatrixXd INSSensor::getC0(double Ts) const {
+Eigen::MatrixXd INSSensor::getCs_bs(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(3, 7);
 	out(2, 5) = 1;
 	return out;
 }
 
-Eigen::MatrixXd INSSensor::getCi(double Ts) const {
+Eigen::MatrixXd INSSensor::getCs(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
-Eigen::MatrixXd INSSensor::getD0(double Ts) const {
+Eigen::MatrixXd INSSensor::getDs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 0);
 }
 
-Eigen::MatrixXd INSSensor::getDi(double Ts) const {
+Eigen::MatrixXd INSSensor::getDs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 0);
 }
 
-Eigen::VectorXi INSSensor::getUpdateNonlinearX0Dependencies() const {
+Eigen::VectorXi INSSensor::getStateUpdateNonlinXbsDep() const {
 	Eigen::VectorXi out = Eigen::VectorXi::Zero(7);
 	out(0) = 1; out(1) = 1; out(5) = 1;
 	return out;
 }
+
+INSSensor::INSSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID) : Sensor(ptr, ID) {}
 
 unsigned int INSSensor::getNumOfStates() const {
 	return 3;
@@ -61,13 +64,13 @@ unsigned int INSSensor::getNumOfNoises() const {
 	return 0;
 }
 
-Eigen::VectorXi INSSensor::getUpdateNonlinearXiDependencies() const {
+Eigen::VectorXi INSSensor::getStateUpdateNonlinXsDep() const {
 	Eigen::VectorXi out = Eigen::VectorXi::Zero(3);
 	out(2) = 1;
 	return out;
 }
 
-Eigen::VectorXd INSSensor::UpdateNonlinearPart(double Ts, const Eigen::VectorXd & baseSystemState, const Eigen::VectorXd & baseSystemDisturbance, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorDisturbance) const {
+Eigen::VectorXd INSSensor::EvalStateUpdateNonlinearPart(double Ts, const Eigen::VectorXd & baseSystemState, const Eigen::VectorXd & baseSystemDisturbance, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorDisturbance) const {
 	Eigen::VectorXd out = Eigen::VectorXd::Zero(3);
 	double phis = baseSystemState(5) + sensorState(2);
 	out(0) = Ts * (baseSystemState(0)*cos(phis) - baseSystemState(1)*sin(phis));
@@ -76,7 +79,7 @@ Eigen::VectorXd INSSensor::UpdateNonlinearPart(double Ts, const Eigen::VectorXd 
 }
 
 bool INSSensor::isCompatible(BaseSystem::BaseSystemPtr ptr) const {
-	return _isCompatible<youBotSystem>(ptr);
+	return _isCompatible<KUKAyouBot>(ptr) || _isCompatible<Truck>(ptr);
 }
 
 std::vector<std::string> INSSensor::getStateNames() const {

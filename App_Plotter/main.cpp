@@ -1,7 +1,7 @@
 
 #include "ZMQSubscriber.h"
 #include "FilterPlot.h"
-#include "youBotSystem.h"
+#include "KUKAyouBot.h"
 #include "INSSensor.h"
 
 int main(void) {
@@ -9,7 +9,7 @@ int main(void) {
 	int insID = 2;
 	int gpsID = 1;
 
-	youBotSystem::BaseSystemPtr youBot = std::make_shared<youBotSystem>(0, 0, 0, 0, youbotID);
+	KUKAyouBot::BaseSystemPtr youBot = std::make_shared<KUKAyouBot>(0, 0, 0, 0, youbotID);
 	INSSensor::SensorPtr ins = std::make_shared<INSSensor>(youBot, insID);
 
 	FilterPlot plotter(youbotID, youBot->getName(), youBot->getStateNames(), STATE);
@@ -23,7 +23,7 @@ int main(void) {
 		DataMsg data;
 		bool success = sub.RecvMsg_Wait(data);
 		while (success) {
-			FilterPlot::AddData(data);
+			FilterPlot::AddDataToWindows(data);
 			success = sub.RecvMsg_DontWait(data);
 		}
 		FilterPlot::UpdateWindows();

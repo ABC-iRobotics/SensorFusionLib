@@ -1,28 +1,35 @@
 #pragma once
-
 #include "Sensor.h"
 
-
-/* Update:
-| vx_old | = | 1 0 0 0 0 0 0 | | vx  | + | 0 0 0 0 0 | | vx_old |
-| vy_old |   | 0 1 0 0 0 0 0 | | vy  | + | 0 0 0 0 0 | | vy_old |
-|   sx   |   | 0 0 0 0 0 0 0 | | om  | + | 0 0 1 0 0 | |   sx   |
-|   sy   |   | 0 0 0 0 0 0 0 | | x   | + | 0 0 0 1 0 | |   sy   |
-|   som  |   | 0 0 0 0 0 0 0 | | y   | + | 0 0 0 0 1 | |   som  |
-                               | phi |
-		            	  	   | null|
-	Output:
-| ax | = 0*x_base + 0*x_sensor + 0*v_base + I_3*v_sensor + | ((vx-vxold)/Ts - omega*vy) * sx |
-| ay |         											   | ((vy-vyold)/Ts + omega*vx) * sy |
-| om |    												   | omega * som |
-
+/*! \brief Class that implements the proprties of a 2D Inertial Measurement Unit (IMU)
+*
+* The raw measured acceleration and angular velocity are the output of this model
+*
+* The dynamics:
+*
+* \f[ \begin{bmatrix} v_{x,old}\\ v_{y,old} \\ s_x \\ s_y \\ s_\omega \end{bmatrix}_k
+=
+\begin{bmatrix} v_{x}\\ v_{y} \\ s_x \\ s_y \\ s_\omega \end{bmatrix}_{k-1}
+\f]
+*
+* where \f$ v_{x,old} \f$, \f$ v_{y,old} \f$ are needed for deriving accelerations and \f$s_x \f$, \f$s_y\f$, \f$s_\omega\f$
+* are the unknown scaling factors
+*
+* The output:
+* 
+* \f[ \begin{bmatrix} a_{x,meas} \\ a_{y,meas} \\ \omega_{meas} \end{bmatrix}
+=
+\begin{bmatrix}
+ \left( (v_x - v_{x,old})/Ts - \omega\cdot v_y \right) s_x \\
+ \left( (v_y - v_{y,old})/Ts + \omega\cdot v_x \right) s_y \\
+ \omega \cdot s_{\omega}
+\end{bmatrix} + \mathbf I \cdot \mathbf v_s
+\f]
 */
-
-
 class IMUSensor : public Sensor
 {
 public:
-	IMUSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID) : Sensor(ptr, ID) {};
+	IMUSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID); /*!< Constructor */
 
 	unsigned int getNumOfStates() const;
 
@@ -32,36 +39,34 @@ public:
 
 	unsigned int getNumOfNoises() const;
 
-	//StatisticValue getInitializationStates() const override;
+	Eigen::MatrixXd getAs_bs(double Ts) const;
 
-	Eigen::MatrixXd getA0(double Ts) const;
+	Eigen::MatrixXd getAs(double Ts) const;
 
-	Eigen::MatrixXd getAi(double Ts) const;
+	Eigen::MatrixXd getBs_bs(double Ts) const;
 
-	Eigen::MatrixXd getB0(double Ts) const;
+	Eigen::MatrixXd getBs(double Ts) const;
 
-	Eigen::MatrixXd getBi(double Ts) const;
+	Eigen::MatrixXd getCs_bs(double Ts) const;
 
-	Eigen::MatrixXd getC0(double Ts) const;
+	Eigen::MatrixXd getCs(double Ts) const;
 
-	Eigen::MatrixXd getCi(double Ts) const;
+	Eigen::MatrixXd getDs_bs(double Ts) const;
 
-	Eigen::MatrixXd getD0(double Ts) const;
+	Eigen::MatrixXd getDs(double Ts) const;
 
-	Eigen::MatrixXd getDi(double Ts) const;
+	Eigen::MatrixXd getPInvDs(double Ts) const override;
 
-	Eigen::MatrixXd getPInvDi(double Ts) const override;
+	Eigen::VectorXi getOutputUpdateNonlinXbsDep() const override;
 
-	Eigen::VectorXi getOutputNonlinearX0Dependencies() const override;
+	Eigen::VectorXi getOutputUpdateNonlinXsDep() const override;
 
-	Eigen::VectorXi getOutputNonlinearXiDependencies() const override;
-
-	Eigen::VectorXd OutputNonlinearPart(double Ts, const Eigen::VectorXd& baseSystemState, const Eigen::VectorXd& baseSystemNoise,
+	Eigen::VectorXd EvalOutputUpdateNonlinearPart(double Ts, const Eigen::VectorXd& baseSystemState, const Eigen::VectorXd& baseSystemNoise,
 		const Eigen::VectorXd& sensorState, const Eigen::VectorXd& sensorNoise) const override;
 
 	bool isCompatible(BaseSystem::BaseSystemPtr ptr) const override;
 
-	typedef std::shared_ptr<IMUSensor> IMUSensorPtr;
+	typedef std::shared_ptr<IMUSensor> IMUSensorPtr;  /*!< Shared pointer type for the IMUSensor class */
 
 	std::vector<std::string> getStateNames() const override;
 

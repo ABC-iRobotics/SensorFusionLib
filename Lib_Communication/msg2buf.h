@@ -2,28 +2,31 @@
 
 #include "DataMsg.h"
 
+/*! \brief Flatbuffers-based serialization tool for DataMsg format
+*
+*/
 class Buffer {
 public:
-	Buffer();
-	Buffer(const unsigned char * buf_, size_t size_);
-	Buffer(const Buffer& buf0);
-	Buffer(Buffer&& o);
+	Buffer(); /*!< Constructor for zero length buffer */
+	Buffer(const unsigned char * buf_, size_t size_); /*!< Constructor from given pointer */
+	Buffer(const Buffer& buf0); /*!< Copy constructor */
+	Buffer(Buffer&& o); /*!< Copy constructor */
 
-	Buffer(const DataMsg& data);
+	Buffer(const DataMsg& data); /*!< Initialize from a DataMsg instance */
 
-	DataMsg ExtractDataMsg() const;
+	DataMsg ExtractDataMsg() const; /*!< Extract DataMsg from the serialized data*/
 	
-	~Buffer();
+	~Buffer(); /*!< Destructor */
 
-	Buffer& operator=(const Buffer& buf0);
+	Buffer& operator=(const Buffer& buf0); /*!< Assign operator */
 
-	bool isNull() const;
+	bool isNull() const; /*!< Returns if the buffer is zero length buffer */
 
-	void print() const;
+	void print() const; /*!< Print relevant informations */
 
-	size_t Size() const;
+	size_t Size() const; /*!< Returns the size of the buffer */
 
-	const unsigned char* Buf() const;
+	const unsigned char* Buf() const; /*!< Returns the pointer of the data*/
 
 private:
 	void _allocandcopy(const unsigned char * buf_);
@@ -32,59 +35,3 @@ private:
 
 	size_t size;
 };
-/*
-class SystemDataMsg {
-public:
-	enum ContentTypes {
-		TOFILTER_MEASUREMENT = 0,
-		TOFILTER_DISTURBANCE = 1,
-		FROMFILTER_PREDICTEDSTATE = 2,
-		FROMFILTER_FILTEREDSTATE = 3,
-		FROMFILTER_PREDICTEDOUTPUT = 4,
-		FROMFILTER_MEASUREDOUTPUT = 5,
-		FROMFILTER_USEDDISTURBANCE = 6,
-		FROMFILTER_USEDNOISE = 7,
-		EMPTY = 8
-	};
-
-	void print() const;
-
-	SystemDataMsg(unsigned char ID, ContentTypes type, unsigned long timestamp_in_us);
-
-	SystemDataMsg(); // to initialize empty instances
-
-	void SetVarianceMatrix(const Eigen::MatrixXd& m);
-
-	void SetValueVector(const Eigen::VectorXd& v);
-
-	Buffer GetMsgBuffer() const;
-
-	SystemDataMsg(const Buffer& buf);
-
-	bool IsEmpty() const;
-
-	bool IsToFilter() const;
-
-	bool IsFromFilter() const;
-
-	bool HasValue() const;
-
-	bool HasVariance() const;
-
-	Eigen::VectorXd Value() const;
-
-	Eigen::MatrixXd Variance() const;
-
-	unsigned char SourceID() const;
-
-	ContentTypes ContentType() const;
-
-private:
-	unsigned char sourceID;
-	Eigen::VectorXd value;
-	bool hasValue;
-	Eigen::MatrixXd variance;
-	bool hasVariance;
-	unsigned long timestamp_in_us;
-	ContentTypes contentType;
-};*/

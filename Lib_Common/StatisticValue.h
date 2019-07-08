@@ -1,36 +1,35 @@
 #pragma once
 
 #include "Eigen/Dense"
-
 #include <iostream>
 
 
-
-enum ValueType { VALUE, VARIANCE };
-
+/*! \brief Class to represent statistic variables as a vector and a covariance matrix
+*
+*/
 struct StatisticValue {
-	Eigen::VectorXd vector;
+	Eigen::VectorXd vector; /*!< The vector containing the value */
 
-	Eigen::MatrixXd variance;
+	Eigen::MatrixXd variance; /*!< Covariance matrix  */
 
-	bool isIndependent; // if the varince matrix is diagonal
+	bool isIndependent; /*!< Describes if the varince matrix is diagonal, then the variables are independent */
 
-	StatisticValue(Eigen::VectorXd vector_, Eigen::MatrixXd variance_, bool isIndependent_ = false);
+	StatisticValue(const Eigen::VectorXd& vector_, const Eigen::MatrixXd& variance_,
+		bool isIndependent_ = false); /*!< Simple constructor */
 
-	StatisticValue(Eigen::VectorXd vector_);
+	StatisticValue(const Eigen::VectorXd& vector_);  /*!< Constructor, that sets zero covariance matrix */
 
-	StatisticValue(size_t n);
+	StatisticValue(size_t n); /*!< Constructor, that sets zero values and covariance matrix */
 
-	StatisticValue();
+	StatisticValue(); /*!< Constructor, that sets zero size value and covariance matrix */
 
-	Eigen::Index Length() const;
+	Eigen::Index Length() const; /*!< Returns the number of variables */
 
-	void Insert(Eigen::Index StartIndex, StatisticValue value);
+	void Insert(Eigen::Index StartIndex, const StatisticValue& value); /*!< Insert a block from the StartIndex, setting zero cross variances with the other values */
 
-	StatisticValue GetPart(Eigen::Index StartIndex, Eigen::Index Length) const;
+	StatisticValue GetPart(Eigen::Index StartIndex, Eigen::Index Length) const; /*!< Returns a block*/
 
-	void Add(StatisticValue value);
-
+	void Add(const StatisticValue& value); /*!< Concatenate statistic variables setting zero cross variances */
 };
 
-std::ostream &operator<<(std::ostream &os, StatisticValue const &m);
+std::ostream &operator<<(std::ostream &os, const StatisticValue &m);

@@ -288,7 +288,7 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
 	auto inbase = partitioner.PartValue(intype, in, -1);
 	if (outType == STATE_UPDATE || baseSystem.available() || forcedOutput) {
 		n = baseSystem.num(outtype, forcedOutput);
-		out.segment(0, n) = baseSystem.getBaseSystemPtr()->genNonlinearPart(outType, Ts, xbase, inbase);
+		out.segment(0, n) = baseSystem.getBaseSystemPtr()->EvalNonlinearPart(outType, Ts, xbase, inbase);
 	}
 	else n = 0;
 	for (size_t i = 0; i < nSensors(); i++)
@@ -296,7 +296,7 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
 			size_t d = sensorList[i].num(outtype, forcedOutput);
 			auto xi = partitioner.PartValue(STATE, state, i);
 			auto ini = partitioner.PartValue(intype, in, i);
-			out.segment(n, d) = sensorList[i].getSensorPtr()->genNonlinearPart(outType, Ts, xbase, inbase, xi, ini);
+			out.segment(n, d) = sensorList[i].getSensorPtr()->EvalNonlinearPart(outType, Ts, xbase, inbase, xi, ini);
 			n += d;
 		}
 	return out;
@@ -556,7 +556,7 @@ SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
 
 Eigen::VectorXi SystemManager::BaseSystemData::dep(TimeUpdateType outType, VariableType type, bool forcedOutput) const {
 	if (outType == STATE_UPDATE || available() || forcedOutput)
-		return ptr->genNonlinearDependency(outType, type);
+		return ptr->getNonlinDep(outType, type);
 	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type), true));
 }
 
@@ -615,14 +615,14 @@ SystemManager::SensorData::SensorData(Sensor::SensorPtr ptr_, const StatisticVal
 Eigen::VectorXi SystemManager::SensorData::depSensor(TimeUpdateType outType,
 	VariableType type, bool forcedOutput) const {
 	if (outType == STATE_UPDATE || available() || forcedOutput)
-		return ptr->genNonlinearSensorDependency(outType, type);
+		return ptr->getNonlinDepOnSensorSignals(outType, type);
 	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type)));
 }
 
 Eigen::VectorXi SystemManager::SensorData::depBaseSystem(TimeUpdateType outType,
 	VariableType type, bool forcedOutput) const {
 	if (outType == STATE_UPDATE || available() || forcedOutput)
-		return ptr->genNonlinearBaseSystemDependency(outType, type);
+		return ptr->getNonlinDepOnBaseSystemSignals(outType, type);
 	else return Eigen::VectorXi::Zero(num(System::getInputValueType(outType, type)));
 }
 
@@ -640,16 +640,16 @@ Eigen::MatrixXd SystemManager::SensorData::getMatrixBaseSystem(double Ts, TimeUp
 	case STATE_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
-			return ptr->getA0(Ts);
+			return ptr->getAs_bs(Ts);
 		case VAR_EXTERNAL:
-			return ptr->getB0(Ts);
+			return ptr->getBs_bs(Ts);
 		}
 	case OUTPUT_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
-			return ptr->getC0(Ts);
+			return ptr->getCs_bs(Ts);
 		case VAR_EXTERNAL:
-			return ptr->getD0(Ts);
+			return ptr->getDs_bs(Ts);
 		}
 	}
 	throw std::runtime_error(std::string("SystemManager::SensorData::getMatrixBaseSystem(): unknown parameters"));
@@ -663,16 +663,16 @@ Eigen::MatrixXd SystemManager::SensorData::getMatrixSensor(double Ts,
 	case STATE_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
-			return ptr->getAi(Ts);
+			return ptr->getAs(Ts);
 		case VAR_EXTERNAL:
-			return ptr->getBi(Ts);
+			return ptr->getBs(Ts);
 		}
 	case OUTPUT_UPDATE:
 		switch (inType) {
 		case VAR_STATE:
-			return ptr->getCi(Ts);
+			return ptr->getCs(Ts);
 		case VAR_EXTERNAL:
-			return ptr->getDi(Ts);
+			return ptr->getDs(Ts);
 		}
 	}
 	throw std::runtime_error(std::string("SystemManager::SensorData::getMatrixSensor(): unknown parameters"));

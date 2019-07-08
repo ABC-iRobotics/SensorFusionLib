@@ -1,51 +1,54 @@
 #include "IMUSensor.h"
-#include "youBotSystem.h"
+#include "KUKAyouBot.h"
+#include "truck.h"
 
-Eigen::MatrixXd IMUSensor::getA0(double Ts) const {
+Eigen::MatrixXd IMUSensor::getAs_bs(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(5, 7);
 	out(0, 0) = 1;
 	out(1, 1) = 1;
 	return out;
 }
 
-Eigen::MatrixXd IMUSensor::getAi(double Ts) const {
+Eigen::MatrixXd IMUSensor::getAs(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Identity(5, 5);
 	out(0, 0) = 0;
 	out(1, 1) = 0;
 	return out;
 }
 
-Eigen::MatrixXd IMUSensor::getB0(double Ts) const {
+Eigen::MatrixXd IMUSensor::getBs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(5, 4);
 }
 
-Eigen::MatrixXd IMUSensor::getBi(double Ts) const {
+Eigen::MatrixXd IMUSensor::getBs(double Ts) const {
 	return Eigen::MatrixXd::Zero(5, 0);
 }
 
-Eigen::MatrixXd IMUSensor::getC0(double Ts) const {
+Eigen::MatrixXd IMUSensor::getCs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 7);
 }
 
-Eigen::MatrixXd IMUSensor::getCi(double Ts) const {
+Eigen::MatrixXd IMUSensor::getCs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 5);
 }
 
-Eigen::MatrixXd IMUSensor::getD0(double Ts) const {
+Eigen::MatrixXd IMUSensor::getDs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(3, 0);
 }
 
-Eigen::MatrixXd IMUSensor::getDi(double Ts) const {
+Eigen::MatrixXd IMUSensor::getDs(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
-Eigen::MatrixXd IMUSensor::getPInvDi(double Ts) const {
+Eigen::MatrixXd IMUSensor::getPInvDs(double Ts) const {
 	return Eigen::MatrixXd::Identity(3, 3);
 }
 
-Eigen::VectorXi IMUSensor::getOutputNonlinearX0Dependencies() const {
+Eigen::VectorXi IMUSensor::getOutputUpdateNonlinXbsDep() const {
 	return Eigen::VectorXi::Ones(3);
 }
+
+IMUSensor::IMUSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID) : Sensor(ptr, ID) {}
 
 unsigned int IMUSensor::getNumOfStates() const {
 	return 5;
@@ -63,11 +66,11 @@ unsigned int IMUSensor::getNumOfNoises() const {
 	return 3;
 }
 
-Eigen::VectorXi IMUSensor::getOutputNonlinearXiDependencies() const {
+Eigen::VectorXi IMUSensor::getOutputUpdateNonlinXsDep() const {
 	return Eigen::VectorXi::Ones(5);
 }
 
-Eigen::VectorXd IMUSensor::OutputNonlinearPart(double Ts, const Eigen::VectorXd & baseSystemState,
+Eigen::VectorXd IMUSensor::EvalOutputUpdateNonlinearPart(double Ts, const Eigen::VectorXd & baseSystemState,
 	const Eigen::VectorXd & baseSystemNoise, const Eigen::VectorXd & sensorState, const Eigen::VectorXd & sensorNoise) const {
 	Eigen::VectorXd out(3);
 	//std::cout << "x0:\n" << baseSystemState << "\nv0:\n" << baseSystemNoise << "\nxi:\n" << sensorState << "\nvi:\n" << sensorNoise << "\n";
@@ -83,7 +86,7 @@ Eigen::VectorXd IMUSensor::OutputNonlinearPart(double Ts, const Eigen::VectorXd 
 }
 
 bool IMUSensor::isCompatible(BaseSystem::BaseSystemPtr ptr) const {
-	return _isCompatible<youBotSystem>(ptr);
+	return _isCompatible<KUKAyouBot>(ptr) || _isCompatible<Truck>(ptr);
 }
 
 std::vector<std::string> IMUSensor::getStateNames() const {

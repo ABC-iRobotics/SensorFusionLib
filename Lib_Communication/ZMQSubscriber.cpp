@@ -1,4 +1,5 @@
 #include "ZMQSubscriber.h"
+#include "msg2buf.h"
 #include <string>
 #include <iostream>
 

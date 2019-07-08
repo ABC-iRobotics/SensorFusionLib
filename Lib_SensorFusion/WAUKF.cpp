@@ -223,7 +223,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 				if (index != -1) { //basesystem
 					auto sys = Sensor(index);
 					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT.TimeInS(), STATE_UPDATE, VAR_EXTERNAL, true);
-					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBi(dT.TimeInS());
+					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBs(dT.TimeInS());
 					v = pinvBi1 * (p.PartValue(DataType::STATE, value, index) - Bi0 * v);
 				}
 				it->second.AddValue(v);
@@ -243,7 +243,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 					auto sys = Sensor(index);
 					Eigen::MatrixXd Bi0 = sys.getMatrixBaseSystem(dT.TimeInS(), STATE_UPDATE, VAR_EXTERNAL, true);
 					Eigen::MatrixXd v2 = Bi0 * pinvBbs * p.PartVariance(DataType::STATE, value, -1, index);
-					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBi(dT.TimeInS());
+					Eigen::MatrixXd pinvBi1 = sys.getSensorPtr()->getPInvBs(dT.TimeInS());
 					v = pinvBi1 * (Bi0*v*Bi0.transpose() - v2 - v2.transpose() +
 						p.PartVariance(DataType::STATE, value, index, index))*pinvBi1.transpose();
 				}
@@ -268,7 +268,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 					if (index != -1) { //basesystem
 						auto sys = Sensor(index);
 						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT.TimeInS(), OUTPUT_UPDATE, VAR_EXTERNAL, true);
-						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDi(dT.TimeInS());
+						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDs(dT.TimeInS());
 						v = pinvDi1 * (p.PartValue(DataType::OUTPUT, value, index) - Di0 * v);
 					}
 					it->second.AddValue(v);
@@ -289,7 +289,7 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 						auto sys = Sensor(index);
 						Eigen::MatrixXd Di0 = sys.getMatrixBaseSystem(dT.TimeInS(), OUTPUT_UPDATE, VAR_EXTERNAL, true);
 						Eigen::MatrixXd v2 = Di0 * pinvDbs * p.PartVariance(OUTPUT, value, -1, index); // index sorrend?
-						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDi(dT.TimeInS());
+						Eigen::MatrixXd pinvDi1 = sys.getSensorPtr()->getPInvDs(dT.TimeInS());
 						v = pinvDi1 * (Di0*v*Di0.transpose() - v2 - v2.transpose() +
 							p.PartVariance(OUTPUT, value, index, index))*pinvDi1.transpose();
 					}

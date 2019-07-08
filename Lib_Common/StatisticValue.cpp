@@ -1,22 +1,12 @@
 #include "StatisticValue.h"
-#include <exception>
 
-class WrongVarianceSizes : public std::exception {
-	virtual const char* what() const throw();
-};
-
-const char * WrongVarianceSizes::what() const throw() {
-	return "Not consistent value and variance values";
-}
-
-StatisticValue::StatisticValue(Eigen::VectorXd vector_,
-	Eigen::MatrixXd variance_, bool isIndependent_) :
+StatisticValue::StatisticValue(const Eigen::VectorXd& vector_, const Eigen::MatrixXd& variance_, bool isIndependent_) :
 	vector(vector_), variance(variance_), isIndependent(isIndependent_) {
 	if (vector_.size() != variance.rows() || vector_.size() != variance.cols())
-		throw WrongVarianceSizes();
+		throw std::runtime_error(std::string("StatisticValue::StatisticValue Not consistent value and variance values!"));
 }
 
-StatisticValue::StatisticValue(Eigen::VectorXd vector_) :
+StatisticValue::StatisticValue(const Eigen::VectorXd& vector_) :
 	vector(vector_), isIndependent(true),
 	variance(Eigen::MatrixXd::Zero(vector_.size(), vector_.size())) {}
 
@@ -28,7 +18,7 @@ StatisticValue::StatisticValue(size_t n) :
 
 Eigen::Index StatisticValue::Length() const { return vector.size(); }
 
-void StatisticValue::Insert(Eigen::Index StartIndex, StatisticValue value) {
+void StatisticValue::Insert(Eigen::Index StartIndex, const StatisticValue& value) {
 	for (Eigen::Index i = 0; i < value.Length(); i++) {
 		vector(StartIndex + i) = value.vector(i);
 		for (Eigen::Index j = 0; j < value.vector.size(); j++)
@@ -48,7 +38,7 @@ StatisticValue StatisticValue::GetPart(Eigen::Index StartIndex, Eigen::Index Len
 	return StatisticValue(vector.segment(StartIndex, Length), variance.block(StartIndex, StartIndex, Length, Length));
 }
 
-void StatisticValue::Add(StatisticValue value) {
+void StatisticValue::Add(const StatisticValue& value) {
 	Eigen::Index n0 = Length();
 	Eigen::Index dn = value.Length();
 	vector.conservativeResize(n0 + dn);

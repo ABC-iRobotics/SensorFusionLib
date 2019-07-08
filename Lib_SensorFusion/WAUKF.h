@@ -1,41 +1,102 @@
-#include "SystemManager.h"
+﻿#include "SystemManager.h"
 #include "Eigen/Dense"
 #include <map>
 
 const unsigned int MAX_WINDOW_SIZE = 200;
 
+enum ValueType { VALUE, VARIANCE };
+
+/*! \brief Moving average window implementation
+*
+*  Type can be Eigen::VectorXd or Eigen::MatrixXd
+*/
 template<class Type>
-class MAWindow { // Type will be Eigen::VectorXd or Eigen::MatrixXd
-	Type data[MAX_WINDOW_SIZE];
-	Type out;
-	bool upToDate;
-	bool initialized;
-	unsigned int lastWritten;
-	unsigned int windowSize;
+class MAWindow { 
+	Type data[MAX_WINDOW_SIZE]; /*!< Buffer*/
+	Type out; /*!< Last result*/
+	bool upToDate; /*!< Last result is uptodate*/
+	bool initialized; /*!< If it is initialized*/
+	unsigned int lastWritten; /*!< Index of the latest element */
+	unsigned int windowSize; /*!< Used windowsize */
 public:
-	MAWindow(unsigned int windowSize_, const Type& initValue);
-	MAWindow(unsigned int windowSize_ = 100); // constructor without initialization
-	const Type& Value();
-	void AddValue(const Type& value);
+	MAWindow(unsigned int windowSize_, const Type& initValue); /*!< Constructor with initialization */
+	MAWindow(unsigned int windowSize_ = 100);  /*!< Constructor without initialization */
+	const Type& Value();  /*!< Get the actual result */
+	void AddValue(const Type& value);  /*!< Add a new value */
 };
 
+/*! \brief Class to perform Kalman-filtering with windowing based parameter estimation on complex asynchronous multisensor systems
+*
+* The functionality of SystemManager superclass wraps the models into a simple state model
+*
+* \f$ \mathbf x_k = \mathbf A\cdot \mathbf x_{k-1} + \mathbf B
+ \cdot \mathbf w_k + \mathbf f( \mathbf x_{k-1}, \mathbf w_k) \f$
+*
+* \f$ \mathbf y_k = \mathbf C\cdot \mathbf x_{k} + \mathbf D
+ \cdot \mathbf v_k + \mathbf g( \mathbf x_{k}, \mathbf v_k) \f$
+* - according to the current status of the sensors. (For the details, see the description of class SystemManager)
+*
+* This subclass calls the Time Update and the implements the Kalman-filtering within the Step() function as
+*
+* - 0. \f$ \hat{\mathbf x}_{k-1} \f$ and its covariance matrix \f$\hat{\Sigma}_{k-1} \f$ are initial guess or comes from the previous filtering.
+* - 1. (During the elapsed \f$ dT \f$ time the recieved sensor measurements was registered (SetProperty())
+*    Time-update: step the time with \f$ dT \f$
+*
+* State update:
+*
+* \f$ \overline{\mathbf x}_k = \mathbf A(dT) \cdot \hat{\mathbf x}_{k-1} + \mathbf B(dT)
+ \cdot \mathbf w_k + \mathbf f(dT, \hat{\mathbf x}_{k-1}, \mathbf w_k) \f$
+ * its covariance matrix as \f$ \overline{\Sigma}_k\f$
+*
+* Output update (to the available sensors):
+*
+* \f$ \overline{\mathbf y}_k = \mathbf C(dT)\cdot \overline{\mathbf x}_{k} + \mathbf D(dT)
+ \cdot \mathbf v_k + \mathbf g(dT, \overline{\mathbf x}_{k}, \mathbf v_k) \f$
+ * its covariance matrices as \f$ \overline{\Sigma}_{yy,k}\f$, \f$ \overline{\Sigma}_{yx,k}\f$
+*
+* - 2. Measurement update (or filtering):
+*
+* \f$ \hat{\mathbf x}_k = \overline{\mathbf x}_k + \mathbf K (\mathbf y_{meas,k} - \overline{\mathbf y}_k) \f$ its covariance matrix as \f$ \hat{\Sigma}_k\f$
+*
+* where \f$ \mathbf K = \overline{\Sigma}_{xy,k}\left(\overline{\Sigma}_{yy,k} + \Sigma_{yy,meas,k} \right)^{-1} \f$
+*
+* - 3. Parameter estimation
+* 
+* Disturbance/noise, value/variance estimation for the chosen systems based on moving average windowing.
+*
+* For more details, see:
+*
+* Gao, Shesheng, Gaoge Hu, and Yongmin Zhong. "Windowing and random weighting‐based adaptive unscented Kalman filter." International Journal of Adaptive Control and Signal Processing 29.2 (2015): 201-223.
+*/
 class WAUKF : public SystemManager {
 public:
-	WAUKF(const BaseSystemData& data, const StatisticValue& state_);
+	WAUKF(const BaseSystemData& data, const StatisticValue& state_); /*!< Constructor. */
 
 	void SetDisturbanceValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
+	/*!< Add a window to estimate \f$ \mathbf w_i\f$ disturbance value for a given System (= BaseSystem or Sensor) with given window size.*/
 
 	void SetNoiseValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
+	/*!< Add a window to estimate \f$ \mathbf v_i\f$ noise value for a given System (= BaseSystem or Sensor) with given window size.*/
 
 	void SetDisturbanceVarianceWindowing(System::SystemPtr ptr, unsigned int windowSize);
-
+	/*!< Add a window to estimate \f$ \Sigma_{ww}\f$ disturbance variance for a given System (= BaseSystem or Sensor) with given window size.*/
+	
 	void SetNoiseVarianceWindowing(System::SystemPtr ptr, unsigned int windowSize);
+	/*!< Add a window to estimate \f$ \Sigma_{vv}\f$ noise variance for a given System (= BaseSystem or Sensor) with given window size.*/
 
-	typedef std::shared_ptr<WAUKF> WAUKFPtr;
+	typedef std::shared_ptr<WAUKF> WAUKFPtr; /*!< Shared pointer type for the WAUKF class */
 
+	/*! \brief Time update with the given dT and Kalman-filter based on the available sensors
+*
+* Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
+*/
 	// TODO: perform further tests on the adaptive methods
 	void Step(TimeMicroSec dT) override;
 
+	/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
+	*
+	* Omitted if the value is estimated by the adaptive method.
+	*/
 	void SetProperty(const DataMsg& data) override;
 
 private:

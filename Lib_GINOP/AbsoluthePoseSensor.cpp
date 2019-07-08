@@ -1,4 +1,6 @@
 #include "AbsoluthePoseSensor.h"
+#include "KUKAyouBot.h"
+#include "truck.h"
 
 AbsoluthePoseSensor::AbsoluthePoseSensor(BaseSystem::BaseSystemPtr ptr, unsigned int ID, bool withOrientation) :
 	Sensor(ptr, ID), withOrientation(withOrientation) {}
@@ -21,23 +23,23 @@ unsigned int AbsoluthePoseSensor::getNumOfNoises() const {
 	else return 2;
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getA0(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getAs_bs(double Ts) const {
 	return Eigen::MatrixXd(0, getNumOfBaseSystemStates());
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getAi(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getAs(double Ts) const {
 	return Eigen::MatrixXd(0, 0);
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getB0(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getBs_bs(double Ts) const {
 	return Eigen::MatrixXd(0, getNumOfBaseSystemDisturbances());
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getBi(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getBs(double Ts) const {
 	return Eigen::MatrixXd(0, 0);
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getC0(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getCs_bs(double Ts) const {
 	Eigen::MatrixXd out = Eigen::MatrixXd::Zero(getNumOfOutputs(), getNumOfBaseSystemStates());
 	out(0, 3) = 1;
 	out(1, 4) = 1;
@@ -46,24 +48,24 @@ Eigen::MatrixXd AbsoluthePoseSensor::getC0(double Ts) const {
 	return out;
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getCi(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getCs(double Ts) const {
 	return Eigen::MatrixXd(getNumOfOutputs(), 0);
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getD0(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getDs_bs(double Ts) const {
 	return Eigen::MatrixXd::Zero(getNumOfOutputs(), getNumOfBaseSystemNoises());
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getDi(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getDs(double Ts) const {
 	return Eigen::MatrixXd::Identity(getNumOfOutputs(), getNumOfNoises());
 }
 
-Eigen::MatrixXd AbsoluthePoseSensor::getPInvDi(double Ts) const {
+Eigen::MatrixXd AbsoluthePoseSensor::getPInvDs(double Ts) const {
 	return Eigen::MatrixXd::Identity(getNumOfNoises(), getNumOfOutputs());
 }
 
 bool AbsoluthePoseSensor::isCompatible(BaseSystem::BaseSystemPtr ptr) const {
-	return _isCompatible<youBotSystem>(ptr);
+	return _isCompatible<KUKAyouBot>(ptr) || _isCompatible<Truck>(ptr);
 }
 
 std::vector<std::string> AbsoluthePoseSensor::getStateNames() const {

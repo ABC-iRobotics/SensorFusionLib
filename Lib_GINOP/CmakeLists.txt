@@ -14,20 +14,22 @@ set (HEADERS
 	IMUSensor.h
 	INSSensor.h
 	AbsoluthePoseSensor.h
-	youBotSystem.h
+	KUKAyouBot.h
 	FilteringManager.h
 	youBotINSGPS.h
 	Simulation.h
+	truck.h
 	)
 	
 set (SOURCES
 	IMUSensor.cpp
 	INSSensor.cpp
 	AbsoluthePoseSensor.cpp
-	youBotSystem.cpp
+	KUKAyouBot.cpp
 	FilteringManager.cpp
 	youBotINSGPS.cpp
 	Simulation.cpp
+	truck.cpp
 	)
 
 # Add the dinamic library target to the project

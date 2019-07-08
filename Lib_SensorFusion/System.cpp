@@ -94,9 +94,3 @@ void System::_systemTest() const {
 	if (getNames(DataType::NOISE).size() != getNumOf(DataType::NOISE))
 		throw std::runtime_error(std::string("System::_systemTest()"));
 }
-
-SystemCallData::SystemCallData(Eigen::VectorXd value, DataType type) :
-	value(value), signalType(type), valueType(VALUE) {}
-
-SystemCallData::SystemCallData(Eigen::MatrixXd variance, DataType type) :
-	variance(variance), signalType(type), valueType(VARIANCE) {}

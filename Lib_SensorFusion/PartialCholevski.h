@@ -2,5 +2,9 @@
 
 #include "Eigen/Dense"
 
-// The Cholevski-Craut algorithm with some midifications
+
+/* \brief Cholevski-factorization of positive semi-definite matrices in the given columns
+ *
+ * Based on the Cholevski-Crout algrithm
+ */
 Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v);

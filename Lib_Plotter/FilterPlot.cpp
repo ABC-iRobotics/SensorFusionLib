@@ -2,7 +2,7 @@
 
 std::vector<FilterPlot*> FilterPlot::toUpdate = std::vector<FilterPlot*>();
 
-void FilterPlot::Callback(const DataMsg & data) {
+void FilterPlot::AddDataToThis(const DataMsg & data) {
 	if (ID == data.GetSourceID() && data.GetDataType() == valueType) {
 		unsigned int index = _index(valueType, data.GetDataSourceType());
 		if (data.HasValue() || data.HasVariance()) {
@@ -34,7 +34,7 @@ std::string SystemValueType2String(DataType type) {
 	}
 }
 
-void FilterPlot::Update() {
+void FilterPlot::UpdateThis() {
 	for (unsigned int i = 0; i < nViews; i++)
 		plotter.updatePlot(i);
 	plotter.updateWindow();
@@ -183,11 +183,11 @@ FilterPlot::~FilterPlot() {
 
 void FilterPlot::UpdateWindows() {
 	for (size_t i = 0; i < toUpdate.size(); i++)
-		toUpdate[i]->Update();
+		toUpdate[i]->UpdateThis();
 }
 
-void FilterPlot::AddData(const DataMsg & data) {
+void FilterPlot::AddDataToWindows(const DataMsg & data) {
 	//data.print();
 	for (unsigned int i = 0; i < toUpdate.size(); i++)
-		toUpdate[i]->Callback(data);
+		toUpdate[i]->AddDataToThis(data);
 }
