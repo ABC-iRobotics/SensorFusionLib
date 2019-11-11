@@ -37,7 +37,7 @@
 	0 \\ 0 \\ 0 \\ T_sv_x\cos\phi - T_sv_y\sin\phi \\ T_sv_x\sin\phi + T_sv_y\cos\phi \\ 0 \\ 0
 	\end{bmatrix}
 \f]
-* where \f$T_d\f$ is the assumed fastest time constant (\f$ T_d\geq T_s\f$)
+* where \f$T_d\f$ is the assumed slowest time constant (\f$ T_d\geq T_s\f$)
 * and for the KUKAyouBot the odometry can br written as
 * \f[
 \begin{bmatrix}
@@ -67,7 +67,7 @@ private:
 	double dGeomR;
 
 public:
-	KUKAyouBot(double Tdyn, double L, double W, double R, unsigned int ID); /*!< Constructor. Tdyn is the expected fastest time constant, L, W, R stand for the length, width of the platform and radius of its wheels. */
+	KUKAyouBot(double Tdyn, double L, double W, double R, unsigned int ID); /*!< Constructor. Tdyn is the expected slowest time constant, L, W, R stand for the length, width of the platform and radius of its wheels. */
 
 	unsigned int getNumOfDisturbances() const override;
 

@@ -4,7 +4,7 @@
 #include <iostream>
 
 ZMQSubscriber::ZMQSubscriber(int port) : context(1), socket(context, ZMQ_SUB) {
-	std::string protocol = "tcp://localhost:" + std::to_string(port);
+	std::string protocol = "tcp://10.8.0.14:" + std::to_string(port);
 	socket.connect(protocol);
 	socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 }
