@@ -9,8 +9,11 @@ INCLUDE(ExternalProject)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
 
+
 if(UNIX AND NOT APPLE)
-set(LINUX TRUE)
+    set(LINUX TRUE)
+    #This is required to find sodium package for libzmq linking
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 endif()
 
 # if(NOT LINUX) should work, too, if you need that
