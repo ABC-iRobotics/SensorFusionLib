@@ -6,30 +6,41 @@ void FilteringManager::_processMSG(const DataMsg & data) {
 }
 
 bool FilteringManager::_getandprocessMsg_Wait(unsigned int waitinms) {
-	DataMsg msg;
-	bool success = zmqSub.RecvMsg_Wait(msg, waitinms);
+	bool success = zmqSub.RecvMsg_Wait(waitinms);
 	if (success)
-		_processMSG(msg);
+		_readLoadedZMQMsgs();
 	return success;
 }
 
 bool FilteringManager::_getandprocessMsg_DontWait() {
-	DataMsg msg;
-	bool success = zmqSub.RecvMsg_DontWait(msg);
+	bool success = zmqSub.RecvMsg_DontWait();
 	if (success)
-		_processMSG(msg);
+		_readLoadedZMQMsgs();
 	return success;
 }
 
-FilteringManager::FilteringManager(double Ts_max_s, int port) :
-	zmqPub(NULL), Ts_max(Ts_max_s), zmqSub(port), filter(NULL) {}
+void FilteringManager::_readLoadedZMQMsgs() {
+	DataMsg msg;
+	for (unsigned int i = 0; i < zmqSub.numSockets(); i++) {
+		zmqSub.getData(i, msg);
+		if (!msg.IsEmpty())
+			_processMSG(msg);
+	}
+}
+
+FilteringManager::FilteringManager(double Ts_max_s) :
+	zmqPub(NULL), Ts_max(Ts_max_s), zmqSub(), filter(NULL) {}
+
+void FilteringManager::addSensorSockets(std::string address) {
+	zmqSub.addSocket(address);
+}
 
 void FilteringManager::SetFilter(SystemManager::SystemManagerPtr filter_) {
 	filter = filter_;
 }
 
-void FilteringManager::SetZMQLogger(int port) {
-	zmqPub = new ZMQPublisher(port);
+void FilteringManager::SetZMQLogger(std::string address) {
+	zmqPub = new ZMQPublisher(address);
 	filter->SetCallback([this](const DataMsg& data) {
 		zmqPub->SendMsg(data);
 	});

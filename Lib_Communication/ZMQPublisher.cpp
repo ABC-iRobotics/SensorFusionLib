@@ -4,9 +4,8 @@
 #include <iostream>
 #include <thread>
 
-ZMQPublisher::ZMQPublisher(int port) : context(1), socket(context, ZMQ_PUB) {
-	std::string protocol = "tcp://*:" + std::to_string(port);
-	socket.bind(protocol.c_str());
+ZMQPublisher::ZMQPublisher(std::string address) : context(1), socket(context, ZMQ_PUB) {
+	socket.bind(address.c_str());
 }
 
 /*!< Constructor: initializes a zmq context and a publisher socket (tcp://localhost:port)*/

@@ -17,14 +17,16 @@ int main(void) {
 	//FilterPlot plotter3(insID, ins->getName(), ins->getOutputNames(), OUTPUT);
 
 
-	ZMQSubscriber sub(5556);
+	ZMQLogSubscriber sub;
+	sub.addSocket("tcp://localhost:5554");
+	DataMsg data;
 
 	while (true) {
-		DataMsg data;
-		bool success = sub.RecvMsg_Wait(data);
-		while (success) {
-			FilterPlot::AddDataToWindows(data);
-			success = sub.RecvMsg_DontWait(data);
+		auto start = std::chrono::system_clock::now();
+		while (std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now() - start).count() < 50) {
+			if (sub.RecvMsg_Wait(data, 100))
+				FilterPlot::AddDataToWindows(data);
 		}
 		FilterPlot::UpdateWindows();
 	}
