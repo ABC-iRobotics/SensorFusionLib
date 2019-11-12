@@ -16,7 +16,7 @@ endif()
 # if(NOT LINUX) should work, too, if you need that
 if(LINUX) 
 message(STATUS ">>> Linux")
-# linux stuff here
+    set (CMAKE_CXX_STANDARD 11)
 else()
     if(WIN32)
         # for Windows operating system in general
