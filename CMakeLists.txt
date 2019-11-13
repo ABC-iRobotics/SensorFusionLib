@@ -9,14 +9,32 @@ INCLUDE(ExternalProject)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
 
-# on *nixes we need this to use C++11 
-if (MSVC_VERSION GREATER_EQUAL "1900")
-    include(CheckCXXCompilerFlag)
-    CHECK_CXX_COMPILER_FLAG("/std:c++latest" _cpp_latest_flag_supported)
-    if (_cpp_latest_flag_supported)
-        add_compile_options("/std:c++latest")
+
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+    #This is required to find sodium package for libzmq linking
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+endif()
+
+# if(NOT LINUX) should work, too, if you need that
+if(LINUX) 
+message(STATUS ">>> Linux")
+    set (CMAKE_CXX_STANDARD 11)
+else()
+    if(WIN32)
+        # for Windows operating system in general
+        # on *nixes we need this to use C++11 
+        if (MSVC_VERSION GREATER_EQUAL "1900")
+            include(CheckCXXCompilerFlag)
+            CHECK_CXX_COMPILER_FLAG("/std:c++latest" _cpp_latest_flag_supported)
+            if (_cpp_latest_flag_supported)
+                add_compile_options("/std:c++latest")
+            endif()
+        endif()
     endif()
 endif()
+
+
 
 # where to put the resulting binaries?
 set (APPLICATION Bin)
@@ -35,7 +53,7 @@ set(DEPENDENCIES_DIR ${CMAKE_BINARY_DIR})
 
 file(MAKE_DIRECTORY  ${CMAKE_BINARY_DIR}/dependencies)
 
-option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
+option(ADD_PLOTTER "To use OpenCV-based plotters" FALSE)
 set(FILTERPLOT ${ADD_PLOTTER})
 
 add_subdirectory (Lib_Common)

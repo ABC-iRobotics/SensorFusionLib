@@ -7,8 +7,8 @@
 // partitionate matrices - helper quantities
 // evalnonlinpart on matrices
 
-#include "Simulation_youbot_Kalman.h"
-#include "Simulation_youbot_WAUKF.h"
+#include "Simulation_youBot_Kalman.h"
+#include "Simulation_youBot_WAUKF.h"
 
 int main() {
 	simulation_youbot_Kalman();

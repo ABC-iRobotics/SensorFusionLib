@@ -1,7 +1,10 @@
 #include "youBotINSGPS.h"
 
 int main(void) {
-	youBotINSGPS filter(5555, 5556);
+	youBotINSGPS filter("tcp://*:5554");
+	filter.addSensorSockets("tcp://localhost:5555");
+	filter.addSensorSockets("tcp://localhost:5556");
+	filter.addSensorSockets("tcp://localhost:5557");
 	filter.run();
 
 	return 0;

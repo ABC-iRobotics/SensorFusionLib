@@ -1,12 +1,20 @@
 #include "ZMQSubscriber.h"
 
 int main(void) {
-	ZMQSubscriber sub(5555);
+	ZMQRTSubscriber sub;
+	sub.addSocket("tcp://localhost:5555");
+	sub.addSocket("tcp://localhost:5556");
+	sub.addSocket("tcp://localhost:5557");
 
 	while (true) {
-		DataMsg d;
-		if (sub.RecvMsg_Wait(d))
-			d.print();
+		DataMsg data;
+		if (sub.RecvMsg_Wait()) {
+			for (unsigned int i = 0; i < sub.numSockets(); i++) {
+				sub.getData(i, data);
+				if (!data.IsEmpty())
+					data.print();
+			}
+		}
 	}
 
 	/*
