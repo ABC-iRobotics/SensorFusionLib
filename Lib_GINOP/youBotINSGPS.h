@@ -7,10 +7,12 @@
 */
 class youBotINSGPS : private FilteringManager {
 public:
-	youBotINSGPS(int port, int port_logger = -1); /*!< Constructor */
+	youBotINSGPS(std::string loggeraddress = ""); /*!< Constructor */
 
 	~youBotINSGPS(); /*!< Destructor */
 
 	using FilteringManager::run;
+
+	using FilteringManager::addSensorSockets;
 };
 

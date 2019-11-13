@@ -13,7 +13,7 @@
 * Start it with the run() function
 */
 class FilteringManager {
-	ZMQSubscriber zmqSub;
+	ZMQRTSubscriber zmqSub;
 	ZMQPublisher* zmqPub;
 	const double Ts_max; // in seconds
 	SystemManager::SystemManagerPtr filter;
@@ -24,12 +24,16 @@ class FilteringManager {
 
 	bool _getandprocessMsg_DontWait();
 
+	void _readLoadedZMQMsgs();
+
 public:
-	FilteringManager(double Ts_max_s, int port); /*!< Constructor */
+	FilteringManager(double Ts_max_s); /*!< Constructor */
+
+	void addSensorSockets(std::string address); // e.g. "tcp://10.8.0.14:5555" or "ipc:///tmp/feeds/0"
 
 	void SetFilter(SystemManager::SystemManagerPtr filter_); /*!< Set filter - necessary before run()*/
 
-	void SetZMQLogger(int port); /*!< Set port to log the filtering results real-time */
+	void SetZMQLogger(std::string loggeraddress); /*!< Set port to log the filtering results real-time */
 
 	void run(); /*!< Start the filtering function*/
 

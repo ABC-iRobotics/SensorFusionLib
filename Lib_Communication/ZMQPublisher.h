@@ -11,8 +11,11 @@ class ZMQPublisher {
 	zmq::socket_t socket;
 
 public:
-	ZMQPublisher(int port); /*!< Constructor: initializes a zmq context and a publisher socket (tcp://localhost:port)*/
+	ZMQPublisher(std::string address); /*!< Constructor: initializes a zmq context and a publisher socket (tcp://localhost:port or ipc:///tmp/feeds/0 ...)*/
+
 	~ZMQPublisher(); /*!< Destructor */
+
+	ZMQPublisher(const ZMQPublisher&) = delete;
 
 	void SendString(); /*!< Send a string - for testing purposes*/
 

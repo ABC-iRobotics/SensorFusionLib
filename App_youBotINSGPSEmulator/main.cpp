@@ -4,7 +4,9 @@
 #include "Simulation.h"
 
 int main() {
-	ZMQPublisher pub(5555);
+	ZMQPublisher pub_odometry("tcp://*:5555");
+	ZMQPublisher pub_IMU("tcp://*:5556");
+	ZMQPublisher pub_GPS("tcp://*:5557");
 
 	// Trajectory
 	Trajectory traj = genTrajectory();
@@ -27,20 +29,20 @@ int main() {
 			Eigen::VectorXd w_youbot = youbotphantom.update(traj.vx_local[n], traj.vy_local[n], traj.omega[n]);
 			DataMsg msg(0, DISTURBANCE, SENSOR);
 			msg.SetValueVector(w_youbot);
-			pub.SendMsg(msg);
+			pub_odometry.SendMsg(msg);
 		}
 		if (n % 30 == 0) {
 			Eigen::VectorXd y_GPS = GPS.update(traj.x[n], traj.y[n], traj.phi[n]);
 			DataMsg msg(1, OUTPUT, SENSOR);
 			msg.SetValueVector(y_GPS);
-			pub.SendMsg(msg);
+			pub_IMU.SendMsg(msg);
 		}
 		insphantom.Step(traj.ax_local[n], traj.ay_local[n], traj.omega[n], traj.Ts.TimeInS());
 		{
 			Eigen::VectorXd y_ins = insphantom.Out();
 			DataMsg msg(2, OUTPUT, SENSOR);
 			msg.SetValueVector(y_ins);
-			pub.SendMsg(msg);
+			pub_GPS.SendMsg(msg);
 		}
 	}
 	return 0;

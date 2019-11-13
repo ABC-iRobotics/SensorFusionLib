@@ -4,7 +4,7 @@
 #include "INSSensor.h"
 #include "AbsoluthePoseSensor.h"
 
-youBotINSGPS::youBotINSGPS(int port, int port_logger) : FilteringManager(0.01, port) {
+youBotINSGPS::youBotINSGPS(std::string loggeraddress) : FilteringManager(0.01) {
 	WAUKF::WAUKFPtr waukf;
 
 	//youbot
@@ -58,8 +58,8 @@ youBotINSGPS::youBotINSGPS(int port, int port_logger) : FilteringManager(0.01, p
 		//waukf->SetNoiseValueWindowing(absPose, 100);
 	}
 	SetFilter(waukf);
-	if (port_logger >= 0)
-		SetZMQLogger(port_logger);
+	if (loggeraddress.length() > 0)
+		SetZMQLogger(loggeraddress);
 }
 
 youBotINSGPS::~youBotINSGPS()
