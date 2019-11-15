@@ -17,7 +17,6 @@ void KalmanFilter::Step(TimeMicroSec dT) { // update, collect measurement, corre
 	StatisticValue y_meas = (*this)(OUTPUT);
 	StatisticValue y_pred = Eval(OUTPUT_UPDATE, dT.TimeInS(), x_pred, (*this)(NOISE), Syxpred, sg2);
 
-	StepClock(dT);
 	PredictionDone(x_pred, y_pred);
 
 	Eigen::MatrixXd Syy = y_pred.variance + y_meas.variance;

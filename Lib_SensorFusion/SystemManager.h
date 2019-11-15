@@ -310,8 +310,6 @@ protected:
 
 	void FilteringDone(const StatisticValue& state) const; /*!< Call it with filtering results to forward them to the set callback */
 
-	void StepClock(TimeMicroSec dt); /*!< To step the inner clock in the overridden Step() function */
-
 	void Call(const DataMsg& data) const; /*!< Call the callback if it is set */
 
 private:

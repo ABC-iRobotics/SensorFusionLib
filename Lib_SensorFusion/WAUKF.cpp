@@ -197,7 +197,6 @@ void WAUKF::Step(TimeMicroSec dT) { // update, collect measurement, correction v
 	StatisticValue y_pred = _evalWithV0(OUTPUT_UPDATE, dT.TimeInS(), x_pred,
 		(*this)(DataType::NOISE), Syxpred, sg2, false, y_pred0);
 
-	StepClock(dT);
 	PredictionDone(x_pred, y_pred);
 	// Kalman-filtering
 	Eigen::MatrixXd Syy = y_pred.variance + y_meas.variance;

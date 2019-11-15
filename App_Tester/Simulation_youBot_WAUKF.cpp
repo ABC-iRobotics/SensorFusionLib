@@ -107,7 +107,7 @@ void Simulation_youBot_WAUKF() {
 		truth(5) = traj.phi[n];
 		truth(6) = 0;
 		{
-			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n);
+			DataMsg data(youBot->getID(), STATE, GROUND_TRUTH, traj.Ts*n); //a bit ugly in the plot because of different timestamps...
 			data.SetValueVector(truth);
 #ifdef FILTERPLOT
 			plotter.AddDataToThis(data);
