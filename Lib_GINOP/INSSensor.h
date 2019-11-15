@@ -35,12 +35,16 @@
 *
 *\f[
 \begin{bmatrix}
-	x_s \\ y_s \\ \Delta \phi
+	x_s \\ y_s \\ \phi_s
 	\end{bmatrix}
 	=
 	\mathbf I
 	\begin{bmatrix}
 	x_s \\ y_s \\ \Delta \phi
+	\end{bmatrix}
+	+
+	\begin{bmatrix}
+	0 \\ 0 \\  \phi
 	\end{bmatrix}
 \f]
 */

@@ -98,7 +98,7 @@ unsigned int FilterPlot::_index(DataType valueType, OperationType callType) cons
 		switch (callType) {
 		case FILTER_PARAM_ESTIMATION:
 			return 0;
-		case FILTER_TIME_UPDATE:
+		case SENSOR:
 			return 1;
 		case GROUND_TRUTH:
 			return 2;
