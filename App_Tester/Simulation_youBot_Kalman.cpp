@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Simulation_youbot_Kalman.h"
+#include "Simulation_youBot_Kalman.h"
 #include "KalmanFilter.h"
 #include "KUKAyouBot.h"
 #include "INSSensor.h"

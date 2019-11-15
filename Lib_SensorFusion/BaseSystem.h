@@ -3,6 +3,8 @@
 // the corresponding  disturbances and measurement noises
 
 #include "System.h"
+#include <iostream>
+#include <memory>
 
 /*! \brief Abstract class to describe the dynamics and related properties of a autonomous system (e.g. mobile robot)
 *

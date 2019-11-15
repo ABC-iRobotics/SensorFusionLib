@@ -1,5 +1,5 @@
 #include "msg2buf.h"
-#include "flatbuffers/flatbuffers.h"
+#include <flatbuffers/flatbuffers.h>
 #include "msg_generated.h"
 #include <iostream>
 

@@ -1,4 +1,7 @@
 #pragma once
+
+#include <iostream>
+#include <memory>
 #include "defs.h"
 #include "StatisticValue.h"
 #include <string>

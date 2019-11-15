@@ -1,8 +1,16 @@
 #include "TimeMicroSec.h"
 
-#include <windows.h>
+#ifdef __linux__
+#include <chrono>
 
-TimeMicroSec::TimeMicroSec() {
+TimeMicroSec::TimeMicroSec()
+{
+	time_in_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+#elif _WIN32
+#include <windows.h>
+TimeMicroSec::TimeMicroSec()
+{
 	SYSTEMTIME time;
 	GetSystemTime(&time);
 	time_in_us = time.wYear;
@@ -18,14 +26,18 @@ TimeMicroSec::TimeMicroSec() {
 	time_in_us += time.wMilliseconds;
 	time_in_us *= 1000;
 }
+#endif
 
-TimeMicroSec TimeMicroSec::operator-(const TimeMicroSec& time) const { return TimeMicroSec(time_in_us - time.time_in_us); }
+TimeMicroSec TimeMicroSec::operator-(const TimeMicroSec &time) const
+{
+	return TimeMicroSec(time_in_us - time.time_in_us);
+}
 
 unsigned long TimeMicroSec::TimeInUS() const { return time_in_us; }
 
-double TimeMicroSec::TimeInMS() const { return double(time_in_us)*1e-3; }
+double TimeMicroSec::TimeInMS() const { return double(time_in_us) * 1e-3; }
 
-double TimeMicroSec::TimeInS() const { return double(time_in_us)*1e-6; }
+double TimeMicroSec::TimeInS() const { return double(time_in_us) * 1e-6; }
 
 TimeMicroSec::TimeMicroSec(unsigned long timeinUS) : time_in_us(timeinUS) {}
 
@@ -35,26 +47,32 @@ TimeMicroSec::~TimeMicroSec()
 
 #include <thread>
 
-void TimeMicroSec::Sleep_for() const {
+void TimeMicroSec::Sleep_for() const
+{
 	std::this_thread::sleep_for(std::chrono::duration<unsigned long, std::micro>(time_in_us));
 }
 
-bool TimeMicroSec::operator>=(const TimeMicroSec& time) const {
+bool TimeMicroSec::operator>=(const TimeMicroSec &time) const
+{
 	return time_in_us >= time.time_in_us;
 }
 
-bool TimeMicroSec::operator<=(const TimeMicroSec& time) const {
+bool TimeMicroSec::operator<=(const TimeMicroSec &time) const
+{
 	return time_in_us <= time.time_in_us;
 }
 
-TimeMicroSec TimeMicroSec::operator+(const TimeMicroSec& time) const {
+TimeMicroSec TimeMicroSec::operator+(const TimeMicroSec &time) const
+{
 	return TimeMicroSec(time_in_us + time.time_in_us);
 }
 
-void TimeMicroSec::operator+=(const TimeMicroSec& time) {
+void TimeMicroSec::operator+=(const TimeMicroSec &time)
+{
 	time_in_us += time.time_in_us;
 }
 
-TimeMicroSec TimeMicroSec::operator*(double r) const {
-	return TimeMicroSec((unsigned long)(time_in_us*r));
+TimeMicroSec TimeMicroSec::operator*(double r) const
+{
+	return TimeMicroSec((unsigned long)(time_in_us * r));
 }

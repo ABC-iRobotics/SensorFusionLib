@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Simulation_youbot_WAUKF.h"
+#include "Simulation_youBot_WAUKF.h"
 #include "WAUKF.h"
 #include "KUKAyouBot.h"
 #include "INSSensor.h"
