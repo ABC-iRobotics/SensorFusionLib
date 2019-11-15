@@ -14,7 +14,7 @@ DataMsg msg2(int i) {
 	DataMsg msg(10, STATE, SENSOR);
 	msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(2, 2)/i);
 	Eigen::VectorXd v0 = Eigen::VectorXd::Ones(2);
-	v0[3] = 2 + i;
+	v0[1] = 2 + i;
 	msg.SetValueVector(v0);
 	return msg;
 }
@@ -36,7 +36,7 @@ int main() {
 	ZMQPublisher pub3("tcp://*:5557");
 
 
-	int i = 0;
+	int i = 1;
 	while (true) {
 		pub1.SendMsg(msg1(i));
 		pub2.SendMsg(msg2(i));
