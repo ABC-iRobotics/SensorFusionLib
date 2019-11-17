@@ -57,13 +57,13 @@ void DataMsg::print() const {
 	printf(" from ");
 	switch (dataSource) {
 	case FILTER_TIME_UPDATE:
-		printf("filter(time update)");
+		printf("filter(time update) (ID: %d)", sourceID);
 		break;
 	case FILTER_MEAS_UPDATE:
-		printf("filter(meas. update)");
+		printf("filter(meas. update) (ID: %d)", sourceID);
 		break;
 	case FILTER_PARAM_ESTIMATION:
-		printf("filter(param. estimation)");
+		printf("filter(param. estimation) (ID: %d)", sourceID);
 		break;
 	case SENSOR:
 		printf("sensor (ID: %d) ", sourceID);
