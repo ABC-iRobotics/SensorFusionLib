@@ -61,8 +61,13 @@ Trajectory genTrajectory() {
 		traj.add(0, 0, 0);
 	for (unsigned int n = 0; n < (1. / Ts); n++)
 		traj.add(3., 0, 0);
-	for (unsigned int n = 0; n < (0.1 / Ts); n++)
-		traj.add(0, 0, 10);
+	for (unsigned int n = 0; n < (0.1 / Ts); n++) {
+		double vx = last_element(traj.vx_local);
+		double vy = last_element(traj.vy_local);
+		double om = last_element(traj.omega);
+		traj.add(0, (10*vx-vy/Ts)*0.5, 10);
+	}
+		
 	for (unsigned int n = 0; n < (10. / Ts); n++)
 		traj.add(0, last_element(traj.omega) * last_element(traj.vx_local), 0);
 	return traj;
