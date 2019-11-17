@@ -100,7 +100,7 @@ unsigned int FilterPlot::_index(DataType valueType, OperationType callType) cons
 			return 0;
 		case SENSOR:
 			return 1;
-		case GROUND_TRUTH:
+		case FILTER_TIME_UPDATE:
 			return 2;
 		}
 	}
@@ -131,7 +131,15 @@ OperationType FilterPlot::_eventType(DataType valueType, unsigned int index) con
 		break;
 	case NOISE:
 	case DISTURBANCE:
-		return FILTER_TIME_UPDATE;
+		switch (index) {
+		case 0:
+			return FILTER_PARAM_ESTIMATION;
+		case 1:
+			return SENSOR;
+		case 2:
+			return GROUND_TRUTH;
+		}
+		break;
 	}
 	throw std::runtime_error(std::string("System::_eventType(): Unhandled argument!\n"));
 }
