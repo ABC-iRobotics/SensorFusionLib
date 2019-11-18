@@ -137,7 +137,7 @@ OperationType FilterPlot::_eventType(DataType valueType, unsigned int index) con
 		case 1:
 			return SENSOR;
 		case 2:
-			return GROUND_TRUTH;
+			return FILTER_TIME_UPDATE;
 		}
 		break;
 	}
