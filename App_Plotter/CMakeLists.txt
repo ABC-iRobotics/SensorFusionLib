@@ -7,8 +7,6 @@ include_directories (
 		${PROJECT_SOURCE_DIR}/Lib_Communication
 		${PROJECT_SOURCE_DIR}/Lib_Plotter
 		${PROJECT_SOURCE_DIR}/Lib_Common
-		${PROJECT_SOURCE_DIR}/Lib_GINOP
-		${PROJECT_SOURCE_DIR}/Lib_SensorFusion
 		)
 
 # Add all header and cpp files in the directory to the project
@@ -22,7 +20,8 @@ set (SOURCES
 add_executable (App_Plotter ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (App_Plotter Eigen3::Eigen Lib_Communication Lib_GINOP Lib_SensorFusion Lib_Plotter)
+target_link_libraries (App_Plotter Eigen3::Eigen Lib_Communication
+Lib_Plotter)
 
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

@@ -50,9 +50,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(DEPENDENCIES_DIR ${CMAKE_BINARY_DIR})
 
-
-file(MAKE_DIRECTORY  ${CMAKE_BINARY_DIR}/dependencies)
-
 option(ADD_PLOTTER "To use OpenCV-based plotters" FALSE)
 set(FILTERPLOT ${ADD_PLOTTER})
 
@@ -62,10 +59,6 @@ if (FILTERPLOT)
 	add_subdirectory (App_Plotter)
 endif()
 add_subdirectory (Lib_SensorFusion)
-add_subdirectory (Lib_GINOP)
 add_subdirectory (Lib_Communication)
-add_subdirectory (App_Filter)
-add_subdirectory (App_Tester)
 add_subdirectory (App_ZMQSub)
 add_subdirectory (App_ZMQPub)
-add_subdirectory (App_youBotINSGPSEmulator)
