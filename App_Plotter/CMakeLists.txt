@@ -1,9 +1,6 @@
 # PROJECT(SensorFusion)
 
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-
 include_directories (
-		${Eigen_INCLUDE_DIRS}
 		${PROJECT_SOURCE_DIR}/Lib_Communication
 		${PROJECT_SOURCE_DIR}/Lib_Plotter
 		${PROJECT_SOURCE_DIR}/Lib_Common
@@ -20,11 +17,4 @@ set (SOURCES
 add_executable (App_Plotter ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (App_Plotter Eigen3::Eigen Lib_Communication
-Lib_Plotter)
-
-
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
-set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MT")
+target_link_libraries (App_Plotter Lib_Communication Lib_Plotter)

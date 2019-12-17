@@ -1,12 +1,6 @@
 # PROJECT(SensorFusion)
 
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(cppzmq)
-find_path(flatbuffers_include_dir "")
-
 include_directories (
-		${Eigen_INCLUDE_DIRS}
-		${flatbuffers_include_dir}
 		${PROJECT_SOURCE_DIR}/Lib_Common
 		)
 
@@ -28,9 +22,7 @@ set (SOURCES
 add_library (Lib_Communication STATIC ${SOURCES} ${HEADERS})
 
 # Add the dinamic library target to the project
-target_link_libraries (Lib_Communication Eigen3::Eigen cppzmq-static Lib_Common)
-		
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MT")
-set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MT")
+target_link_libraries (Lib_Communication Lib_Common)
+
+requires_cppzmq(Lib_Communication)
+requires_flatbuffers(Lib_Communication)

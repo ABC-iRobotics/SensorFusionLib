@@ -1,9 +1,17 @@
 PROJECT(SensorFusion)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-INCLUDE(ExternalProject)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8) # is enough??
 
+#####################################################################################
+### INSTALLING THIRD PARTIES
+#####################################################################################
+# Create 3rd party folder
+set (CMAKE_3RDPARTY_DIR "${CMAKE_BINARY_DIR}/Third parties")
+include( cmake/InstallThirdParties.cmake )
 
+# TODO: add gtest
+
+#####################################################################################
 #####################Minden kell ebbõl?##############################################
 # use folders in IDEs supporting it
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -18,7 +26,7 @@ endif()
 
 # if(NOT LINUX) should work, too, if you need that
 if(LINUX) 
-message(STATUS ">>> Linux")
+	message(STATUS ">>> Linux")
     set (CMAKE_CXX_STANDARD 11)
 else()
     if(WIN32)
@@ -34,24 +42,22 @@ else()
     endif()
 endif()
 
-
-
 # where to put the resulting binaries?
 set (APPLICATION Bin)
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
 #####################################################################################
-
-
 set (CMAKE_CONFIGURATION_TYPES Debug;Release;MinSizeRel;RelWithDebInfo CACHE STRING "Configuration types" FORCE)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(DEPENDENCIES_DIR ${CMAKE_BINARY_DIR})
+
+## Generate Compiler options
+include (cmake/CompilerFlags.cmake)
 
 option(ADD_PLOTTER "To use OpenCV-based plotters" FALSE)
-set(FILTERPLOT ${ADD_PLOTTER})
+set(FILTERPLOT ${ADD_PLOTTER}) # necessary?
 
 add_subdirectory (Lib_Common)
 if (FILTERPLOT)
