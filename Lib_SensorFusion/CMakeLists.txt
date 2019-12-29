@@ -29,3 +29,7 @@ add_library (Lib_SensorFusion STATIC ${SOURCES} ${HEADERS} )
 
 # Link with dependency libraries
 target_link_libraries (Lib_SensorFusion Lib_Common )
+
+requires_eigen(Lib_SensorFusion)
+
+set_target_properties(Lib_SensorFusion PROPERTIES FOLDER "SensorFusion/Lib")

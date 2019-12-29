@@ -30,5 +30,8 @@ add_library (Lib_Plotter STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
 target_link_libraries ( Lib_Plotter Lib_Common )
-
 requires_opencv(Lib_Plotter)
+requires_eigen(Lib_Plotter)
+
+
+set_target_properties(Lib_Plotter PROPERTIES FOLDER "SensorFusion/Lib")

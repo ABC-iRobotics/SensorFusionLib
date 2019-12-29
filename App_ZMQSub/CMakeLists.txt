@@ -18,3 +18,6 @@ add_executable (App_ZMQSub ${SOURCES} ${HEADERS} )
 
 # Link with dependency libraries
 target_link_libraries (App_ZMQSub Lib_Communication )
+requires_eigen(App_ZMQSub)
+requires_zmq(App_ZMQSub)
+set_target_properties(App_ZMQSub PROPERTIES FOLDER "SensorFusion/App")

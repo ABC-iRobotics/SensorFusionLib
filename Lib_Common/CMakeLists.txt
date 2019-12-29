@@ -15,7 +15,11 @@ set (SOURCES
 	)
 	
 
+#include_directories ( "${CMAKE_3RDPARTY_DIR}/Ext-Eigen3" )
+requires_eigen(Lib_Common)
+
+
 # Add the dinamic library target to the project
 add_library (Lib_Common STATIC ${SOURCES} ${HEADERS})
 
-requires_eigen(Lib_Common)
+set_target_properties(Lib_Common PROPERTIES FOLDER "SensorFusion/Lib")

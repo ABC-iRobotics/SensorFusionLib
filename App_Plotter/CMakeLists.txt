@@ -18,3 +18,7 @@ add_executable (App_Plotter ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
 target_link_libraries (App_Plotter Lib_Communication Lib_Plotter)
+
+requires_eigen(App_Plotter)
+requires_zmq(App_Plotter)
+set_target_properties(App_Plotter PROPERTIES FOLDER "SensorFusion/App")
