@@ -9,7 +9,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8) # is enough??
 set (CMAKE_3RDPARTY_DIR "${CMAKE_BINARY_DIR}/Third parties")
 include( cmake/InstallThirdParties.cmake )
 
-# TODO: add gtest
+# TODO: add gtest, linux compatibility?
 
 #####################################################################################
 #####################Minden kell ebbõl?##############################################
@@ -57,10 +57,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include (cmake/CompilerFlags.cmake)
 
 option(ADD_PLOTTER "To use OpenCV-based plotters" FALSE)
-set(FILTERPLOT ${ADD_PLOTTER}) # necessary?
 
 add_subdirectory (Lib_Common)
-if (FILTERPLOT)
+if (ADD_PLOTTER)
 	add_subdirectory (Lib_Plotter)
 	add_subdirectory (App_Plotter)
 endif()
