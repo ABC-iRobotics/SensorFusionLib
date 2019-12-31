@@ -20,7 +20,6 @@ set (SOURCES
 	KalmanFilter.cpp
 	WAUKF.cpp
 	pinv.cpp )
-	
 
 # Add the dinamic library target to the project
 add_library (sf_core STATIC ${SOURCES} ${HEADERS} )

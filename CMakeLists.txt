@@ -130,13 +130,15 @@ if (Policy_FlatBuffers STREQUAL  "Download" OR Policy_ALL_3RD_PARTIES STREQUAL "
 	if (NOT FlatBuffers_FOUND)
 		include(cmake/DownloadAndInstallFlatBuffers.cmake)
 		find_package(FlatBuffers REQUIRED PATHS ${CMAKE_INSTALL_PREFIX} NO_DEFAULT_PATH )
+		find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h)
 	endif()
 elseif (Policy_FlatBuffers STREQUAL  "Search on the path")
 	find_package(FlatBuffers REQUIRED)
+	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h)
 else()
 	message( SEND_ERROR "Policy for FlatBuffers must be chosen!" )
 endif()
-find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h)
+
 
 macro(requires_flatbuffers)
 	include_directories(${FLATBUFFERS_INCLUDE_DIR})
@@ -199,3 +201,5 @@ add_subdirectory (ZMQPub_test)
 # menteni, mely package-t keresi a intall_prefixen, melyeket a rendes pathon...
 #TODO: verziók...
 #TODO: test third parties after creating - collect them and this one...
+
+#•todo: check cross compile...
