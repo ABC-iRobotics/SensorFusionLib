@@ -181,32 +181,21 @@ macro(requires_opencv NAME)
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	target_link_libraries ( ${NAME} ${OpenCV_LIBS} )
 endmacro(requires_opencv)
-if (0)
-macro(requires_opencv NAME)
-	include_directories( #${OpenCV_INCLUDE_DIRS} 
-		${CMAKE_3RDPARTY_OPENCV_SRC_DIR}/modules/core/include
-		${CMAKE_3RDPARTY_OPENCV_SRC_DIR}/modules/highgui/include
-		${CMAKE_3RDPARTY_OPENCV_SRC_DIR}/modules/imgproc/include
-		${CMAKE_3RDPARTY_OPENCV_SRC_DIR}/modules/imgcodecs/include
-		${CMAKE_BINARY_DIR}
-		)
-	target_link_libraries ( ${NAME} opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs) #${opencv_libs}
-endmacro(requires_opencv)
-endif()
 
 option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
 
-add_subdirectory (Lib_Common)
-
+add_subdirectory (types)
 if (ADD_PLOTTER)
-	add_subdirectory (Lib_Plotter)
-	add_subdirectory (App_Plotter)
+	add_subdirectory (plotter)
+	add_subdirectory (plotter_test)
 endif()
-add_subdirectory (Lib_SensorFusion)
-add_subdirectory (Lib_Communication)
-add_subdirectory (App_ZMQSub)
-add_subdirectory (App_ZMQPub)
+add_subdirectory (core)
+add_subdirectory (communication)
+add_subdirectory (ZMQSub_test)
+add_subdirectory (ZMQPub_test)
 
 
-
-#TODO: set include folders to targets, install!!!
+#TODO: package config!
+# menteni, mely package-t keresi a intall_prefixen, melyeket a rendes pathon...
+#TODO: verziók...
+#TODO: test third parties after creating - collect them and this one...

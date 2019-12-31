@@ -1,7 +1,5 @@
 # PROJECT(SensorFusion)
 
-include_directories ( ${PROJECT_SOURCE_DIR}/Lib_Common )
-
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	BaseSystem.h
@@ -25,9 +23,15 @@ set (SOURCES
 	
 
 # Add the dinamic library target to the project
-add_library (Lib_SensorFusion STATIC ${SOURCES} ${HEADERS} )
+add_library (sf_core STATIC ${SOURCES} ${HEADERS} )
 
 # Link with dependency libraries
-target_link_libraries (Lib_SensorFusion Lib_Common )
+target_link_libraries (sf_core sf_types )
 
-set_target_properties(Lib_SensorFusion PROPERTIES FOLDER "Lib")
+target_include_directories(sf_core INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
+
+set_target_properties(sf_core PROPERTIES FOLDER "Lib")
+
+install(TARGETS sf_core LIBRARY DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/sf)

@@ -9,9 +9,9 @@ set (SOURCES
 	)
 
 # Add the dinamic library target to the project
-add_executable (App_ZMQSub ${SOURCES} ${HEADERS} )
+add_executable (ZMQSubTEST ${SOURCES} ${HEADERS} )
 
 # Link with dependency libraries
-target_link_libraries (App_ZMQSub Lib_Communication)
+target_link_libraries (ZMQSubTEST sf_communication)
 
-set_target_properties(App_ZMQSub PROPERTIES FOLDER "App")
+set_target_properties(ZMQSubTEST PROPERTIES FOLDER "Tests")

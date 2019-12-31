@@ -22,17 +22,17 @@ set (SOURCES
 	)
 
 # Add the dinamic library target to the project
-add_library (Lib_Plotter STATIC ${SOURCES} ${HEADERS})
+add_library (sf_plotter STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries ( Lib_Plotter Lib_Common )
+target_link_libraries ( sf_plotter sf_types )
 
-target_include_directories(Lib_Plotter INTERFACE
+target_include_directories(sf_plotter INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
 
-requires_opencv(Lib_Plotter)
+requires_opencv(sf_plotter)
 
-set_target_properties(Lib_Plotter PROPERTIES FOLDER "Lib")
+set_target_properties(sf_plotter PROPERTIES FOLDER "Lib")
 
-install(TARGETS Lib_Plotter LIBRARY DESTINATION lib)
+install(TARGETS sf_plotter LIBRARY DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION include/sf)

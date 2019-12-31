@@ -8,9 +8,9 @@ set (SOURCES
 	)
 
 # Add the dinamic library target to the project
-add_executable (App_Plotter ${SOURCES} ${HEADERS})
+add_executable (PlotterTest ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (App_Plotter Lib_Communication Lib_Plotter)
+target_link_libraries (PlotterTest sf_communication sf_plotter)
 
-set_target_properties(App_Plotter PROPERTIES FOLDER "App")
+set_target_properties(PlotterTest PROPERTIES FOLDER "Tests")
