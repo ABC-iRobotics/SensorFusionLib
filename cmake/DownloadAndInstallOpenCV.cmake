@@ -46,7 +46,13 @@ EXEC_PROGRAM(${CMAKE_COMMAND} \"${CMAKE_3RDPARTY_OPENCV_SRC_DIR}\" ARGS
 message(STATUS "Building opencv (RELEASE). It can take some time...")
 EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
 	--build \"${CMAKE_3RDPARTY_OPENCV_BUILD_DIR}\" --config Release )
+message(STATUS "Building opencv (DEBUG). It can take some time...")
+EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
+	--build \"${CMAKE_3RDPARTY_OPENCV_BUILD_DIR}\" --config Debug )
 message(STATUS "Installing opencv (RELEASE).")
 EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
 	--install \"${CMAKE_3RDPARTY_OPENCV_BUILD_DIR}\" --config Release )
+message(STATUS "Installing opencv (DEBUG).")
+EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
+	--install \"${CMAKE_3RDPARTY_OPENCV_BUILD_DIR}\" --config Debug )
 message(STATUS "done.")
