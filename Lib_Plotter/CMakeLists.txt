@@ -1,9 +1,5 @@
 # PROJECT(SensorFusion)
 
-include_directories(
-		${PROJECT_SOURCE_DIR}/Lib_Common
-		)
-
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	color.h
@@ -30,8 +26,13 @@ add_library (Lib_Plotter STATIC ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
 target_link_libraries ( Lib_Plotter Lib_Common )
+
+target_include_directories(Lib_Plotter INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
+
 requires_opencv(Lib_Plotter)
-requires_eigen(Lib_Plotter)
 
+set_target_properties(Lib_Plotter PROPERTIES FOLDER "Lib")
 
-set_target_properties(Lib_Plotter PROPERTIES FOLDER "SensorFusion/Lib")
+install(TARGETS Lib_Plotter LIBRARY DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/sf)

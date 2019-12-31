@@ -24,8 +24,7 @@ add_library (Lib_Communication STATIC ${SOURCES} ${HEADERS})
 # Add the dinamic library target to the project
 target_link_libraries (Lib_Communication Lib_Common)
 
-requires_eigen(Lib_Communication)
-requires_zmq(Lib_Communication)
-requires_flatbuffers(Lib_Communication)
+requires_cppzmq(Lib_Communication)
+requires_flatbuffers()
 
-set_target_properties(Lib_Communication PROPERTIES FOLDER "SensorFusion/Lib")
+set_target_properties(Lib_Communication PROPERTIES FOLDER "Lib")
