@@ -102,6 +102,10 @@ elseif (Policy_ZMQ STREQUAL  "Search on the path")
 else()
 	message( SEND_ERROR "Policy for ZeroMQ must be chosen!" )
 endif()
+if(ZeroMQ_FOUND)
+	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
+	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+endif()
 
 ### CPPZMQ
 set(Policy_CPPZMQ "Choose" CACHE STRING "How to get CPPZMQ")
@@ -179,10 +183,13 @@ if (ADD_PLOTTER)
 	else()
 		message( SEND_ERROR "Policy for OpenCV must be chosen!" )
 	endif()
-
+	if(OpenCV_FOUND)
+		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
+		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+	endif()
 	macro(requires_opencv NAME)
-	target_link_libraries ( ${NAME} opencv_core opencv_highgui opencv_imgcodecs opencv_imgproc ) # or ${OpenCV_LIBS}
-endmacro(requires_opencv)
+		target_link_libraries ( ${NAME} opencv_core opencv_highgui opencv_imgcodecs opencv_imgproc ) # or ${OpenCV_LIBS}
+	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
 
 
