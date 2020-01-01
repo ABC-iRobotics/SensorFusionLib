@@ -32,5 +32,4 @@ target_include_directories(sf_core INTERFACE
 
 set_target_properties(sf_core PROPERTIES FOLDER "Lib")
 
-install(TARGETS sf_core LIBRARY DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/sf)
+install_lib(sf_core "${HEADERS}")

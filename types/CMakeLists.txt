@@ -25,5 +25,4 @@ target_include_directories(sf_types INTERFACE
 	# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO...
 requires_eigen(sf_types)
 
-install(TARGETS sf_types LIBRARY DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/sf)
+install_lib(sf_types "${HEADERS}")

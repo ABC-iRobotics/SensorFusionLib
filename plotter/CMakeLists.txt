@@ -34,5 +34,4 @@ requires_opencv(sf_plotter)
 
 set_target_properties(sf_plotter PROPERTIES FOLDER "Lib")
 
-install(TARGETS sf_plotter LIBRARY DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include/sf)
+install_lib(sf_plotter "${HEADERS}")

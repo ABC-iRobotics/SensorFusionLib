@@ -43,8 +43,8 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "" FORCE)
 #####################################################################################
 #####################Minden kell ebbõl?##############################################
 
-#
 
+option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
 
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
@@ -163,28 +163,33 @@ macro(requires_eigen NAME)
 	target_link_libraries (${NAME} Eigen3::Eigen)
 endmacro(requires_eigen)
 
-### OpenCV
-set(OpenCV_STATIC TRUE)
-set(Policy_OpenCV "Choose" CACHE STRING "How to get OpenCV")
-set_property(CACHE Policy_OpenCV PROPERTY STRINGS "Choose" "Search on the path" "Download")
-if (Policy_OpenCV STREQUAL  "Download" OR Policy_ALL_3RD_PARTIES STREQUAL "Download all")
-	find_package(OpenCV QUIET PATHS ${CMAKE_INSTALL_PREFIX} NO_DEFAULT_PATH )
-	if (NOT OpenCV_FOUND)
-		include(cmake/DownloadAndInstallOpenCV.cmake)
-		find_package(OpenCV REQUIRED PATHS ${CMAKE_INSTALL_PREFIX} NO_DEFAULT_PATH )
+if (ADD_PLOTTER)
+	### OpenCV
+	set(OpenCV_STATIC TRUE)
+	set(Policy_OpenCV "Choose" CACHE STRING "How to get OpenCV")
+	set_property(CACHE Policy_OpenCV PROPERTY STRINGS "Choose" "Search on the path" "Download")
+	if (Policy_OpenCV STREQUAL  "Download" OR Policy_ALL_3RD_PARTIES STREQUAL "Download all")
+		find_package(OpenCV QUIET PATHS ${CMAKE_INSTALL_PREFIX} NO_DEFAULT_PATH )
+		if (NOT OpenCV_FOUND)
+			include(cmake/DownloadAndInstallOpenCV.cmake)
+			find_package(OpenCV REQUIRED PATHS ${CMAKE_INSTALL_PREFIX} NO_DEFAULT_PATH )
+		endif()
+	elseif (Policy_OpenCV STREQUAL  "Search on the path")
+		find_package(OpenCV REQUIRED)
+	else()
+		message( SEND_ERROR "Policy for OpenCV must be chosen!" )
 	endif()
-elseif (Policy_OpenCV STREQUAL  "Search on the path")
-	find_package(OpenCV REQUIRED)
-else()
-	message( SEND_ERROR "Policy for OpenCV must be chosen!" )
-endif()
 
-macro(requires_opencv NAME)
-	include_directories(${OpenCV_INCLUDE_DIRS})
-	target_link_libraries ( ${NAME} ${OpenCV_LIBS} )
+	macro(requires_opencv NAME)
+	target_link_libraries ( ${NAME} opencv_core opencv_highgui opencv_imgcodecs opencv_imgproc ) # or ${OpenCV_LIBS}
 endmacro(requires_opencv)
+endif(ADD_PLOTTER)
 
-option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
+
+macro(install_lib NAME HEADERS)
+	install(TARGETS ${NAME} ARCHIVE DESTINATION lib/sf_$<CONFIG>)
+	install(FILES ${HEADERS} DESTINATION include/sf)
+endmacro(install_lib)
 
 add_subdirectory (types)
 if (ADD_PLOTTER)
@@ -203,3 +208,5 @@ add_subdirectory (ZMQPub_test)
 #TODO: test third parties after creating - collect them and this one...
 
 #•todo: check cross compile...
+#linux, ros compatibility?
+#lib names: versions, configurations, generators...
