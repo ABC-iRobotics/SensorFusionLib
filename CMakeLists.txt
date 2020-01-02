@@ -145,11 +145,19 @@ if (ADD_PLOTTER)
 	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
 
+# Define the two required variables before including
+# the source code for watching a git repository.
+set(PRE_CONFIGURE_FILE "cmake/git.h.in")
+set(POST_CONFIGURE_FILE "${CMAKE_BINARY_DIR}/git.h")
+include(cmake/git_watcher.cmake)
+
+#### Lib settings
 string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" SF_VERSION_MAJOR "${SF_VERSION}")
 string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" SF_VERSION_MINOR "${SF_VERSION}")
 string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" SF_VERSION_PATCH "${SF_VERSION}")
 set(LIB_VERSION_NAME "${SF_VERSION_MAJOR}_${SF_VERSION_MINOR}_${SF_VERSION_PATCH}")
 macro(install_lib NAME HEADERS)
+	add_dependencies( ${NAME} check_git_repository )
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
 			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt-s-${LIB_VERSION_NAME}"
 			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-swd-${LIB_VERSION_NAME}" #wd as with_debug
@@ -159,7 +167,7 @@ macro(install_lib NAME HEADERS)
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
 		# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO...
-	install(TARGETS ${NAME} ARCHIVE DESTINATION lib/sf_$<CONFIG>)
+	install(TARGETS ${NAME} ARCHIVE DESTINATION lib)#/$<CONFIG>)
 	install(FILES ${HEADERS} DESTINATION include/sf)
 endmacro(install_lib)
 
