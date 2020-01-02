@@ -1,7 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2) # is enough??
+
 #Set SF version for library - it will be checked, but cannot be updated manually
 set(SF_VERSION 0.0.1)
-
+string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" SF_VERSION_MAJOR "${SF_VERSION}")
+string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" SF_VERSION_MINOR "${SF_VERSION}")
+string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" SF_VERSION_PATCH "${SF_VERSION}")
 PROJECT(SensorFusion VERSION ${SF_VERSION})
 
 # use folders in IDEs supporting it
@@ -152,9 +155,6 @@ set(POST_CONFIGURE_FILE "${CMAKE_BINARY_DIR}/git.h")
 include(cmake/git_watcher.cmake)
 
 #### Lib settings
-string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" SF_VERSION_MAJOR "${SF_VERSION}")
-string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" SF_VERSION_MINOR "${SF_VERSION}")
-string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" SF_VERSION_PATCH "${SF_VERSION}")
 set(LIB_VERSION_NAME "${SF_VERSION_MAJOR}_${SF_VERSION_MINOR}_${SF_VERSION_PATCH}")
 macro(install_lib NAME HEADERS)
 	add_dependencies( ${NAME} check_git_repository )

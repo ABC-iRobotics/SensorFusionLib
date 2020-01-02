@@ -128,8 +128,20 @@ function(GetGitState _working_dir _state)
         endif()
     endif()
 
+	# Get the version
+	execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tags
+		WORKING_DIRECTORY ${_working_dir}
+		RESULT_VARIABLE res
+		OUTPUT_VARIABLE _version
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT res EQUAL 0)
+        set(_success "false")
+        set(_dirty "false")
+		set(_version "NOTFOUND")
+    endif()
     # Return a list of our variables to the parent scope.
-    set(${_state} ${_success} ${_hashvar} ${_dirty} PARENT_SCOPE)
+    set(${_state} ${_success} ${_hashvar} ${_dirty} ${_version} PARENT_SCOPE)
 endfunction()
 
 
@@ -186,6 +198,9 @@ function(SetupGitMonitoring)
             -DGIT_STATE_FILE=${GIT_STATE_FILE}
             -DPRE_CONFIGURE_FILE=${PRE_CONFIGURE_FILE}
             -DPOST_CONFIGURE_FILE=${POST_CONFIGURE_FILE}
+			-DSF_VERSION_MAJOR=${SF_VERSION_MAJOR}
+			-DSF_VERSION_MINOR=${SF_VERSION_MINOR}
+			-DSF_VERSION_PATCH=${SF_VERSION_PATCH}
             -P "${CMAKE_CURRENT_LIST_FILE}")
 endfunction()
 
@@ -199,6 +214,20 @@ function(Main)
         # Check if the repo has changed.
         # If so, run the change action.
         CheckGit("${GIT_WORKING_DIR}" did_change state)
+		LIST(GET state 3 GIT_VERSION)
+		string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" GIT_VERSION_MAJOR "${GIT_VERSION}")
+		string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" GIT_VERSION_MINOR "${GIT_VERSION}")
+		string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" GIT_VERSION_PATCH "${GIT_VERSION}")
+		string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.[0-9]+-?(.*)$" "\\1" GIT_VERSION_COMMIT "${GIT_VERSION}")
+		if (DEFINED GIT_VERSION_MAJOR AND NOT SF_VERSION_MAJOR STREQUAL GIT_VERSION_MAJOR)
+			message(SEND_ERROR "Correct major version (${SF_VERSION_MAJOR}->${GIT_VERSION_MAJOR}) in the CMakeList.txt")
+		endif()
+		if (DEFINED GIT_VERSION_MINOR AND NOT SF_VERSION_MINOR STREQUAL GIT_VERSION_MINOR)
+			message(SEND_ERROR "Correct minor version (${SF_VERSION_MINOR}->${GIT_VERSION_MINOR}) in the CMakeList.txt")
+		endif()
+		if (DEFINED GIT_VERSION_PATCH AND NOT SF_VERSION_PATCH STREQUAL GIT_VERSION_PATCH)
+			message(SEND_ERROR "Correct patch version (${SF_VERSION_PATCH}->${GIT_VERSION_PATCH}) in the CMakeList.txt")
+		endif()
         if(did_change)
             GitStateChangedAction("${state}")
         endif()
