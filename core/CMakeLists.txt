@@ -27,9 +27,4 @@ add_library (sf_core STATIC ${SOURCES} ${HEADERS} )
 # Link with dependency libraries
 target_link_libraries (sf_core sf_types )
 
-target_include_directories(sf_core INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
-
-set_target_properties(sf_core PROPERTIES FOLDER "Lib")
-
 install_lib(sf_core "${HEADERS}")

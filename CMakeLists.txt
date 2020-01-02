@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2) # is enough??
+#Set SF version for library - it will be checked, but cannot be updated manually
+set(SF_VERSION 0.0.1)
 
-PROJECT(SensorFusion)
+PROJECT(SensorFusion VERSION ${SF_VERSION})
 
 # use folders in IDEs supporting it
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -143,7 +145,20 @@ if (ADD_PLOTTER)
 	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
 
+string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" SF_VERSION_MAJOR "${SF_VERSION}")
+string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" SF_VERSION_MINOR "${SF_VERSION}")
+string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" SF_VERSION_PATCH "${SF_VERSION}")
+set(LIB_VERSION_NAME "${SF_VERSION_MAJOR}_${SF_VERSION_MINOR}_${SF_VERSION_PATCH}")
 macro(install_lib NAME HEADERS)
+	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
+			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt-s-${LIB_VERSION_NAME}"
+			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-swd-${LIB_VERSION_NAME}" #wd as with_debug
+			MINSIZEREL_POSTFIX "${MSVC_TOOLSET}-mt-sms-${LIB_VERSION_NAME}" #ms as min_size
+			DEBUG_POSTFIX "${MSVC_TOOLSET}-mt-sgd-${LIB_VERSION_NAME}"
+			)
+	target_include_directories(${NAME} INTERFACE
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
+		# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO...
 	install(TARGETS ${NAME} ARCHIVE DESTINATION lib/sf_$<CONFIG>)
 	install(FILES ${HEADERS} DESTINATION include/sf)
 endmacro(install_lib)

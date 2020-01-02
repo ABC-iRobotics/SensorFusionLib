@@ -13,18 +13,13 @@ set (SOURCES
 	ZMQSubscriber.cpp
 	ZMQPublisher.cpp
 	)
-	
+
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS})
 
 # Add the dinamic library target to the project
 target_link_libraries (sf_communication sf_types)
 
-target_include_directories(sf_communication INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
-
 requires_cppzmq(sf_communication)
 requires_flatbuffers()
-
-set_target_properties(sf_communication PROPERTIES FOLDER "Lib")
 
 install_lib(sf_communication "${HEADERS}")

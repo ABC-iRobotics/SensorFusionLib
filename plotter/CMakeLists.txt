@@ -27,11 +27,6 @@ add_library (sf_plotter STATIC ${SOURCES} ${HEADERS})
 # Link with dependency libraries
 target_link_libraries ( sf_plotter sf_types )
 
-target_include_directories(sf_plotter INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
-
 requires_opencv(sf_plotter)
-
-set_target_properties(sf_plotter PROPERTIES FOLDER "Lib")
 
 install_lib(sf_plotter "${HEADERS}")
