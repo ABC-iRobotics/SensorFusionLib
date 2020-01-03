@@ -156,13 +156,14 @@ include(cmake/git_watcher.cmake)
 
 #### Lib settings
 set(LIB_VERSION_NAME "${SF_VERSION_MAJOR}_${SF_VERSION_MINOR}_${SF_VERSION_PATCH}")
+set(MSVC_TOOLSET "-${CMAKE_VS_PLATFORM_TOOLSET}")
 macro(install_lib NAME HEADERS)
 	add_dependencies( ${NAME} check_git_repository )
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
-			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt-s-${LIB_VERSION_NAME}"
-			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-swd-${LIB_VERSION_NAME}" #wd as with_debug
-			MINSIZEREL_POSTFIX "${MSVC_TOOLSET}-mt-sms-${LIB_VERSION_NAME}" #ms as min_size
-			DEBUG_POSTFIX "${MSVC_TOOLSET}-mt-sgd-${LIB_VERSION_NAME}"
+			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt-${LIB_VERSION_NAME}"
+			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-relwithdebinfo-${LIB_VERSION_NAME}"
+			MINSIZEREL_POSTFIX "${MSVC_TOOLSET}-mt-minsizerel-${LIB_VERSION_NAME}"
+			DEBUG_POSTFIX "d${MSVC_TOOLSET}-mt-${LIB_VERSION_NAME}"
 			)
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
