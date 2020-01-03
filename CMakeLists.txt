@@ -1,11 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2) # is enough??
 
-#Set SF version for library - it will be checked, but cannot be updated manually
-set(SF_VERSION 0.0.1)
-string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" SF_VERSION_MAJOR "${SF_VERSION}")
-string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" SF_VERSION_MINOR "${SF_VERSION}")
-string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" SF_VERSION_PATCH "${SF_VERSION}")
-PROJECT(SensorFusion VERSION ${SF_VERSION})
+PROJECT(SensorFusion)
 
 # use folders in IDEs supporting it
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -151,20 +146,17 @@ endif(ADD_PLOTTER)
 
 # Define the two required variables before including
 # the source code for watching a git repository.
-set(PRE_CONFIGURE_FILE "cmake/git.h.in")
-set(POST_CONFIGURE_FILE "${CMAKE_BINARY_DIR}/git.h")
 include(cmake/git_watcher.cmake)
 
 #### Lib settings
-set(LIB_VERSION_NAME "${SF_VERSION_MAJOR}_${SF_VERSION_MINOR}_${SF_VERSION_PATCH}")
 set(MSVC_TOOLSET "-${CMAKE_VS_PLATFORM_TOOLSET}")
 macro(install_lib NAME HEADERS)
 	add_dependencies( ${NAME} check_git_repository )
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
-			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt-${LIB_VERSION_NAME}"
-			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-relwithdebinfo-${LIB_VERSION_NAME}"
-			MINSIZEREL_POSTFIX "${MSVC_TOOLSET}-mt-minsizerel-${LIB_VERSION_NAME}"
-			DEBUG_POSTFIX "d${MSVC_TOOLSET}-mt-${LIB_VERSION_NAME}"
+			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt"
+			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-relwithdebinfo"
+			MINSIZEREL_POSTFIX "${MSVC_TOOLSET}-mt-minsizerel"
+			DEBUG_POSTFIX "d${MSVC_TOOLSET}-mt"
 			)
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
@@ -187,17 +179,15 @@ add_subdirectory (ZMQPub_test)
 install(FILES "${CMAKE_BINARY_DIR}/versioning/Version.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake)
 install(FILES "${CMAKE_BINARY_DIR}/versioning/ConfigVersionCheck.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/$<CONFIG>)
 install(FILES "${CMAKE_BINARY_DIR}/versioning/SensorFusionConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX})
-
+install(FILES "${CMAKE_BINARY_DIR}/versioning/sf_version.h" DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
 #find_program(GIT git)
 #find_program(GIT git) HG!!
 #TODO: package config!
 # menteni, mely package-t keresi a intall_prefixen, melyeket a rendes pathon...
-#TODO: verziók...
 
 #•todo: check cross compile...
 #linux, ros compatibility?
-#lib names: versions, configurations, generators...
 
 #readme: tested on:
 #install readme: versions, versions of third parties...
@@ -205,15 +195,6 @@ install(FILES "${CMAKE_BINARY_DIR}/versioning/SensorFusionConfigVersion.cmake" D
 
 #introduce drafts
 
-#kell egyáltlán a libname-re a verzio - a cmake ugyis tudja...
-
 #doxygen generation! - WITH_DOCS CACHE entry... - for install!!
 
-#•minsizerel/relwith debug: installed??
-
 #◘third party install csak az install paranccsal?
-
-# todo: adja meg a verziókat a második meghívásra és ellenőrizze...
-# exportálja is verzió file-ba - a src-be h legyen mit másolni majd az installnak
-
-#install mappaszerkezet: verziók, configok, platformok, generátorok??
