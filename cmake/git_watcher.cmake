@@ -62,7 +62,7 @@ endmacro()
 
 CHECK_REQUIRED_VARIABLE(PRE_CONFIGURE_FILE)
 CHECK_REQUIRED_VARIABLE(POST_CONFIGURE_FILE)
-CHECK_OPTIONAL_VARIABLE(GIT_STATE_FILE "${CMAKE_BINARY_DIR}/git-state")
+CHECK_OPTIONAL_VARIABLE(GIT_STATE_FILE "${CMAKE_BINARY_DIR}/versioning/git-state")
 CHECK_OPTIONAL_VARIABLE(GIT_WORKING_DIR "${CMAKE_SOURCE_DIR}")
 
 # Check the optional git variable.
@@ -175,6 +175,21 @@ function(CheckGit _working_dir _state_changed _state)
     # We need to update the state file on disk.
     # Future builds will compare their state to this file.
     file(WRITE "${GIT_STATE_FILE}" "${state}")
+	# Create SF_VERSION_FULL
+	LIST(GET state 3 SF_VERSION_FULL)
+	string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" GIT_VERSION_MAJOR "${SF_VERSION_FULL}")
+	string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\..*" "\\1" GIT_VERSION_MINOR "${SF_VERSION_FULL}")
+	string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)-?.*" "\\1" GIT_VERSION_PATCH "${SF_VERSION_FULL}")
+	configure_file("${ORIGINAL_SOURCE_FOLDER}/cmake/SensorFusionConfigVersion.cmake.in"
+					"${CMAKE_BINARY_DIR}/versioning/SensorFusionConfigVersion.cmake" @ONLY)
+	LIST(GET state 2 GIT_IS_DIRTY)
+	if (GIT_IS_DIRTY)
+		set(SF_VERSION_FULL "${SF_VERSION_FULL}-dirty")
+	endif()
+	# Create versioning/ConfigVersionCheck.cmake
+	configure_file("${ORIGINAL_SOURCE_FOLDER}/cmake/ConfigVersionCheck.cmake.in" "${CMAKE_BINARY_DIR}/versioning/ConfigVersionCheck.cmake" @ONLY)
+	# Create versioning/ConfigVersionCheck.cmake
+	file(WRITE "${CMAKE_BINARY_DIR}/versioning/Version.cmake" "set(SF_VERSION_FULL \"${SF_VERSION_FULL}\")")
     set(${_state_changed} "true" PARENT_SCOPE)
 endfunction()
 
@@ -201,6 +216,7 @@ function(SetupGitMonitoring)
 			-DSF_VERSION_MAJOR=${SF_VERSION_MAJOR}
 			-DSF_VERSION_MINOR=${SF_VERSION_MINOR}
 			-DSF_VERSION_PATCH=${SF_VERSION_PATCH}
+			-DORIGINAL_SOURCE_FOLDER=${CMAKE_SOURCE_DIR}
             -P "${CMAKE_CURRENT_LIST_FILE}")
 endfunction()
 

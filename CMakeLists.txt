@@ -168,7 +168,7 @@ macro(install_lib NAME HEADERS)
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
 		# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO...
 	install(TARGETS ${NAME} ARCHIVE DESTINATION lib)#/$<CONFIG>)
-	install(FILES ${HEADERS} DESTINATION include/sf)
+	install(FILES ${HEADERS} DESTINATION include)
 endmacro(install_lib)
 
 add_subdirectory (types)
@@ -182,6 +182,9 @@ add_subdirectory (ZMQSub_test)
 add_subdirectory (ZMQPub_test)
 
 
+install(FILES "${CMAKE_BINARY_DIR}/versioning/Version.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake)
+install(FILES "${CMAKE_BINARY_DIR}/versioning/ConfigVersionCheck.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/$<CONFIG>)
+install(FILES "${CMAKE_BINARY_DIR}/versioning/SensorFusionConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX})
 #TODO: package config!
 # menteni, mely package-t keresi a intall_prefixen, melyeket a rendes pathon...
 #TODO: verziók...
