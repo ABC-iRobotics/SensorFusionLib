@@ -39,7 +39,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
 set (CMAKE_CONFIGURATION_TYPES Debug;Release;MinSizeRel;RelWithDebInfo CACHE STRING "Configuration types" FORCE)
 
 
-## Set folders
+## Set folders - TODO: clear from the final version!!
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -148,6 +148,7 @@ if (ADD_PLOTTER)
 	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
 
+
 # Define the two required variables before including
 # the source code for watching a git repository.
 set(PRE_CONFIGURE_FILE "cmake/git.h.in")
@@ -186,11 +187,33 @@ add_subdirectory (ZMQPub_test)
 install(FILES "${CMAKE_BINARY_DIR}/versioning/Version.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake)
 install(FILES "${CMAKE_BINARY_DIR}/versioning/ConfigVersionCheck.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/$<CONFIG>)
 install(FILES "${CMAKE_BINARY_DIR}/versioning/SensorFusionConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+
+#find_program(GIT git)
+#find_program(GIT git) HG!!
 #TODO: package config!
 # menteni, mely package-t keresi a intall_prefixen, melyeket a rendes pathon...
 #TODO: verziók...
-#TODO: test third parties after creating - collect them and this one...
 
 #•todo: check cross compile...
 #linux, ros compatibility?
 #lib names: versions, configurations, generators...
+
+#readme: tested on:
+#install readme: versions, versions of third parties...
+#needs: git, hg, doxygen, latex
+
+#introduce drafts
+
+#kell egyáltlán a libname-re a verzio - a cmake ugyis tudja...
+
+#doxygen generation! - WITH_DOCS CACHE entry... - for install!!
+
+#•minsizerel/relwith debug: installed??
+
+#◘third party install csak az install paranccsal?
+
+# todo: adja meg a verziókat a második meghívásra és ellenőrizze...
+# exportálja is verzió file-ba - a src-be h legyen mit másolni majd az installnak
+
+#install mappaszerkezet: verziók, configok, platformok, generátorok??
