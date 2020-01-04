@@ -18,8 +18,7 @@ set(CompilerFlags
         CMAKE_C_FLAGS_DEBUG
         CMAKE_C_FLAGS_RELEASE
 		CMAKE_C_FLAGS_RELWITHDEBINFO
-		CMAKE_C_FLAGS_MINSIZEREL
-        )
+		CMAKE_C_FLAGS_MINSIZEREL)
 set(EXTERNAL_FLAG_SETTER "")
 foreach(CompilerFlag ${CompilerFlags})
   string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
@@ -149,18 +148,16 @@ endif(ADD_PLOTTER)
 include(cmake/git_watcher.cmake)
 
 #### Lib settings
-set(MSVC_TOOLSET "-${CMAKE_VS_PLATFORM_TOOLSET}")
 macro(install_lib NAME HEADERS)
 	add_dependencies( ${NAME} check_git_repository )
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
-			RELEASE_POSTFIX "${MSVC_TOOLSET}-mt"
-			RELWITHDEBINFO_POSTFIX "${MSVC_TOOLSET}-mt-relwithdebinfo"
-			MINSIZEREL_POSTFIX "${MSVC_TOOLSET}-mt-minsizerel"
-			DEBUG_POSTFIX "d${MSVC_TOOLSET}-mt"
-			)
+			RELEASE_POSTFIX "${CMAKE_VS_PLATFORM_TOOLSET}-mt"
+			RELWITHDEBINFO_POSTFIX "${CMAKE_VS_PLATFORM_TOOLSET}-mt-relwithdebinfo"
+			MINSIZEREL_POSTFIX "${CMAKE_VS_PLATFORM_TOOLSET}-mt-minsizerel"
+			DEBUG_POSTFIX "d${CMAKE_VS_PLATFORM_TOOLSET}-mt")
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
-		# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO...
+		# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO... ???
 	install(TARGETS ${NAME} ARCHIVE DESTINATION lib)#/$<CONFIG>)
 	install(FILES ${HEADERS} DESTINATION include)
 endmacro(install_lib)
@@ -198,3 +195,5 @@ install(FILES "${CMAKE_BINARY_DIR}/versioning/sf_version.h" DESTINATION ${CMAKE_
 #doxygen generation! - WITH_DOCS CACHE entry... - for install!!
 
 #◘third party install csak az install paranccsal?
+
+#Googletests - call on third parties??
