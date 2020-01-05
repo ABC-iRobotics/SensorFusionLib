@@ -142,14 +142,8 @@ if (ADD_PLOTTER)
 	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
 
-
-# Define the two required variables before including
-# the source code for watching a git repository.
-include(cmake/git_watcher.cmake)
-
 #### Lib settings
 macro(install_lib NAME HEADERS)
-	add_dependencies( ${NAME} check_git_repository )
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
 			RELEASE_POSTFIX "${CMAKE_VS_PLATFORM_TOOLSET}-mt"
 			RELWITHDEBINFO_POSTFIX "${CMAKE_VS_PLATFORM_TOOLSET}-mt-relwithdebinfo"
@@ -172,11 +166,7 @@ add_subdirectory (communication)
 add_subdirectory (ZMQSub_test)
 add_subdirectory (ZMQPub_test)
 
-
-install(FILES "${CMAKE_BINARY_DIR}/versioning/Version.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake)
-install(FILES "${CMAKE_BINARY_DIR}/versioning/ConfigVersionCheck.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/$<CONFIG>)
-install(FILES "${CMAKE_BINARY_DIR}/versioning/SensorFusionConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_PREFIX})
-install(FILES "${CMAKE_BINARY_DIR}/versioning/sf_version.h" DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(SCRIPT "cmake/installing.cmake")
 
 #find_program(GIT git)
 #find_program(GIT git) HG!!
