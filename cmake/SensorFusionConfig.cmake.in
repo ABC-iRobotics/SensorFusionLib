@@ -1,0 +1,83 @@
+
+#Check versions of targets to be installed
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/SensorFusionVersion.cmake)
+message(STATUS "SensorFusion FOUND\nSensorFusion version: @SF_VERSION_FULL@")
+
+# Get the installed and not installed configurations
+file(GLOB _CONFIG_FILES "${CMAKE_CURRENT_LIST_DIR}/SensorFusionTargets-*.cmake")
+foreach (_config ${CMAKE_CONFIGURATION_TYPES})
+message(STATUS "${_config}")
+	string(TOLOWER ${_config} __config)
+	set(_${__config}_installed false)
+endforeach()
+foreach(f ${_CONFIG_FILES})
+	string(REGEX REPLACE ".*SensorFusionTargets-(.*)\\.cmake" "\\1" FOUND_CONFIGURATION "${f}")
+	message(STATUS "SensorFusion configuration: ${FOUND_CONFIGURATION}")
+	string(TOLOWER ${FOUND_CONFIGURATION} __config)
+	set(_${__config}_installed true)
+	include(${CMAKE_CURRENT_LIST_DIR}/cmake/SensorFusionVersionCheck-${FOUND_CONFIGURATION}.cmake)
+endforeach()
+foreach (_config ${CMAKE_CONFIGURATION_TYPES})
+	string(TOLOWER ${_config} __config)
+	if (NOT _${__config}_installed)
+		message(STATUS "Configuration ${_config} not found")
+	endif()
+endforeach()
+
+#Find dependencies
+include(CMakeFindDependencyMacro)
+macro(find_dependency_in_install name version)
+	find_dependency(${name} ${version} QUIET PATHS "${CMAKE_CURRENT_LIST_DIR}/Third parties" NO_DEFAULT_PATH)
+	if (NOT ${name}_FOUND)
+		find_dependency(${name} ${version} REQUIRED)
+	endif()
+endmacro()
+#Find OpenCV
+set(OpenCV_STATIC TRUE)
+find_dependency_in_install(OpenCV "")
+if(OpenCV_FOUND)
+	set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
+	set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+endif()
+#Find Eigen3
+find_dependency_in_install(Eigen3 3.3)
+#Find FlatBuffers
+find_dependency_in_install(FlatBuffers "")
+if (FlatBuffers_FOUND)
+	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h PATHS "${CMAKE_CURRENT_LIST_DIR}/Third parties/include")
+endif()
+#Find ZeroMQ
+find_dependency_in_install(ZeroMQ "")
+if(ZeroMQ_FOUND)
+	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
+	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+endif()
+#Find CPPZMQ
+find_dependency_in_install(CPPZMQ "")
+
+#Create targets
+include(${CMAKE_CURRENT_LIST_DIR}/SensorFusionTargets.cmake)
+
+
+#Map release configurations to an installed configuration
+if (_release_installed)
+	set(TO_MAP_RELEASE "RELEASE")
+elseif(_minsizerel_installed)
+	set(TO_MAP_RELEASE "MINSIZEREL")
+elseif(_relwithdebinfo_installed)
+	set(TO_MAP_RELEASE "RELWITHDEBINFO")
+else()
+	foreach (_config ${CMAKE_CONFIGURATION_TYPES})
+		string(TOLOWER ${_config} __config)
+		if (_${__config} STREQUAL "release" OR _${__config} STREQUAL "minsizerel" OR _${__config} STREQUAL "relwithdebinfo")
+			message(SEND_ERROR "The sensorfusion package to be installed does not have release configurations to be installed!")
+		endif()
+	endforeach()
+endif()
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/MapImportedConfigOfTargets.cmake)
+foreach (_config RELEASE MINSIZEREL RELWITHDEBINFO)
+	string(TOLOWER ${_config} __config)
+	if (NOT _${__config}_installed)
+		map_imported_config(${_config} ${TO_MAP_RELEASE})
+	endif()
+endforeach()

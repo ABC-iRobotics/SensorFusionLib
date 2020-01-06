@@ -144,15 +144,23 @@ endif(ADD_PLOTTER)
 
 #### Lib settings
 macro(install_lib NAME HEADERS)
+	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL} "${NAME}" PARENT_SCOPE) #for configuring Config.cmake in installing.cmake
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
 			RELEASE_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt"
 			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt-relwithdebinfo"
 			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt-minsizerel"
 			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt-debug"
+			IMPORTED_LOCATION lib
+			)
 	target_include_directories(${NAME} INTERFACE
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
-		# $<INSTALL_INTERFACE:include/mylib>  # <prefix>/include/mylib TODO... ???
-	install(TARGETS ${NAME} ARCHIVE DESTINATION lib)#/$<CONFIG>)
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+		$<INSTALL_INTERFACE:include>)
+	install(TARGETS ${NAME} EXPORT SensorFusionTargets
+		LIBRARY DESTINATION lib
+		ARCHIVE DESTINATION lib
+		RUNTIME DESTINATION bin
+		INCLUDES DESTINATION include
+	)
 	install(FILES ${HEADERS} DESTINATION include)
 endmacro(install_lib)
 
@@ -168,10 +176,16 @@ add_subdirectory (ZMQPub_test)
 
 install(SCRIPT "cmake/installing.cmake")
 
+install(EXPORT SensorFusionTargets
+  FILE SensorFusionTargets.cmake
+  DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  NAMESPACE SensorFusion::)
+
+configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/MapImportedConfigOfTargets.cmake.in"
+		"${CMAKE_INSTALL_PREFIX}/cmake/MapImportedConfigOfTargets.cmake" @ONLY)
+
 #find_program(GIT git)
 #find_program(GIT git) HG!!
-#TODO: package config!
-# menteni, mely package-t keresi a intall_prefixen, melyeket a rendes pathon...
 
 #•todo: check cross compile...
 #linux, ros compatibility?

@@ -1,7 +1,3 @@
-macro(PATH_TO_ABSOLUTE var_name)
-    get_filename_component(${var_name} "${${var_name}}" ABSOLUTE)
-endmacro()
-
 # Check the optional git variable.
 # If it's not set, we'll try to find it using the CMake packaging system.
 if(NOT DEFINED GIT_EXECUTABLE)
@@ -65,34 +61,33 @@ if (GIT_IS_DIRTY)
 	set(SF_VERSION_FULL "${SF_VERSION_FULL}-dirty")
 endif()
 
-#configure_file("${CMAKE_CURRENT_LIST_DIR}/SensorFusionConfigVersion.cmake.in"
-				#"${CMAKE_INSTALL_PREFIX}/SensorFusionConfigVersion.cmake" @ONLY)
+set(export_config_name "SensorFusion")
 
+set(SF_PACKAGE_VERSION "${GIT_VERSION_MAJOR}.${GIT_VERSION_MINOR}.${GIT_VERSION_PATCH}")
 # Create versioning/ConfigVersionCheck.cmake
-file(WRITE "${CMAKE_INSTALL_PREFIX}/cmake/Version.cmake"
+file(WRITE "${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}Version.cmake"
 "set(SF_VERSION_FULL \"${SF_VERSION_FULL}\")
-set(SF_VERSION \"${GIT_VERSION_MAJOR}.${GIT_VERSION_MINOR}.${GIT_VERSION_PATCH}\")")
-	
-file(WRITE "${CMAKE_INSTALL_PREFIX}/SensorFusionConfigVersion.cmake"
-"set(PACKAGE_VERSION \"${GIT_VERSION_MAJOR}.${GIT_VERSION_MINOR}.${GIT_VERSION_PATCH}\")
-# Check whether the requested PACKAGE_FIND_VERSION is compatible
-if(\"\${PACKAGE_VERSION}\" VERSION_LESS \"\${PACKAGE_FIND_VERSION}\")
-	set(PACKAGE_VERSION_COMPATIBLE FALSE)
-else()
-	set(PACKAGE_VERSION_COMPATIBLE TRUE)
-	if (\"\${PACKAGE_VERSION}\" VERSION_EQUAL \"\${PACKAGE_FIND_VERSION}\")
-	set(PACKAGE_VERSION_EXACT TRUE)
-	endif()
+set(SF_VERSION \"${SF_PACKAGE_VERSION}\")")
+
+#----------
+# Write verisoning
+message(STATUS "${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${BUILD_TYPE}.cmake")
+file(WRITE "${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${BUILD_TYPE}.cmake"
+"if(NOT SF_VERSION_FULL STREQUAL \"${SF_VERSION_FULL}\")
+	message(FATAL_ERROR \"${export_config_name} package: wrong ${BUILD_TYPE} version\")
 endif()")
 
-file(WRITE "${CMAKE_INSTALL_PREFIX}/cmake/VersionCheck-${BUILD_TYPE}.cmake"
-"function(versioncheck_${BUILD_TYPE} version_full res)
-	if(version_full STREQUAL \"${SF_VERSION_FULL}\")
-		set(\${res} TRUE)
-	else()
-		set(\${res} FALSE)
-	endif()
-endfunction()")
+#------------------------------------------------------------------------------
+# Configure <export_config_name>ConfigVersion.cmake common to build and install tree
+message(STATUS "${SF_PACKAGE_VERSION}")
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+	${CMAKE_INSTALL_PREFIX}/${export_config_name}ConfigVersion.cmake
+	VERSION "${SF_PACKAGE_VERSION}"
+	COMPATIBILITY ExactVersion)
 
 configure_file("${CMAKE_CURRENT_LIST_DIR}/sf_version.h.in"
 	"${CMAKE_INSTALL_PREFIX}/include/sf_version.h" @ONLY)
+
+configure_file("${CMAKE_CURRENT_LIST_DIR}/SensorFusionConfig.cmake.in"
+	"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake" @ONLY)
