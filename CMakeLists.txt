@@ -178,7 +178,7 @@ install(SCRIPT "cmake/installing.cmake")
 
 install(EXPORT SensorFusionTargets
   FILE SensorFusionTargets.cmake
-  DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  DESTINATION "cmake"
   NAMESPACE SensorFusion::)
 
 configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/MapImportedConfigOfTargets.cmake.in"

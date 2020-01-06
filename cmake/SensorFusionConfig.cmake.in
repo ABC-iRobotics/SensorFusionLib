@@ -4,7 +4,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/SensorFusionVersion.cmake)
 message(STATUS "SensorFusion FOUND\nSensorFusion version: @SF_VERSION_FULL@")
 
 # Get the installed and not installed configurations
-file(GLOB _CONFIG_FILES "${CMAKE_CURRENT_LIST_DIR}/SensorFusionTargets-*.cmake")
+file(GLOB _CONFIG_FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/SensorFusionTargets-*.cmake")
 foreach (_config ${CMAKE_CONFIGURATION_TYPES})
 message(STATUS "${_config}")
 	string(TOLOWER ${_config} __config)
@@ -56,7 +56,7 @@ endif()
 find_dependency_in_install(CPPZMQ "")
 
 #Create targets
-include(${CMAKE_CURRENT_LIST_DIR}/SensorFusionTargets.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/SensorFusionTargets.cmake)
 
 
 #Map release configurations to an installed configuration
