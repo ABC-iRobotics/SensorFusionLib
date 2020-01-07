@@ -231,8 +231,6 @@ install(CODE "
 
 #Googletests - call on third parties??
 
-#unset config variables
-
 #választható legyen mt/md flag...
 
 #third party mappaszerkezet: sg/src /build /install
