@@ -87,13 +87,34 @@ file(MAKE_DIRECTORY ${CMAKE_3RDPARTY_DIR})
 set(Policy_ALL_3RD_PARTIES "Setting one by one" CACHE STRING "How to get 3rdParties")
 set_property(CACHE Policy_ALL_3RD_PARTIES PROPERTY STRINGS "Setting one by one" "Download all")
 
-macro(third_party_policy NAME)
+macro(third_party_policy NAME COMMAND CACHE_LIST_NAME CONFIG_LIST_NAME DOES_NEED_BUILDING)
 	set(Policy_${NAME} "Choose" CACHE STRING "How to get ${NAME}")
 	set_property(CACHE Policy_${NAME} PROPERTY STRINGS "Choose" "Search on the path" "Download")
 	if (Policy_${NAME} STREQUAL  "Download" OR Policy_ALL_3RD_PARTIES STREQUAL "Download all")
 		find_package(${NAME} QUIET PATHS ${3RDPARTY_INSTALL_PREFIX} NO_DEFAULT_PATH )
 		if (NOT ${NAME}_FOUND)
-			include(cmake/DownloadAndInstall${NAME}.cmake)
+			set (DIR "${CMAKE_3RDPARTY_DIR}/${NAME}")
+			set (SRC_DIR "${DIR}/src")
+			set (BUILD_DIR "${DIR}/build")
+			# CLONE
+			message( STATUS "Downloading ${NAME} (to ${SRC_DIR})...")
+			EXEC_PROGRAM( "${COMMAND} \"${SRC_DIR}\"" )
+			message ( STATUS " succeeded. CMake configure started....")
+			# Call configure, generate and build (Release & Debug) on the externals
+			message(STATUS "Generating makefile/solution for ${NAME}")
+			EXEC_PROGRAM(\"${CMAKE_COMMAND}\" \"${SRC_DIR}\" ARGS \"${GENERATOR_ARGUMENT}\" \"-S${SRC_DIR}\"
+				\"-B${BUILD_DIR}\" ${${CACHE_LIST_NAME}} ${EXTERNAL_FLAG_SETTER} )
+			foreach(config ${${CONFIG_LIST_NAME}})
+				if(${DOES_NEED_BUILDING})
+					message(STATUS "Building ${NAME} (${config}). It can take some time...")
+					EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
+						--build \"${BUILD_DIR}\" --config ${config} )
+				endif()
+				message(STATUS "Installing ${NAME} (${config}).")
+				EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
+					--install \"${BUILD_DIR}\" --config ${config} )
+			endforeach()
+			message(STATUS "done.")
 			find_package(${NAME} REQUIRED PATHS ${3RDPARTY_INSTALL_PREFIX} NO_DEFAULT_PATH )
 		endif()
 	elseif (Policy_${NAME} STREQUAL  "Search on the path")
@@ -103,20 +124,32 @@ macro(third_party_policy NAME)
 	endif()
 endmacro(third_party_policy)
 
+set(THIRD_PARTY_CONFIG Debug;Release)
+set(ONLY_RELEASE Release)
+
 ### ZeroMQ
-third_party_policy(ZeroMQ)
+set(ZMQ_COMMAND "git clone https://github.com/zeromq/libzmq.git -bv4.3.2")
+set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=FALSE;-DENABLE_CPACK=FALSE;
+	-DENABLE_CURVE=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE=FALSE;-DLIBZMQ_PEDANTIC=FALSE;
+	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+third_party_policy(ZeroMQ ${ZMQ_COMMAND} ZMQ_CACHE_SETTINGS THIRD_PARTY_CONFIG true)
 if(ZeroMQ_FOUND)
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
 endif()
 ### CPPZMQ
-third_party_policy(CPPZMQ)
+set(CPPZMQ_COMMAND "git clone https://github.com/zeromq/cppzmq.git -bv4.5.0")
+set(CPPZMQ_CACHE_SETTINGS -DENABLE_DRAFTS=FALSE;-DBUILD_TESTING=FALSE;-DCPPZMQ_BUILD_TESTS=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+third_party_policy(CPPZMQ ${CPPZMQ_COMMAND} CPPZMQ_CACHE_SETTINGS ONLY_RELEASE false)
 macro(requires_cppzmq NAME)
 	target_link_libraries (${NAME} cppzmq-static)
 	add_definitions(-DZMQ_STATIC)
 endmacro(requires_cppzmq)
 ### FlatBuffers
-third_party_policy(FlatBuffers)
+set(FLATBUFFERS_COMMAND "git clone https://github.com/google/flatbuffers.git -bv1.11.0")
+set(FLATBUFFERS_CACHE_SETTINGS -DFLATBUFFERS_BUILD_FLATC=FALSE;-DFLATBUFFERS_BUILD_FLATHASH=FALSE;
+	-DFLATBUFFERS_BUILD_FLATLIB=FALSE;-DFLATBUFFERS_BUILD_TESTS=FALSE;-DFLATBUFFERS_LIBXX_WITH_CLANG=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+third_party_policy(FlatBuffers ${FLATBUFFERS_COMMAND} FLATBUFFERS_CACHE_SETTINGS ONLY_RELEASE false)
 if (FlatBuffers_FOUND)
 	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h PATHS "${3RDPARTY_INSTALL_PREFIX}/include")
 endif()
@@ -124,7 +157,9 @@ macro(requires_flatbuffers)
 	include_directories(${FLATBUFFERS_INCLUDE_DIR}) #targetinclude_directory????
 endmacro(requires_flatbuffers)
 ### Eigen
-third_party_policy(Eigen3)
+set(EIGEN3_COMMAND "hg clone --verbose https://bitbucket.org/eigen/eigen -r3.3.7")
+set(EIGEN3_CACHE_SETTINGS -DBUILD_TESTING=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";-DCMAKE_INSTALL_INCLUDEDIR="include")
+third_party_policy(Eigen3 ${EIGEN3_COMMAND} EIGEN3_CACHE_SETTINGS ONLY_RELEASE false)
 macro(requires_eigen NAME)
 	target_link_libraries (${NAME} Eigen3::Eigen)
 endmacro(requires_eigen)
@@ -132,7 +167,15 @@ endmacro(requires_eigen)
 if (ADD_PLOTTER)
 	### OpenCV
 	set(OpenCV_STATIC TRUE)
-	third_party_policy(OpenCV)
+	set(OPENCV_COMMAND "git clone https://github.com/opencv/opencv.git -b4.1.2")
+	set(OPENCV_CACHE_SETTINGS -DBUILD_opencv_apps=FALSE;-DBUILD_opencv_calib3d=FALSE;-DBUILD_opencv_dnn=FALSE;
+		-DBUILD_opencv_features2d=FALSE;-DBUILD_opencv_flann=FALSE;-DBUILD_opencv_gapi=FALSE;-DBUILD_opencv_java_bindings_generator=FALSE;
+		-DBUILD_opencv_ml=FALSE;-DBUILD_opencv_objdetect=FALSE;-DBUILD_opencv_photo=FALSE;-DBUILD_opencv_python_bindings_generator=FALSE;
+		-DBUILD_opencv_python_tests=FALSE;-DBUILD_opencv_stiching=FALSE;-DBUILD_opencv_ts=FALSE;-DBUILD_opencv_video=FALSE;
+		-DBUILD_opencv_videoio=FALSE;-DBUILD_opencv_apps=FALSE;-DBUILD_JAVA=FALSE;-DBUILD_OPENEXR=FALSE;-DBUILD_PACKAGE=FALSE;
+		-DBUILD_PERF_TESTS=FALSE;-DBUILD_PROTOBUF=FALSE;-DBUILD_SHARED_LIBS=FALSE;-DBUILD_TESTS=FALSE;-DBUILD_TIFF=FALSE;-DWITH_ADE=FALSE;
+		-DWITH_FFMPEG=FALSE;-DWITH_EIGEN=FALSE;-DCPU_DISPATCH="";-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+	third_party_policy(OpenCV ${OPENCV_COMMAND} OPENCV_CACHE_SETTINGS THIRD_PARTY_CONFIG true)
 	if(OpenCV_FOUND)
 		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
 		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
@@ -154,8 +197,7 @@ macro(install_lib NAME HEADERS)
 			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-relwithdebinfo"
 			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-minsizerel"
 			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-debug"
-			IMPORTED_LOCATION lib
-			)
+			IMPORTED_LOCATION lib)
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 		$<INSTALL_INTERFACE:include>)
@@ -163,8 +205,7 @@ macro(install_lib NAME HEADERS)
 		LIBRARY DESTINATION lib
 		ARCHIVE DESTINATION lib
 		RUNTIME DESTINATION bin
-		INCLUDES DESTINATION include
-	)
+		INCLUDES DESTINATION include)
 	install(FILES ${HEADERS} DESTINATION include)
 endmacro(install_lib)
 
@@ -212,7 +253,6 @@ install(CODE "
 	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/Config.cmake.in\"
 	\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
 ")
-
 #find_program(GIT git)
 #find_program(GIT git) HG!!
 
