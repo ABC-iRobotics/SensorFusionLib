@@ -142,20 +142,24 @@ if (ADD_PLOTTER)
 	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
 
+set(export_config_name "SensorFusion")
+set(export_targets ${export_config_name}Targets)
+set(export_targets_name ${export_config_name}Targets-${CMAKE_GENERATOR_PLATFORM})
+
 #### Lib settings
 macro(install_lib NAME HEADERS)
 	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL} "${NAME}" PARENT_SCOPE) #for configuring Config.cmake in installing.cmake
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
-			RELEASE_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt"
-			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt-relwithdebinfo"
-			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt-minsizerel"
-			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-mt-debug"
+			RELEASE_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt"
+			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-relwithdebinfo"
+			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-minsizerel"
+			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-debug"
 			IMPORTED_LOCATION lib
 			)
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 		$<INSTALL_INTERFACE:include>)
-	install(TARGETS ${NAME} EXPORT SensorFusionTargets
+	install(TARGETS ${NAME} EXPORT ${export_targets}
 		LIBRARY DESTINATION lib
 		ARCHIVE DESTINATION lib
 		RUNTIME DESTINATION bin
@@ -174,15 +178,40 @@ add_subdirectory (communication)
 add_subdirectory (ZMQSub_test)
 add_subdirectory (ZMQPub_test)
 
-install(SCRIPT "cmake/installing.cmake")
-
-install(EXPORT SensorFusionTargets
-  FILE SensorFusionTargets.cmake
+install(EXPORT ${export_targets}
+  FILE ${export_targets_name}.cmake
   DESTINATION "cmake"
-  NAMESPACE SensorFusion::)
+  NAMESPACE ${export_config_name}::)
 
-configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/MapImportedConfigOfTargets.cmake.in"
-		"${CMAKE_INSTALL_PREFIX}/cmake/MapImportedConfigOfTargets.cmake" @ONLY)
+# Because git version cannot be returned in build-time, the install goes via script...
+install(CODE "
+	include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
+
+	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL})
+	set(export_config_name ${export_config_name})
+	set(export_targets ${export_targets})
+
+	#----------
+	# Create a script to check the current export to the latest *Version.cmake
+	file(WRITE \"${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${CMAKE_GENERATOR_PLATFORM}-\${BUILD_TYPE}.cmake\" \"
+	if(NOT SF_VERSION_FULL STREQUAL \\\"\${GIT_VERSION_FULL}\\\")
+		message(FATAL_ERROR \\\"${export_config_name} package: wrong \${BUILD_TYPE} version\\\")
+	endif()\")
+
+	#------------------------------------------------------------------------------
+	# Configure <export_config_name>ConfigVersion.cmake common to build and install tree
+	include(CMakePackageConfigHelpers)
+	write_basic_package_version_file(
+		\"${CMAKE_INSTALL_PREFIX}/${export_config_name}ConfigVersion.cmake\"
+		VERSION \${GIT_TAG_VERSION}
+		COMPATIBILITY ExactVersion)
+
+	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/sf_version.h.in\"
+		\"${CMAKE_INSTALL_PREFIX}/include/sf_version.h\" @ONLY)
+
+	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/Config.cmake.in\"
+	\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
+")
 
 #find_program(GIT git)
 #find_program(GIT git) HG!!
@@ -201,3 +230,14 @@ configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/MapImportedConfigOfTargets.cmake
 #◘third party install csak az install paranccsal?
 
 #Googletests - call on third parties??
+
+#unset config variables
+
+#választható legyen mt/md flag...
+
+#third party mappaszerkezet: sg/src /build /install
+#installra ujabb install parancsok
+
+#tesztelni külön telepített third partykkal
+
+#uninstall custom_command

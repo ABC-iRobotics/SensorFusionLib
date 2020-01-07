@@ -1,5 +1,0 @@
-macro(map_imported_config config dest_config)
-	foreach (_target @LIBS_TO_INSTALL@)
-		set_target_properties(SensorFusion::${_target} PROPERTIES MAP_IMPORTED_CONFIG_${_config} ${dest_config})
-	endforeach()
-endmacro()
