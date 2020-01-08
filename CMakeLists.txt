@@ -22,7 +22,7 @@ set(CompilerFlags
 set(EXTERNAL_FLAG_SETTER "")
 foreach(CompilerFlag ${CompilerFlags})
   string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-  set(EXTERNAL_FLAG_SETTER "${EXTERNAL_FLAG_SETTER} -D${CompilerFlag}=\"${${CompilerFlag}}\"" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
+  list(APPEND EXTERNAL_FLAG_SETTER -D${CompilerFlag}="${${CompilerFlag}}" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
 endforeach()
 
 # where to put the resulting binaries?
@@ -80,49 +80,7 @@ endif()
 
 # TODO: add gtest, linux compatibility?
 
-set (CMAKE_3RDPARTY_DIR "${CMAKE_BINARY_DIR}/Third parties")
-set (3RDPARTY_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/Third parties")
-file(MAKE_DIRECTORY ${CMAKE_3RDPARTY_DIR})
-#Policy_all_thirdparties
-set(Policy_ALL_3RD_PARTIES "Setting one by one" CACHE STRING "How to get 3rdParties")
-set_property(CACHE Policy_ALL_3RD_PARTIES PROPERTY STRINGS "Setting one by one" "Download all")
-
-macro(third_party_policy NAME COMMAND CACHE_LIST_NAME CONFIG_LIST_NAME DOES_NEED_BUILDING)
-	set(Policy_${NAME} "Choose" CACHE STRING "How to get ${NAME}")
-	set_property(CACHE Policy_${NAME} PROPERTY STRINGS "Choose" "Search on the path" "Download")
-	if (Policy_${NAME} STREQUAL  "Download" OR Policy_ALL_3RD_PARTIES STREQUAL "Download all")
-		find_package(${NAME} QUIET PATHS ${3RDPARTY_INSTALL_PREFIX} NO_DEFAULT_PATH )
-		if (NOT ${NAME}_FOUND)
-			set (DIR "${CMAKE_3RDPARTY_DIR}/${NAME}")
-			set (SRC_DIR "${DIR}/src")
-			set (BUILD_DIR "${DIR}/build")
-			# CLONE
-			message( STATUS "Downloading ${NAME} (to ${SRC_DIR})...")
-			EXEC_PROGRAM( "${COMMAND} \"${SRC_DIR}\"" )
-			message ( STATUS " succeeded. CMake configure started....")
-			# Call configure, generate and build (Release & Debug) on the externals
-			message(STATUS "Generating makefile/solution for ${NAME}")
-			EXEC_PROGRAM(\"${CMAKE_COMMAND}\" \"${SRC_DIR}\" ARGS \"${GENERATOR_ARGUMENT}\" \"-S${SRC_DIR}\"
-				\"-B${BUILD_DIR}\" ${${CACHE_LIST_NAME}} ${EXTERNAL_FLAG_SETTER} )
-			foreach(config ${${CONFIG_LIST_NAME}})
-				if(${DOES_NEED_BUILDING})
-					message(STATUS "Building ${NAME} (${config}). It can take some time...")
-					EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
-						--build \"${BUILD_DIR}\" --config ${config} )
-				endif()
-				message(STATUS "Installing ${NAME} (${config}).")
-				EXEC_PROGRAM(${CMAKE_COMMAND} ARGS
-					--install \"${BUILD_DIR}\" --config ${config} )
-			endforeach()
-			message(STATUS "done.")
-			find_package(${NAME} REQUIRED PATHS ${3RDPARTY_INSTALL_PREFIX} NO_DEFAULT_PATH )
-		endif()
-	elseif (Policy_${NAME} STREQUAL  "Search on the path")
-		find_package(${NAME} REQUIRED)
-	else()
-		message( SEND_ERROR "Policy for ${NAME} must be chosen!" )
-	endif()
-endmacro(third_party_policy)
+include(cmake/ThirdPartyHandling.cmake)
 
 set(THIRD_PARTY_CONFIG Debug;Release)
 set(ONLY_RELEASE Release)
@@ -131,7 +89,8 @@ set(ONLY_RELEASE Release)
 set(ZMQ_COMMAND "git clone https://github.com/zeromq/libzmq.git -bv4.3.2")
 set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=FALSE;-DENABLE_CPACK=FALSE;
 	-DENABLE_CURVE=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE=FALSE;-DLIBZMQ_PEDANTIC=FALSE;
-	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=FALSE;
+	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
 third_party_policy(ZeroMQ ${ZMQ_COMMAND} ZMQ_CACHE_SETTINGS THIRD_PARTY_CONFIG true)
 if(ZeroMQ_FOUND)
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
@@ -139,7 +98,8 @@ if(ZeroMQ_FOUND)
 endif()
 ### CPPZMQ
 set(CPPZMQ_COMMAND "git clone https://github.com/zeromq/cppzmq.git -bv4.5.0")
-set(CPPZMQ_CACHE_SETTINGS -DENABLE_DRAFTS=FALSE;-DBUILD_TESTING=FALSE;-DCPPZMQ_BUILD_TESTS=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+set(CPPZMQ_CACHE_SETTINGS -DENABLE_DRAFTS=FALSE;-DBUILD_TESTING=FALSE;-DCPPZMQ_BUILD_TESTS=FALSE;
+	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
 third_party_policy(CPPZMQ ${CPPZMQ_COMMAND} CPPZMQ_CACHE_SETTINGS ONLY_RELEASE false)
 macro(requires_cppzmq NAME)
 	target_link_libraries (${NAME} cppzmq-static)
@@ -148,7 +108,8 @@ endmacro(requires_cppzmq)
 ### FlatBuffers
 set(FLATBUFFERS_COMMAND "git clone https://github.com/google/flatbuffers.git -bv1.11.0")
 set(FLATBUFFERS_CACHE_SETTINGS -DFLATBUFFERS_BUILD_FLATC=FALSE;-DFLATBUFFERS_BUILD_FLATHASH=FALSE;
-	-DFLATBUFFERS_BUILD_FLATLIB=FALSE;-DFLATBUFFERS_BUILD_TESTS=FALSE;-DFLATBUFFERS_LIBXX_WITH_CLANG=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+	-DFLATBUFFERS_BUILD_FLATLIB=FALSE;-DFLATBUFFERS_BUILD_TESTS=FALSE;-DFLATBUFFERS_LIBXX_WITH_CLANG=FALSE;
+	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
 third_party_policy(FlatBuffers ${FLATBUFFERS_COMMAND} FLATBUFFERS_CACHE_SETTINGS ONLY_RELEASE false)
 if (FlatBuffers_FOUND)
 	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h PATHS "${3RDPARTY_INSTALL_PREFIX}/include")
@@ -158,7 +119,8 @@ macro(requires_flatbuffers)
 endmacro(requires_flatbuffers)
 ### Eigen
 set(EIGEN3_COMMAND "hg clone --verbose https://bitbucket.org/eigen/eigen -r3.3.7")
-set(EIGEN3_CACHE_SETTINGS -DBUILD_TESTING=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";-DCMAKE_INSTALL_INCLUDEDIR="include")
+set(EIGEN3_CACHE_SETTINGS -DBUILD_TESTING=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";
+	-DCMAKE_INSTALL_INCLUDEDIR="include";${EXTERNAL_FLAG_SETTER})
 third_party_policy(Eigen3 ${EIGEN3_COMMAND} EIGEN3_CACHE_SETTINGS ONLY_RELEASE false)
 macro(requires_eigen NAME)
 	target_link_libraries (${NAME} Eigen3::Eigen)
@@ -174,7 +136,7 @@ if (ADD_PLOTTER)
 		-DBUILD_opencv_python_tests=FALSE;-DBUILD_opencv_stiching=FALSE;-DBUILD_opencv_ts=FALSE;-DBUILD_opencv_video=FALSE;
 		-DBUILD_opencv_videoio=FALSE;-DBUILD_opencv_apps=FALSE;-DBUILD_JAVA=FALSE;-DBUILD_OPENEXR=FALSE;-DBUILD_PACKAGE=FALSE;
 		-DBUILD_PERF_TESTS=FALSE;-DBUILD_PROTOBUF=FALSE;-DBUILD_SHARED_LIBS=FALSE;-DBUILD_TESTS=FALSE;-DBUILD_TIFF=FALSE;-DWITH_ADE=FALSE;
-		-DWITH_FFMPEG=FALSE;-DWITH_EIGEN=FALSE;-DCPU_DISPATCH="";-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}")
+		-DWITH_FFMPEG=FALSE;-DWITH_EIGEN=FALSE;-DCPU_DISPATCH="";-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
 	third_party_policy(OpenCV ${OPENCV_COMMAND} OPENCV_CACHE_SETTINGS THIRD_PARTY_CONFIG true)
 	if(OpenCV_FOUND)
 		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
@@ -218,6 +180,8 @@ add_subdirectory (core)
 add_subdirectory (communication)
 add_subdirectory (ZMQSub_test)
 add_subdirectory (ZMQPub_test)
+
+add_custom_target(uninstall COMMAND  ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -P "${CMAKE_SOURCE_DIR}/cmake/CleanInstall.cmake"  )
 
 install(EXPORT ${export_targets}
   FILE ${export_targets_name}.cmake
@@ -273,9 +237,4 @@ install(CODE "
 
 #választható legyen mt/md flag...
 
-#third party mappaszerkezet: sg/src /build /install
-#installra ujabb install parancsok
-
 #tesztelni külön telepített third partykkal
-
-#uninstall custom_command

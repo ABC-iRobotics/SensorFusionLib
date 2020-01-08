@@ -1,0 +1,11 @@
+if (NOT DEFINED CMAKE_INSTALL_PREFIX)
+	message(FATAL_ERROR "The install path is not defined")
+endif()
+
+file(GLOB FILELIST "${CMAKE_INSTALL_PREFIX}/*")
+foreach(file_ ${FILELIST})
+	if(NOT file_ MATCHES "^.*Third parties$")
+		file(REMOVE_RECURSE "${file_}")
+		message(STATUS "- ${file_}   - deleted.")
+	endif()
+endforeach()
