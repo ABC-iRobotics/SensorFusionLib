@@ -6,8 +6,11 @@ PROJECT(SensorFusion)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
 
+set(RUNTIME_LIBRARY_SETTINGS "/MT*" CACHE STRING "Code Generation: multi-threaded (/MT*) or multi threaded DLL (/MD*)")
+set_property(CACHE RUNTIME_LIBRARY_SETTINGS PROPERTY STRINGS "/MT*" "/MD*")
+
 ############################################################################################################
-# Set /MT compiler flags
+# Set /MT or /MD compiler flags
 set(CompilerFlags
         CMAKE_CXX_FLAGS
         CMAKE_CXX_FLAGS_DEBUG
@@ -20,9 +23,16 @@ set(CompilerFlags
 		CMAKE_C_FLAGS_RELWITHDEBINFO
 		CMAKE_C_FLAGS_MINSIZEREL)
 set(EXTERNAL_FLAG_SETTER "")
+if (RUNTIME_LIBRARY_SETTINGS STREQUAL "/MT*")
+	set(REPLACE_ARGS "/MD" "/MT")
+	set(RUNTIME_INFO "mt")
+else()
+	set(REPLACE_ARGS "/MT" "/MD")
+	set(RUNTIME_INFO "md")
+endif()
 foreach(CompilerFlag ${CompilerFlags})
-  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-  list(APPEND EXTERNAL_FLAG_SETTER -D${CompilerFlag}="${${CompilerFlag}}" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
+	string(REPLACE ${REPLACE_ARGS} ${CompilerFlag} "${${CompilerFlag}}")
+	list(APPEND EXTERNAL_FLAG_SETTER -D${CompilerFlag}="${${CompilerFlag}}" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
 endforeach()
 
 # where to put the resulting binaries?
@@ -128,6 +138,12 @@ endmacro(requires_eigen)
 
 if (ADD_PLOTTER)
 	### OpenCV
+	if (RUNTIME_LIBRARY_SETTINGS STREQUAL "/MT*")
+		set(BUILD_OPENCV_WITH_STATIC_CRT true)
+	else()
+		set(BUILD_OPENCV_WITH_STATIC_CRT false)
+	endif()
+
 	set(OpenCV_STATIC TRUE)
 	set(OPENCV_COMMAND "git clone https://github.com/opencv/opencv.git -b4.1.2")
 	set(OPENCV_CACHE_SETTINGS -DBUILD_opencv_apps=FALSE;-DBUILD_opencv_calib3d=FALSE;-DBUILD_opencv_dnn=FALSE;
@@ -135,8 +151,9 @@ if (ADD_PLOTTER)
 		-DBUILD_opencv_ml=FALSE;-DBUILD_opencv_objdetect=FALSE;-DBUILD_opencv_photo=FALSE;-DBUILD_opencv_python_bindings_generator=FALSE;
 		-DBUILD_opencv_python_tests=FALSE;-DBUILD_opencv_stiching=FALSE;-DBUILD_opencv_ts=FALSE;-DBUILD_opencv_video=FALSE;
 		-DBUILD_opencv_videoio=FALSE;-DBUILD_opencv_apps=FALSE;-DBUILD_JAVA=FALSE;-DBUILD_OPENEXR=FALSE;-DBUILD_PACKAGE=FALSE;
-		-DBUILD_PERF_TESTS=FALSE;-DBUILD_PROTOBUF=FALSE;-DBUILD_SHARED_LIBS=FALSE;-DBUILD_TESTS=FALSE;-DBUILD_TIFF=FALSE;-DWITH_ADE=FALSE;
-		-DWITH_FFMPEG=FALSE;-DWITH_EIGEN=FALSE;-DCPU_DISPATCH="";-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
+		-DBUILD_PERF_TESTS=FALSE;-DBUILD_PROTOBUF=FALSE;-DBUILD_SHARED_LIBS=FALSE;-DBUILD_WITH_STATIC_CRT=${BUILD_OPENCV_WITH_STATIC_CRT};
+		-DBUILD_TESTS=FALSE;-DBUILD_TIFF=FALSE;-DWITH_ADE=FALSE;-DWITH_FFMPEG=FALSE;-DWITH_EIGEN=FALSE;-DCPU_DISPATCH="";
+		-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
 	third_party_policy(OpenCV ${OPENCV_COMMAND} OPENCV_CACHE_SETTINGS THIRD_PARTY_CONFIG true)
 	if(OpenCV_FOUND)
 		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
@@ -149,16 +166,16 @@ endif(ADD_PLOTTER)
 
 set(export_config_name "SensorFusion")
 set(export_targets ${export_config_name}Targets)
-set(export_targets_name ${export_config_name}Targets-${CMAKE_GENERATOR_PLATFORM})
+set(export_targets_name ${export_config_name}Targets-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO})
 
 #### Lib settings
 macro(install_lib NAME HEADERS)
 	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL} "${NAME}" PARENT_SCOPE) #for configuring Config.cmake in installing.cmake
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
-			RELEASE_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt"
-			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-relwithdebinfo"
-			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-minsizerel"
-			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-mt-debug"
+			RELEASE_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}"
+			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-relwithdebinfo"
+			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-minsizerel"
+			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-debug"
 			IMPORTED_LOCATION lib)
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
@@ -193,12 +210,13 @@ install(CODE "
 	include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
 
 	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL})
+	set(RUNTIME_INFO ${RUNTIME_INFO})
 	set(export_config_name ${export_config_name})
 	set(export_targets ${export_targets})
 
 	#----------
 	# Create a script to check the current export to the latest *Version.cmake
-	file(WRITE \"${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${CMAKE_GENERATOR_PLATFORM}-\${BUILD_TYPE}.cmake\" \"
+	file(WRITE \"${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-\${BUILD_TYPE}.cmake\" \"
 	if(NOT SF_VERSION_FULL STREQUAL \\\"\${GIT_VERSION_FULL}\\\")
 		message(FATAL_ERROR \\\"${export_config_name} package: wrong \${BUILD_TYPE} version\\\")
 	endif()\")
@@ -231,10 +249,6 @@ install(CODE "
 
 #doxygen generation! - WITH_DOCS CACHE entry... - for install!!
 
-#◘third party install csak az install paranccsal?
-
 #Googletests - call on third parties??
-
-#választható legyen mt/md flag...
 
 #tesztelni külön telepített third partykkal

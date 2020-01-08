@@ -8,19 +8,30 @@ set(SF_VERSION "@GIT_TAG_VERSION@")
 
 message(STATUS "@export_config_name@ FOUND\n@export_config_name@ version: ${SF_VERSION_FULL}")
 
+list(GET CMAKE_CONFIGURATION_TYPES 1 _valid_config)
+string(TOUPPER ${_valid_config} _VALID_CONFIG)
+if(CMAKE_CXX_FLAGS_${_VALID_CONFIG} MATCHES "^.*/MT.*$")
+	message(STATUS "MT Runtime Library Settings FOUND")
+	set(RUNTIME_INFO "mt")
+endif()
+if(CMAKE_CXX_FLAGS_${_VALID_CONFIG} MATCHES "^.*/MD.*$")
+	message(STATUS "MD Runtime Library Settings FOUND")
+	set(RUNTIME_INFO "md")
+endif()
+
 # Get the installed and not installed configurations
-file(GLOB _CONFIG_FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/@export_targets@-${CMAKE_GENERATOR_PLATFORM}-*.cmake")
+file(GLOB _CONFIG_FILES "${CMAKE_CURRENT_LIST_DIR}/cmake/@export_targets@-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-*.cmake")
 foreach (_config ${CMAKE_CONFIGURATION_TYPES})
 	string(TOLOWER ${_config} __config)
 	set(_${__config}_installed false)
 	unset(__config)
 endforeach()
 foreach(f ${_CONFIG_FILES})
-	string(REGEX REPLACE ".*@export_targets@-${CMAKE_GENERATOR_PLATFORM}-(.*)\\.cmake" "\\1" FOUND_CONFIGURATION "${f}")
+	string(REGEX REPLACE ".*@export_targets@-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-(.*)\\.cmake" "\\1" FOUND_CONFIGURATION "${f}")
 	message(STATUS "@export_config_name@ configuration: ${FOUND_CONFIGURATION}")
 	string(TOLOWER ${FOUND_CONFIGURATION} __config)
 	set(_${__config}_installed true)
-	include(${CMAKE_CURRENT_LIST_DIR}/cmake/@export_config_name@VersionCheck-${CMAKE_GENERATOR_PLATFORM}-${FOUND_CONFIGURATION}.cmake)
+	include(${CMAKE_CURRENT_LIST_DIR}/cmake/@export_config_name@VersionCheck-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-${FOUND_CONFIGURATION}.cmake)
 	unset(FOUND_CONFIGURATION)
 	unset(__config)
 endforeach()
@@ -60,7 +71,7 @@ endif()
 find_dependency_in_install(CPPZMQ "")
 
 #Create targets
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/@export_targets@-${CMAKE_GENERATOR_PLATFORM}.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/@export_targets@-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}.cmake)
 
 #Map release configurations to an installed configuration
 if (_release_installed)
