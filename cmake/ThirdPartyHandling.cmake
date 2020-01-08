@@ -4,11 +4,11 @@ set (CMAKE_3RDPARTY_DIR "${CMAKE_BINARY_DIR}/Third parties")
 set (3RDPARTY_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/Third parties")
 file(MAKE_DIRECTORY ${CMAKE_3RDPARTY_DIR})
 #Policy_all_thirdparties
-set(Policy_ALL_3RD_PARTIES "Setting one by one" CACHE STRING "How to get 3rdParties")
+set(Policy_ALL_3RD_PARTIES "Setting one by one" CACHE STRING "How to get 3rdParties - download option may need Git or HG on the PATH")
 set_property(CACHE Policy_ALL_3RD_PARTIES PROPERTY STRINGS "Setting one by one" "Download all")
 
-macro(third_party_policy NAME COMMAND CACHE_LIST_NAME CONFIG_LIST_NAME DOES_NEED_BUILDING)
-	set(Policy_${NAME} "Choose" CACHE STRING "How to get ${NAME}")
+macro(third_party_policy NAME COMMAND CACHE_LIST_NAME CONFIG_LIST_NAME DOES_NEED_BUILDING PROGRAMNAMELIST)
+	set(Policy_${NAME} "Choose" CACHE STRING "How to get ${NAME} - download option may need Git or HG on the PATH")
 	set_property(CACHE Policy_${NAME} PROPERTY STRINGS "Choose" "Search on the path" "Download")
 	if (Policy_${NAME} STREQUAL  "Download" OR Policy_ALL_3RD_PARTIES STREQUAL "Download all")
 		find_package(${NAME} QUIET PATHS ${3RDPARTY_INSTALL_PREFIX} NO_DEFAULT_PATH )
@@ -17,6 +17,7 @@ macro(third_party_policy NAME COMMAND CACHE_LIST_NAME CONFIG_LIST_NAME DOES_NEED
 			set (SRC_DIR "${DIR}/src")
 			set (BUILD_DIR "${DIR}/build")
 			# CLONE
+			find_program(${${PROGRAMNAMELIST}})
 			message( STATUS "Downloading ${NAME} (to ${SRC_DIR})...")
 			EXEC_PROGRAM( "${COMMAND} \"${SRC_DIR}\"" )
 			message ( STATUS " succeeded. CMake configure started....")
