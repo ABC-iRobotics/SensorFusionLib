@@ -237,16 +237,23 @@ install(CODE "
 	\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
 ")
 
+option(WITH_DOCS "To generate documentation into the package during install (neeeds doxygen and latex - MikTex)" false)
+
+if(WITH_DOCS)
+	configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/Docs/Doxyfile.in" "${CMAKE_BINARY_DIR}/Doxyfile" @ONLY)
+	find_program(DOXYGEN doxygen)
+	find_program(LATEX latex)
+	install(CODE "EXEC_PROGRAM(doxygen \"${CMAKE_BINARY_DIR}/Doxyfile\")
+		file(COPY \"${CMAKE_SOURCE_DIR}/cmake/docs/index.html\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/Docs\" )
+	" )
+endif()
 #•todo: check cross compile...
 #linux, ros compatibility?
 
 #readme: tested on:
 #install readme: versions, versions of third parties...
-#needs: doxygen, latex
 
 #introduce drafts
-
-#doxygen generation! - WITH_DOCS CACHE entry... - for install!!
 
 #Googletests - call on third parties??
 
