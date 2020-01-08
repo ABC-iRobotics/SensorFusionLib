@@ -52,6 +52,14 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "" FORCE)
 #####################################################################################
 #####################Minden kell ebbõl?##############################################
 
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  option(ENABLE_DRAFTS "Build and install draft classes and methods" ON)
+else()
+  option(ENABLE_DRAFTS "Build and install draft classes and methods" OFF)
+endif()
+if(ENABLE_DRAFTS)
+  add_definitions(-DSF_BUILD_DRAFT_API)
+endif()
 
 option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
 
@@ -205,7 +213,6 @@ install(EXPORT ${export_targets}
   FILE ${export_targets_name}.cmake
   DESTINATION "cmake"
   NAMESPACE ${export_config_name}::)
-
 # Because git version cannot be returned in build-time, the install goes via script...
 install(CODE "
 	include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
@@ -238,7 +245,6 @@ install(CODE "
 ")
 
 option(WITH_DOCS "To generate documentation into the package during install (neeeds doxygen and latex - MikTex)" false)
-
 if(WITH_DOCS)
 	configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/Docs/Doxyfile.in" "${CMAKE_BINARY_DIR}/Doxyfile" @ONLY)
 	find_program(DOXYGEN doxygen)
@@ -253,7 +259,7 @@ endif()
 #readme: tested on:
 #install readme: versions, versions of third parties...
 
-#introduce drafts
+#TODO: update package title page, pictures...
 
 #Googletests - call on third parties??
 
