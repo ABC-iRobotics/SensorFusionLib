@@ -99,11 +99,19 @@ set(GIT_NAMES GIT Git)
 set(HG_NAMES HG Hg)
 ## ---------------------------------------------------------------------------------
 ## Find or get ZeroMQ
+if (CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+	message(FATAL_ERROR "Don't use ZMQ on x86 platform!")
+endif()
 set(ZMQ_COMMAND "git clone https://github.com/zeromq/libzmq.git -bv4.3.2")
-set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=FALSE;-DENABLE_CPACK=FALSE;
-	-DENABLE_CURVE=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE=FALSE;-DLIBZMQ_PEDANTIC=FALSE;
-	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=FALSE;
-	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
+set(TO_BUILD_THIRD_PARTY_TESTS FALSE) #TODO: cache - add to tests
+set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=${TO_BUILD_THIRD_PARTY_TESTS};
+	-DENABLE_CPACK=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE=TRUE;-DLIBZMQ_PEDANTIC=TRUE;
+	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=${TO_BUILD_THIRD_PARTY_TESTS};
+	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER};
+	-DZMQ_CV_IMPL="win32api")
+	# problems with the tests: vs2017 & stl11 (use win32api) !
+	# win32 in general
+	# or stl11/pthreads! must be configured! dont apply on x86
 third_party_policy(ZeroMQ ${ZMQ_COMMAND} ZMQ_CACHE_SETTINGS THIRD_PARTY_CONFIG true GIT_NAMES)
 if(ZeroMQ_FOUND)
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
@@ -265,7 +273,7 @@ endif()
 #linux, ros compatibility?
 
 #readme: tested on:
-#install readme: versions, versions of third parties...
+#versions, versions of third parties...
 
 #TODO: update package title page, pictures...
 
