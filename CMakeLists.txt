@@ -1,16 +1,15 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2) # is enough??
 
 PROJECT(SensorFusion)
-
-# use folders in IDEs supporting it
+## ---------------------------------------------------------------------------------
+## Use folders in IDEs supporting it
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
 
+## ---------------------------------------------------------------------------------
+## Set /MT or /MD compiler flags
 set(RUNTIME_LIBRARY_SETTINGS "/MT*" CACHE STRING "Code Generation: multi-threaded (/MT*) or multi threaded DLL (/MD*)")
 set_property(CACHE RUNTIME_LIBRARY_SETTINGS PROPERTY STRINGS "/MT*" "/MD*")
-
-############################################################################################################
-# Set /MT or /MD compiler flags
 set(CompilerFlags
         CMAKE_CXX_FLAGS
         CMAKE_CXX_FLAGS_DEBUG
@@ -35,23 +34,17 @@ foreach(CompilerFlag ${CompilerFlags})
 	list(APPEND EXTERNAL_FLAG_SETTER -D${CompilerFlag}="${${CompilerFlag}}" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
 endforeach()
 
-# where to put the resulting binaries?
-set (APPLICATION Bin)
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${APPLICATION})
-#####################################################################################
+## ---------------------------------------------------------------------------------
+## Set configurations to be used
 set (CMAKE_CONFIGURATION_TYPES Debug;Release;MinSizeRel;RelWithDebInfo CACHE STRING "Configuration types" FORCE)
 
+## ---------------------------------------------------------------------------------
+## Set folders
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "" FORCE) #Nem convention instead of program files/SensorFusion...
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Bin) #Or the program puts the application into different folders...
 
-## Set folders - TODO: clear from the final version!!
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "" FORCE)
-
-#####################################################################################
-#####################Minden kell ebbõl?##############################################
-
+## ---------------------------------------------------------------------------------
+## Draft settings - use SF_BUILD_DRAFT_API in the code for experimental API 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   option(ENABLE_DRAFTS "Build and install draft classes and methods" ON)
 else()
@@ -61,14 +54,13 @@ if(ENABLE_DRAFTS)
   add_definitions(-DSF_BUILD_DRAFT_API)
 endif()
 
-option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
-
+## ---------------------------------------------------------------------------------
+## TODO clean this part...
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
     #This is required to find sodium package for libzmq linking
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 endif()
-
 # if(NOT LINUX) should work, too, if you need that
 if(LINUX) 
 	message(STATUS ">>> Linux")
@@ -87,6 +79,8 @@ else()
     endif()
 endif()
 
+## ---------------------------------------------------------------------------------
+## Get generator and platform to use for third party building (e.g. Visual Studio 2017 x64)
 set( GENERATOR_ARGUMENT "" CACHE STRING "Used to build third parties")
 if (GENERATOR_ARGUMENT STREQUAL "")
 	message(STATUS "Getting generator and architecture...")
@@ -96,15 +90,15 @@ if (GENERATOR_ARGUMENT STREQUAL "")
 	set(GENERATOR_ARGUMENT ${RES} CACHE STRING "Used to build third parties" FORCE)
 endif()
 
-# TODO: add gtest, linux compatibility?
-
+## ---------------------------------------------------------------------------------
+## Generally used variables for third parties
 include(cmake/ThirdPartyHandling.cmake)
-
 set(THIRD_PARTY_CONFIG Debug;Release)
 set(ONLY_RELEASE Release)
 set(GIT_NAMES GIT Git)
 set(HG_NAMES HG Hg)
-### ZeroMQ
+## ---------------------------------------------------------------------------------
+## Find or get ZeroMQ
 set(ZMQ_COMMAND "git clone https://github.com/zeromq/libzmq.git -bv4.3.2")
 set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=FALSE;-DENABLE_CPACK=FALSE;
 	-DENABLE_CURVE=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE=FALSE;-DLIBZMQ_PEDANTIC=FALSE;
@@ -115,7 +109,8 @@ if(ZeroMQ_FOUND)
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
 endif()
-### CPPZMQ
+## ---------------------------------------------------------------------------------
+## Find or get CPPZMQ
 set(CPPZMQ_COMMAND "git clone https://github.com/zeromq/cppzmq.git -bv4.5.0")
 set(CPPZMQ_CACHE_SETTINGS -DENABLE_DRAFTS=FALSE;-DBUILD_TESTING=FALSE;-DCPPZMQ_BUILD_TESTS=FALSE;
 	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
@@ -124,7 +119,8 @@ macro(requires_cppzmq NAME)
 	target_link_libraries (${NAME} cppzmq-static)
 	add_definitions(-DZMQ_STATIC)
 endmacro(requires_cppzmq)
-### FlatBuffers
+## ---------------------------------------------------------------------------------
+## Find or get FlatBuffers
 set(FLATBUFFERS_COMMAND "git clone https://github.com/google/flatbuffers.git -bv1.11.0")
 set(FLATBUFFERS_CACHE_SETTINGS -DFLATBUFFERS_BUILD_FLATC=FALSE;-DFLATBUFFERS_BUILD_FLATHASH=FALSE;
 	-DFLATBUFFERS_BUILD_FLATLIB=FALSE;-DFLATBUFFERS_BUILD_TESTS=FALSE;-DFLATBUFFERS_LIBXX_WITH_CLANG=FALSE;
@@ -136,7 +132,8 @@ endif()
 macro(requires_flatbuffers)
 	include_directories(${FLATBUFFERS_INCLUDE_DIR}) #targetinclude_directory????
 endmacro(requires_flatbuffers)
-### Eigen
+## ---------------------------------------------------------------------------------
+## Find or get Eigen
 set(EIGEN3_COMMAND "hg clone --verbose https://bitbucket.org/eigen/eigen -r3.3.7")
 set(EIGEN3_CACHE_SETTINGS -DBUILD_TESTING=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";
 	-DCMAKE_INSTALL_INCLUDEDIR="include";${EXTERNAL_FLAG_SETTER})
@@ -145,14 +142,15 @@ macro(requires_eigen NAME)
 	target_link_libraries (${NAME} Eigen3::Eigen)
 endmacro(requires_eigen)
 
+option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
 if (ADD_PLOTTER)
-	### OpenCV
+	## ---------------------------------------------------------------------------------
+	## Find or OpenCV
 	if (RUNTIME_LIBRARY_SETTINGS STREQUAL "/MT*")
 		set(BUILD_OPENCV_WITH_STATIC_CRT true)
 	else()
 		set(BUILD_OPENCV_WITH_STATIC_CRT false)
 	endif()
-
 	set(OpenCV_STATIC TRUE)
 	set(OPENCV_COMMAND "git clone https://github.com/opencv/opencv.git -b4.1.2")
 	set(OPENCV_CACHE_SETTINGS -DBUILD_opencv_apps=FALSE;-DBUILD_opencv_calib3d=FALSE;-DBUILD_opencv_dnn=FALSE;
@@ -172,12 +170,14 @@ if (ADD_PLOTTER)
 		target_link_libraries ( ${NAME} opencv_core opencv_highgui opencv_imgcodecs opencv_imgproc ) # or ${OpenCV_LIBS}
 	endmacro(requires_opencv)
 endif(ADD_PLOTTER)
-
+## ---------------------------------------------------------------------------------
+## Names used in the CMake package
 set(export_config_name "SensorFusion")
 set(export_targets ${export_config_name}Targets)
 set(export_targets_name ${export_config_name}Targets-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO})
 
-#### Lib settings
+## ---------------------------------------------------------------------------------
+## Macro to setup archive targets
 macro(install_lib NAME HEADERS)
 	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL} "${NAME}" PARENT_SCOPE) #for configuring Config.cmake in installing.cmake
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
@@ -197,6 +197,8 @@ macro(install_lib NAME HEADERS)
 	install(FILES ${HEADERS} DESTINATION include)
 endmacro(install_lib)
 
+## ---------------------------------------------------------------------------------
+## Get the content of subfolders
 add_subdirectory (types)
 if (ADD_PLOTTER)
 	add_subdirectory (plotter)
@@ -207,13 +209,17 @@ add_subdirectory (communication)
 add_subdirectory (ZMQSub_test)
 add_subdirectory (ZMQPub_test)
 
+## ---------------------------------------------------------------------------------
+## Target to clean install folder
 add_custom_target(uninstall COMMAND  ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -P "${CMAKE_SOURCE_DIR}/cmake/CleanInstall.cmake"  )
 
+## ---------------------------------------------------------------------------------
+## Additional install methods
 install(EXPORT ${export_targets}
   FILE ${export_targets_name}.cmake
   DESTINATION "cmake"
   NAMESPACE ${export_config_name}::)
-# Because git version cannot be returned in build-time, the install goes via script...
+# Because git version cannot be returned in build-time, the install goes via install(CODE *)...
 install(CODE "
 	include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
 
@@ -244,6 +250,8 @@ install(CODE "
 	\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
 ")
 
+## ---------------------------------------------------------------------------------
+## To generate doxygen documentation automatically during install
 option(WITH_DOCS "To generate documentation into the package during install (neeeds doxygen and latex - MikTex)" false)
 if(WITH_DOCS)
 	configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/Docs/Doxyfile.in" "${CMAKE_BINARY_DIR}/Doxyfile" @ONLY)
@@ -263,4 +271,4 @@ endif()
 
 #Googletests - call on third parties??
 
-#tesztelni külön telepített third partykkal
+# TODO: add gtest, linux compatibility?
