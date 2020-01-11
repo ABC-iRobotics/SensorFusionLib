@@ -103,12 +103,11 @@ if (CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
 	message(FATAL_ERROR "Don't use ZMQ on x86 platform!")
 endif()
 set(ZMQ_COMMAND "git clone https://github.com/zeromq/libzmq.git -bv4.3.2")
-set(TO_BUILD_THIRD_PARTY_TESTS FALSE) #TODO: cache - add to tests
-set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=${TO_BUILD_THIRD_PARTY_TESTS};
-	-DENABLE_CPACK=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE=TRUE;-DLIBZMQ_PEDANTIC=TRUE;
-	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=${TO_BUILD_THIRD_PARTY_TESTS};
+set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=FALSE;
+	-DENABLE_CPACK=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE:BOOL=TRUE;-DLIBZMQ_PEDANTIC=TRUE;
+	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=FALSE;
 	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER};
-	-DZMQ_CV_IMPL="win32api")
+	-DZMQ_CV_IMPL:STRING=win32api;-DENABLE_CURVE:BOOL=FALSE)
 	# problems with the tests: vs2017 & stl11 (use win32api) !
 	# win32 in general
 	# or stl11/pthreads! must be configured! dont apply on x86
@@ -269,6 +268,21 @@ if(WITH_DOCS)
 		file(COPY \"${CMAKE_SOURCE_DIR}/cmake/docs/index.html\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/Docs\" )
 	" )
 endif()
+
+## ---------------------------------------------------------------------------------
+## Tests
+option(BUILD_TESTING "To build the unit tests" TRUE)
+if (BUILD_TESTING)
+	enable_testing()
+	add_subdirectory(tests)
+
+endif()
+
+
+
+
+
+
 #•todo: check cross compile...
 #linux, ros compatibility?
 
