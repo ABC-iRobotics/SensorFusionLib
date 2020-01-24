@@ -30,19 +30,6 @@
 #ifndef __TESTUTIL_HPP_INCLUDED__
 #define __TESTUTIL_HPP_INCLUDED__
 
-#ifdef WIN32
-	#define ZMQ_USE_CV_IMPL_WIN32API
-	#define ZMQ_HAVE_WINDOWS
-#else
-	//TODO
-#endif
-/*
-#if defined ZMQ_CUSTOM_PLATFORM_HPP
-#include "platform.hpp"
-#else
-#include "../src/platform.hpp"
-#endif
-*/
 #include "../include/zmq.h"
 #include "stdint.hpp"
 

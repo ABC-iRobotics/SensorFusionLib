@@ -1,42 +1,43 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2) # is enough??
 
 PROJECT(SensorFusion)
-## ---------------------------------------------------------------------------------
-## Use folders in IDEs supporting it
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
 
-## ---------------------------------------------------------------------------------
-## Set /MT or /MD compiler flags
-set(RUNTIME_LIBRARY_SETTINGS "/MT*" CACHE STRING "Code Generation: multi-threaded (/MT*) or multi threaded DLL (/MD*)")
-set_property(CACHE RUNTIME_LIBRARY_SETTINGS PROPERTY STRINGS "/MT*" "/MD*")
-set(CompilerFlags
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
+if (WIN32)
+	## ---------------------------------------------------------------------------------
+	## Use folders in IDEs supporting it
+	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+	set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "")
+	## ---------------------------------------------------------------------------------
+	## Set /MT or /MD compiler flags
+	set(RUNTIME_LIBRARY_SETTINGS "/MT*" CACHE STRING "Code Generation: multi-threaded (/MT*) or multi threaded DLL (/MD*)")
+	set_property(CACHE RUNTIME_LIBRARY_SETTINGS PROPERTY STRINGS "/MT*" "/MD*")
+	set(CompilerFlags
+		CMAKE_CXX_FLAGS
+		CMAKE_CXX_FLAGS_DEBUG
+		CMAKE_CXX_FLAGS_RELEASE
 		CMAKE_CXX_FLAGS_RELWITHDEBINFO
 		CMAKE_CXX_FLAGS_MINSIZEREL
-        CMAKE_C_FLAGS
-        CMAKE_C_FLAGS_DEBUG
-        CMAKE_C_FLAGS_RELEASE
+		CMAKE_C_FLAGS
+		CMAKE_C_FLAGS_DEBUG
+		CMAKE_C_FLAGS_RELEASE
 		CMAKE_C_FLAGS_RELWITHDEBINFO
 		CMAKE_C_FLAGS_MINSIZEREL)
-set(EXTERNAL_FLAG_SETTER "")
-if (RUNTIME_LIBRARY_SETTINGS STREQUAL "/MT*")
-	set(REPLACE_ARGS "/MD" "/MT")
-	set(RUNTIME_INFO "mt")
-else()
-	set(REPLACE_ARGS "/MT" "/MD")
-	set(RUNTIME_INFO "md")
+	set(EXTERNAL_FLAG_SETTER "")
+	if (RUNTIME_LIBRARY_SETTINGS STREQUAL "/MT*")
+		set(REPLACE_ARGS "/MD" "/MT")
+		set(RUNTIME_INFO "mt")
+	else()
+		set(REPLACE_ARGS "/MT" "/MD")
+		set(RUNTIME_INFO "md")
+	endif()
+	foreach(CompilerFlag ${CompilerFlags})
+		string(REPLACE ${REPLACE_ARGS} ${CompilerFlag} "${${CompilerFlag}}")
+		list(APPEND EXTERNAL_FLAG_SETTER -D${CompilerFlag}="${${CompilerFlag}}" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
+	endforeach()
+	## ---------------------------------------------------------------------------------
+	## Set configurations to be used
+	set (CMAKE_CONFIGURATION_TYPES Debug;Release;MinSizeRel;RelWithDebInfo CACHE STRING "Configuration types" FORCE)
 endif()
-foreach(CompilerFlag ${CompilerFlags})
-	string(REPLACE ${REPLACE_ARGS} ${CompilerFlag} "${${CompilerFlag}}")
-	list(APPEND EXTERNAL_FLAG_SETTER -D${CompilerFlag}="${${CompilerFlag}}" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
-endforeach()
-
-## ---------------------------------------------------------------------------------
-## Set configurations to be used
-set (CMAKE_CONFIGURATION_TYPES Debug;Release;MinSizeRel;RelWithDebInfo CACHE STRING "Configuration types" FORCE)
 
 ## ---------------------------------------------------------------------------------
 ## Set folders
@@ -59,14 +60,13 @@ endif()
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
     #This is required to find sodium package for libzmq linking
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+    #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 endif()
 # if(NOT LINUX) should work, too, if you need that
 if(LINUX) 
 	message(STATUS ">>> Linux")
-    set (CMAKE_CXX_STANDARD 11)
-else()
-    if(WIN32)
+	set (CMAKE_CXX_STANDARD 11)
+elseif(WIN32)
         # for Windows operating system in general
         # on *nixes we need this to use C++11 
         if (MSVC_VERSION GREATER_EQUAL "1900")
@@ -76,7 +76,6 @@ else()
                 add_compile_options("/std:c++latest")
             endif()
         endif()
-    endif()
 endif()
 
 ## ---------------------------------------------------------------------------------
@@ -97,8 +96,7 @@ set(THIRD_PARTY_CONFIG Debug;Release)
 set(ONLY_RELEASE Release)
 set(GIT_NAMES GIT Git)
 set(HG_NAMES HG Hg)
-## ---------------------------------------------------------------------------------
-## Find or get ZeroMQ
+
 if (CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
 	message(FATAL_ERROR "Don't use ZMQ on x86 platform!")
 endif()
@@ -106,11 +104,34 @@ set(ZMQ_COMMAND "git clone https://github.com/zeromq/libzmq.git -bv4.3.2")
 set(ZMQ_CACHE_SETTINGS -DBUILD_SHARED=TRUE;-DBUILD_STATIC=TRUE;-DBUILD_TESTS=FALSE;
 	-DENABLE_CPACK=FALSE;-DENABLE_DRAFTS=FALSE;-DENABLE_RADIX_TREE:BOOL=TRUE;-DLIBZMQ_PEDANTIC=TRUE;
 	-DWITH_PERF_TOOL=FALSE;-DWITH_DOCS=FALSE;-DZMQ_BUILD_TESTS=FALSE;
-	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER};
-	-DZMQ_CV_IMPL:STRING=win32api;-DENABLE_CURVE:BOOL=FALSE)
-	# problems with the tests: vs2017 & stl11 (use win32api) !
-	# win32 in general
-	# or stl11/pthreads! must be configured! dont apply on x86
+	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";-DENABLE_CURVE:BOOL=FALSE)
+add_definitions(-DZMQ_STATIC)
+if (WIN32)
+	list(APPEND ZMQ_CACHE_SETTINGS ${EXTERNAL_FLAG_SETTER})
+	add_definitions(-DZMQ_HAVE_WINDOWS)
+	if (CMAKE_GENERATOR STREQUAL "Visual Studio 15 2017")
+		add_definitions(-DZMQ_USE_CV_IMPL_WIN32API)
+		list(APPEND ZMQ_CACHE_SETTINGS -DZMQ_CV_IMPL:STRING=win32api)
+	else()
+		add_definitions(-DZMQ_USE_CV_IMPL_STL11)
+		list(APPEND ZMQ_CACHE_SETTINGS -DZMQ_CV_IMPL:STRING=stl11)
+	endif()
+else()
+	include(CheckCXXSymbolExists)
+	check_cxx_symbol_exists(SO_PEERCRED sys/socket.h ZMQ_HAVE_SO_PEERCRED)
+	check_cxx_symbol_exists(LOCAL_PEERCRED sys/socket.h ZMQ_HAVE_LOCAL_PEERCRED)
+	if (ZMQ_HAVE_SO_PEERCRED)
+		add_definitions(-DZMQ_HAVE_SO_PEERCRED)
+	endif()
+	if (ZMQ_HAVE_LOCAL_PEERCRED)
+		add_definitions(-DZMQ_HAVE_LOCAL_PEERCRED)
+	endif()
+endif()
+if (UNIX)
+	add_definitions(-DZMQ_HAVE_LINUX)
+	add_definitions(-DZMQ_HAVE_TIPC)
+	list(APPEND ZMQ_CACHE_SETTINGS -DZMQ_CV_IMPL:STRING=pthreads)
+endif()
 third_party_policy(ZeroMQ ${ZMQ_COMMAND} ZMQ_CACHE_SETTINGS THIRD_PARTY_CONFIG true GIT_NAMES)
 if(ZeroMQ_FOUND)
 	set_target_properties(libzmq-static PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
@@ -121,10 +142,9 @@ endif()
 set(CPPZMQ_COMMAND "git clone https://github.com/zeromq/cppzmq.git -bv4.5.0")
 set(CPPZMQ_CACHE_SETTINGS -DENABLE_DRAFTS=FALSE;-DBUILD_TESTING=FALSE;-DCPPZMQ_BUILD_TESTS=FALSE;
 	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
-third_party_policy(CPPZMQ ${CPPZMQ_COMMAND} CPPZMQ_CACHE_SETTINGS ONLY_RELEASE false GIT_NAMES)
+third_party_policy(cppzmq ${CPPZMQ_COMMAND} CPPZMQ_CACHE_SETTINGS ONLY_RELEASE false GIT_NAMES)
 macro(requires_cppzmq NAME)
 	target_link_libraries (${NAME} cppzmq-static)
-	add_definitions(-DZMQ_STATIC)
 endmacro(requires_cppzmq)
 ## ---------------------------------------------------------------------------------
 ## Find or get FlatBuffers
@@ -132,8 +152,8 @@ set(FLATBUFFERS_COMMAND "git clone https://github.com/google/flatbuffers.git -bv
 set(FLATBUFFERS_CACHE_SETTINGS -DFLATBUFFERS_BUILD_FLATC=FALSE;-DFLATBUFFERS_BUILD_FLATHASH=FALSE;
 	-DFLATBUFFERS_BUILD_FLATLIB=FALSE;-DFLATBUFFERS_BUILD_TESTS=FALSE;-DFLATBUFFERS_LIBXX_WITH_CLANG=FALSE;
 	-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
-third_party_policy(FlatBuffers ${FLATBUFFERS_COMMAND} FLATBUFFERS_CACHE_SETTINGS ONLY_RELEASE false GIT_NAMES)
-if (FlatBuffers_FOUND)
+third_party_policy(Flatbuffers ${FLATBUFFERS_COMMAND} FLATBUFFERS_CACHE_SETTINGS ONLY_RELEASE false GIT_NAMES)
+if (Flatbuffers_FOUND)
 	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h PATHS "${3RDPARTY_INSTALL_PREFIX}/include")
 endif()
 macro(requires_flatbuffers)

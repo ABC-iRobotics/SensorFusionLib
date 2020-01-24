@@ -31,9 +31,9 @@ DataMsg msg3(int i) {
 
 int main() {
 
-	ZMQPublisher pub1("tcp://*:5555");
-	ZMQPublisher pub2("tcp://*:5556");
-	ZMQPublisher pub3("tcp://*:5557");
+	ZMQPublisher pub1("tcp://*:15555");
+	ZMQPublisher pub2("tcp://*:15556");
+	ZMQPublisher pub3("tcp://*:15557");
 
 
 	int i = 1;

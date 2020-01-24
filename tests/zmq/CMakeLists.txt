@@ -105,8 +105,44 @@ set(tests
 )
 
 if(NOT WIN32)
-	list(APPEND tests
-	test_security_gssapi)
+  list(APPEND tests test_security_gssapi)
+  list(APPEND tests
+    test_ipc_wildcard
+    test_pair_ipc
+    test_rebind_ipc
+    test_reqrep_ipc
+    test_proxy
+    test_proxy_hwm
+    test_proxy_single_socket
+    test_proxy_terminate
+    test_getsockopt_memset
+    test_filter_ipc
+    test_stream_exceeds_buffer
+    test_router_mandatory_hwm
+    test_use_fd
+    test_zmq_poll_fd
+  )
+  if(HAVE_FORK)
+    list(APPEND tests test_fork)
+  endif()
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    list(APPEND tests
+      test_abstract_ipc
+      )
+    if(ZMQ_HAVE_TIPC)
+      list(APPEND tests
+        test_address_tipc
+        test_pair_tipc
+        test_reqrep_device_tipc
+        test_reqrep_tipc
+        test_router_mandatory_tipc
+        test_sub_forward_tipc
+        test_connect_delay_tipc
+        test_shutdown_stress_tipc
+        test_term_endpoint_tipc
+      )
+    endif()
+  endif()
 endif()
 
 include_directories("${CMAKE_CURRENT_LIST_DIR}/../unity")
