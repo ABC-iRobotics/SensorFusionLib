@@ -24,4 +24,7 @@ find_package(SensorFusion 0.0.1)
 
 add_executable(sg "main.cpp")
 
-target_link_libraries(sg SensorFusion::sf_core SensorFusion::sf_communication SensorFusion::sf_plotter)
+target_link_libraries(sg SensorFusion::sf_core SensorFusion::sf_communication)
+if (SF_HAVE_PLOTTER)
+	target_link_libraries(sg SensorFusion::sf_plotter)
+endif()

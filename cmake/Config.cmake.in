@@ -48,11 +48,14 @@ macro(find_dependency_in_install name version)
 	endif()
 endmacro()
 #Find OpenCV
-set(OpenCV_STATIC TRUE)
-find_dependency_in_install(OpenCV "")
-if(OpenCV_FOUND)
-	set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
-	set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+set(SF_HAVE_PLOTTER @ADD_PLOTTER@)
+if (SF_HAVE_PLOTTER)
+	set(OpenCV_STATIC TRUE)
+	find_dependency_in_install(OpenCV "")
+	if(OpenCV_FOUND)
+		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
+		set_target_properties(IlmImf PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+	endif()
 endif()
 #Find Eigen3
 find_dependency_in_install(Eigen3 3.3)

@@ -273,6 +273,7 @@ install(CODE "
 	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/sf_version.h.in\"
 		\"${CMAKE_INSTALL_PREFIX}/include/sf_version.h\" @ONLY)
 
+	set(ADD_PLOTTER ${ADD_PLOTTER})
 	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/Config.cmake.in\"
 	\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
 ")
