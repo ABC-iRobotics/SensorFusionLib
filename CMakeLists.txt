@@ -201,18 +201,24 @@ endif(ADD_PLOTTER)
 ## Names used in the CMake package
 set(export_config_name "SensorFusion")
 set(export_targets ${export_config_name}Targets)
-set(export_targets_name ${export_config_name}Targets-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO})
+if(WIN32)
+	set(export_targets_name ${export_config_name}Targets-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO})
+else()
+	set(export_targets_name ${export_config_name}Targets)
+endif()
 
 ## ---------------------------------------------------------------------------------
 ## Macro to setup archive targets
 macro(install_lib NAME HEADERS)
 	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL} "${NAME}" PARENT_SCOPE) #for configuring Config.cmake in installing.cmake
-	set_target_properties(${NAME} PROPERTIES FOLDER "Lib"
+	set_target_properties(${NAME} PROPERTIES FOLDER "Lib" IMPORTED_LOCATION lib)
+	if(WIN32)
+		set_target_properties(${NAME} PROPERTIES
 			RELEASE_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}"
 			RELWITHDEBINFO_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-relwithdebinfo"
 			MINSIZEREL_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-minsizerel"
-			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-debug"
-			IMPORTED_LOCATION lib)
+			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-debug")
+	endif()
 	target_include_directories(${NAME} INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
 		$<INSTALL_INTERFACE:include>)
@@ -247,36 +253,62 @@ install(EXPORT ${export_targets}
   DESTINATION "cmake"
   NAMESPACE ${export_config_name}::)
 # Because git version cannot be returned in build-time, the install goes via install(CODE *)...
-install(CODE "
-	include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
+if(WIN32)
+	install(CODE "
+		include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
 
-	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL})
-	set(RUNTIME_INFO ${RUNTIME_INFO})
-	set(export_config_name ${export_config_name})
-	set(export_targets ${export_targets})
+		set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL})
+		set(RUNTIME_INFO ${RUNTIME_INFO})
+		set(export_config_name ${export_config_name})
+		set(export_targets ${export_targets})
 
-	#----------
-	# Create a script to check the current export to the latest *Version.cmake
-	file(WRITE \"${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-\${BUILD_TYPE}.cmake\" \"
-	if(NOT SF_VERSION_FULL STREQUAL \\\"\${GIT_VERSION_FULL}\\\")
-		message(FATAL_ERROR \\\"${export_config_name} package: wrong \${BUILD_TYPE} version\\\")
-	endif()\")
+		#----------
+		# Create a script to check the current export to the latest *Version.cmake
+		file(WRITE \"${CMAKE_INSTALL_PREFIX}/cmake/${export_config_name}VersionCheck-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-\${BUILD_TYPE}.cmake\" \"
+		if(NOT SF_VERSION_FULL STREQUAL \\\"\${GIT_VERSION_FULL}\\\")
+			message(FATAL_ERROR \\\"${export_config_name} package: wrong \${BUILD_TYPE} version\\\")
+		endif()\")
 
-	#------------------------------------------------------------------------------
-	# Configure <export_config_name>ConfigVersion.cmake common to build and install tree
-	include(CMakePackageConfigHelpers)
-	write_basic_package_version_file(
-		\"${CMAKE_INSTALL_PREFIX}/${export_config_name}ConfigVersion.cmake\"
-		VERSION \${GIT_TAG_VERSION}
-		COMPATIBILITY ExactVersion)
+		#------------------------------------------------------------------------------
+		# Configure <export_config_name>ConfigVersion.cmake common to build and install tree
+		include(CMakePackageConfigHelpers)
+		write_basic_package_version_file(
+			\"${CMAKE_INSTALL_PREFIX}/${export_config_name}ConfigVersion.cmake\"
+			VERSION \${GIT_TAG_VERSION}
+			COMPATIBILITY ExactVersion)
 
-	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/sf_version.h.in\"
-		\"${CMAKE_INSTALL_PREFIX}/include/sf_version.h\" @ONLY)
+		configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/sf_version.h.in\"
+			\"${CMAKE_INSTALL_PREFIX}/include/sf_version.h\" @ONLY)
 
-	set(ADD_PLOTTER ${ADD_PLOTTER})
-	configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/Config.cmake.in\"
-	\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
-")
+		set(ADD_PLOTTER ${ADD_PLOTTER})
+		configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/ConfigWindows.cmake.in\"
+		\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
+	")
+else()
+	install(CODE "
+		include(\"${CMAKE_SOURCE_DIR}/cmake/GetGitVersion.cmake\")
+
+		set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL})
+		set(export_config_name ${export_config_name})
+		set(export_targets ${export_targets})
+		set(export_targets_name ${export_targets_name})
+
+		#------------------------------------------------------------------------------
+		# Configure <export_config_name>ConfigVersion.cmake common to build and install tree
+		include(CMakePackageConfigHelpers)
+		write_basic_package_version_file(
+			\"${CMAKE_INSTALL_PREFIX}/${export_config_name}ConfigVersion.cmake\"
+			VERSION \${GIT_TAG_VERSION}
+			COMPATIBILITY ExactVersion)
+
+		configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/sf_version.h.in\"
+			\"${CMAKE_INSTALL_PREFIX}/include/sf_version.h\" @ONLY)
+
+		set(ADD_PLOTTER ${ADD_PLOTTER})
+		configure_file(\"${CMAKE_CURRENT_LIST_DIR}/cmake/ConfigLinux.cmake.in\"
+		\"${CMAKE_INSTALL_PREFIX}/${export_config_name}Config.cmake\" @ONLY)
+	")
+endif()
 
 ## ---------------------------------------------------------------------------------
 ## To generate doxygen documentation automatically during install
@@ -299,19 +331,7 @@ if (BUILD_TESTING)
 
 endif()
 
-
-
-
-
-
-#•todo: check cross compile...
-#linux, ros compatibility?
-
 #readme: tested on:
 #versions, versions of third parties...
 
 #TODO: update package title page, pictures...
-
-#Googletests - call on third parties??
-
-# TODO: add gtest, linux compatibility?

@@ -42,7 +42,7 @@ endif()
 #Find dependencies
 include(CMakeFindDependencyMacro)
 macro(find_dependency_in_install name version)
-	find_dependency(${name} ${version} QUIET PATHS "${CMAKE_CURRENT_LIST_DIR}/Third parties" NO_DEFAULT_PATH)
+	find_dependency(${name} ${version} QUIET PATHS "${CMAKE_CURRENT_LIST_DIR}/ThirdParties" NO_DEFAULT_PATH)
 	if (NOT ${name}_FOUND)
 		find_dependency(${name} ${version} REQUIRED)
 	endif()
@@ -62,7 +62,7 @@ find_dependency_in_install(Eigen3 3.3)
 #Find FlatBuffers
 find_dependency_in_install(FlatBuffers "")
 if (FlatBuffers_FOUND)
-	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h PATHS "${CMAKE_CURRENT_LIST_DIR}/Third parties/include")
+	find_path(FLATBUFFERS_INCLUDE_DIR NAMES flatbuffers/flatbuffers.h PATHS "${CMAKE_CURRENT_LIST_DIR}/ThirdParties/include")
 endif()
 #Find ZeroMQ
 find_dependency_in_install(ZeroMQ "")
