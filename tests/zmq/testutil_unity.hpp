@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "testutil.hpp"
 
-#include "../unity/unity.h"
+#include "../common/unity.h"
 
 // Internal helper functions that are not intended to be directly called from
 // tests. They must be declared in the header since they are used by macros.

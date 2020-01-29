@@ -28,11 +28,9 @@
 */
 
 #include "testutil.hpp"
-
-#include "testutil.hpp"
 #include "testutil_unity.hpp"
 
-#include <unity.h>
+#include "../common/unity.h"
 
 const size_t services = 5;
 

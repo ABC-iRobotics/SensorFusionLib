@@ -29,7 +29,7 @@
 
 #include "testutil.hpp"
 
-#include <unity.h>
+#include "../common/unity.h"
 
 void setUp ()
 {

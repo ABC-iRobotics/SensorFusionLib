@@ -31,7 +31,7 @@
 
 #include "testutil_unity.hpp"
 
-#include <unity.h>
+#include "../common/unity.h"
 
 void *sock;
 

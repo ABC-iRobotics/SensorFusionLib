@@ -1,4 +1,4 @@
-# Add testutil-static
+# Add testutil-static target
 set(TESTUTIL_SOURCES
 	testutil.cpp
 	testutil.hpp
@@ -12,10 +12,11 @@ set(TESTUTIL_SOURCES
 add_library(testutil-static STATIC ${TESTUTIL_SOURCES})
 set_target_properties(testutil-static PROPERTIES FOLDER "Tests/ZMQ")
 target_link_libraries(testutil-static libzmq-static ${OPTIONAL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} unity)
+
 # use testutil-static for both tests and unit tests
 set(TESTUTIL_LIB testutil-static)
 if(MSVC_VERSION LESS 1700)
-	set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../unity/unity.c" PROPERTIES LANGUAGE CXX)
+	set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/../common/unity.c" PROPERTIES LANGUAGE CXX)
 endif()
 if(MSVC_VERSION LESS 1600)
 	target_compile_definitions(unity PUBLIC "UNITY_EXCLUDE_STDINT_H")
