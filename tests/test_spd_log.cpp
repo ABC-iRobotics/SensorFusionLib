@@ -1,4 +1,4 @@
-#include "common/unity.h"
+#include "Common/unity.h"
 void setUp() {}
 void tearDown() {}
 
@@ -7,9 +7,6 @@ void tearDown() {}
 #include <iostream>
 
 using namespace SF;
-
-#include <filesystem>
-#include <iostream>
 
 void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 
@@ -22,7 +19,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	std::string filename = "test_log.txt";
 	{
 		std::vector<double> results = std::vector<double>();
-		auto logger = spdLogWrite(filename.c_str(), "log_tester");
+		spdLogWrite logger(filename.c_str(), "log_tester");
 		for (int n = 0; n < Ncases; n++) {
 			auto start = SF::Now();
 			for (long int i = 0; i < Ndata; i++)
@@ -134,7 +131,6 @@ void test_read_write(int Ndata) {
 			w.WriteDataMsg(*msgs[i]);
 	}
 	// Read the log - checking the results...
-	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	{
 		spdLogRead r(filename);
 		int i = 0;

@@ -60,18 +60,18 @@ void spdLogWrite::WriteDataMsg(const DataMsg & msg) {
 	fmt::format_to(buf, " ");
 	auto micros = spdlog::details::fmt_helper::time_fraction<std::chrono::microseconds>(msg.GetTime()).count();
 	auto tm = spdlog::details::os::localtime(std::chrono::system_clock::to_time_t(msg.GetTime()));
-	fmt::format_to(buf, "{}/", unsigned int(1900 + tm.tm_year));
-	spdlog::details::fmt_helper::pad2(unsigned int(1 + tm.tm_mon), buf);
+	fmt::format_to(buf, "{}/", static_cast<unsigned int>(1900 + tm.tm_year));
+	spdlog::details::fmt_helper::pad2(static_cast<unsigned int>(1 + tm.tm_mon), buf);
 	fmt::format_to(buf, "/");
-	spdlog::details::fmt_helper::pad2(unsigned int(tm.tm_mday), buf);
+	spdlog::details::fmt_helper::pad2(static_cast<unsigned int>(tm.tm_mday), buf);
 	fmt::format_to(buf, "-");
-	spdlog::details::fmt_helper::pad2(unsigned int(tm.tm_hour), buf);
+	spdlog::details::fmt_helper::pad2(static_cast<unsigned int>(tm.tm_hour), buf);
 	fmt::format_to(buf, ":");
-	spdlog::details::fmt_helper::pad2(unsigned int(tm.tm_min), buf);
+	spdlog::details::fmt_helper::pad2(static_cast<unsigned int>(tm.tm_min), buf);
 	fmt::format_to(buf, ":");
-	spdlog::details::fmt_helper::pad2(unsigned int(tm.tm_sec), buf);
+	spdlog::details::fmt_helper::pad2(static_cast<unsigned int>(tm.tm_sec), buf);
 	fmt::format_to(buf, "-");
-	spdlog::details::fmt_helper::pad6(unsigned int(micros), buf);
+	spdlog::details::fmt_helper::pad6(static_cast<unsigned int>(micros), buf);
 	fmt::format_to(buf, " ");
 	if (msg.HasValue()) {
 		Eigen::VectorXd v = msg.GetValue();

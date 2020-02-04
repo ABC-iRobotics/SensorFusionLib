@@ -2,6 +2,7 @@
 
 #include "defs.h"
 #include "StatisticValue.h"
+#include <memory>
 
 /*! \brief General message format containing a StatisticValue, a timestamp and information about its DataType and source
 *

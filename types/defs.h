@@ -30,11 +30,11 @@ namespace SF {
 
 	DTime duration_since_epoch(const Time& t);
 
-	template<intmax_t a, intmax_t b>
-	inline DTime duration_cast(const std::chrono::duration<long long, std::ratio<a, b>>& in);
+	template<class _Rep, class _Period>
+	inline DTime duration_cast(const std::chrono::duration<_Rep, _Period>& in);
 
-	template<intmax_t a, intmax_t b>
-	inline double duration_cast_to_sec(const std::chrono::duration<long long, std::ratio<a, b>>& in);
+	template<class _Rep, class _Period>
+	inline double duration_cast_to_sec(const std::chrono::duration<_Rep, _Period>& in);
 
 	Time InitFromDurationSinceEpochInMicroSec(const long long& value);
 
@@ -42,13 +42,13 @@ namespace SF {
 
 	Time Now();
 
-	template<intmax_t a, intmax_t b>
-	inline DTime duration_cast(const std::chrono::duration<long long, std::ratio<a, b>>& in) {
+	template<class _Rep,class _Period>
+	inline DTime duration_cast(const std::chrono::duration<_Rep, _Period>& in) {
 		return std::chrono::duration_cast<DTime>(in);
 	}
 
-	template<intmax_t a, intmax_t b>
-	inline double duration_cast_to_sec(const std::chrono::duration<long long, std::ratio<a, b>>& in) {
+	template<class _Rep, class _Period>
+	inline double duration_cast_to_sec(const std::chrono::duration<_Rep, _Period>& in) {
 		return duration_cast(in).count() / 1e6;
 	}
 }
