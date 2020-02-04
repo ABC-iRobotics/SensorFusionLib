@@ -160,6 +160,16 @@ macro(requires_flatbuffers)
 	include_directories(${FLATBUFFERS_INCLUDE_DIR}) #targetinclude_directory????
 endmacro(requires_flatbuffers)
 ## ---------------------------------------------------------------------------------
+## Find or get SPDLOG
+set(SPDLOG_COMMAND "git clone https://github.com/gabime/spdlog.git -bv1.5.0")
+set(SPDLOG_CACHE_SETTINGS -DSPDLOG_BUILD_BENCH=FALSE;-DSPDLOG_BUILD_EXAMPLE=FALSE;
+	-DSPDLOG_BUILD_EXAMPLE_HO=FALSE;-DSPDLOG_BUILD_TESTS=FALSE;-DSPDLOG_BUILD_TESTS_HO=FALSE;
+	-DSPDLOG_INSTALL=TRUE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";${EXTERNAL_FLAG_SETTER})
+third_party_policy(spdlog ${SPDLOG_COMMAND} SPDLOG_CACHE_SETTINGS THIRD_PARTY_CONFIG TRUE GIT_NAMES)
+macro(requires_spdlog NAME)
+	target_link_libraries (${NAME} spdlog::spdlog)
+endmacro(requires_spdlog)
+## ---------------------------------------------------------------------------------
 ## Find or get Eigen
 set(EIGEN3_COMMAND "hg clone --verbose https://bitbucket.org/eigen/eigen -r3.3.7")
 set(EIGEN3_CACHE_SETTINGS -DBUILD_TESTING=FALSE;-DCMAKE_INSTALL_PREFIX="${3RDPARTY_INSTALL_PREFIX}";

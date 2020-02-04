@@ -1,4 +1,4 @@
-add_subdirectory(common)
+add_subdirectory(Common)
 
 # ZMQ tests
 if (ZeroMQ_FOUND)
@@ -7,3 +7,23 @@ if (ZeroMQ_FOUND)
 		add_subdirectory(zmq)
 	endif()
 endif()
+
+# SF tests
+set(tests
+	test_spd_log
+	)
+foreach(test ${tests})
+	add_executable(${test} ${test}.cpp)
+	set_target_properties(${test} PROPERTIES FOLDER "Tests")
+	target_link_libraries(${test} unity)
+
+	if(WIN32)
+		add_test(NAME ${test} WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND ${test})
+	else()
+		add_test(NAME ${test} COMMAND ${test})
+	endif()
+	set_tests_properties(${test} PROPERTIES TIMEOUT 10)
+	set_tests_properties(${test} PROPERTIES SKIP_RETURN_CODE 77)
+endforeach()
+
+target_link_libraries(test_spd_log sf_communication)
