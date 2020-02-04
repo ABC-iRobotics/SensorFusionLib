@@ -10,12 +10,15 @@ KalmanFilter::~KalmanFilter()
 {
 }
 
-void KalmanFilter::Step(TimeMicroSec dT) { // update, collect measurement, correction via Kalman-filtering
+using namespace SF;
+
+void KalmanFilter::Step(DTime dT) { // update, collect measurement, correction via Kalman-filtering
+	double dT_sec = duration_cast_to_sec(dT);
 	Eigen::MatrixXd sg1, sg2;
-	StatisticValue x_pred = Eval(STATE_UPDATE, dT.TimeInS(), (*this)(STATE), (*this)(DISTURBANCE), sg1, sg2);
+	StatisticValue x_pred = Eval(STATE_UPDATE, dT_sec, (*this)(STATE), (*this)(DISTURBANCE), sg1, sg2);
 	Eigen::MatrixXd Syxpred;
 	StatisticValue y_meas = (*this)(OUTPUT);
-	StatisticValue y_pred = Eval(OUTPUT_UPDATE, dT.TimeInS(), x_pred, (*this)(NOISE), Syxpred, sg2);
+	StatisticValue y_pred = Eval(OUTPUT_UPDATE, dT_sec, x_pred, (*this)(NOISE), Syxpred, sg2);
 
 	PredictionDone(x_pred, y_pred);
 

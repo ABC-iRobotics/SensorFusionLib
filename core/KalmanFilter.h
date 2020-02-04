@@ -36,6 +36,8 @@
 *
 * where \f$ \mathbf K = \overline{\Sigma}_{xy,k}\left(\overline{\Sigma}_{yy,k} + \Sigma_{yy,meas,k} \right)^{-1} \f$
 */
+using namespace SF;
+
 class KalmanFilter : public SystemManager {
 public:
 	KalmanFilter(BaseSystemData data, StatisticValue state_); /*!< Constructor. */
@@ -45,7 +47,7 @@ public:
 *
 * Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
 */
-	void Step(TimeMicroSec dT) override;
+	void Step(DTime dT) override;
 
 	typedef std::shared_ptr<KalmanFilter> KalmanFilterPtr; /*!< Shared pointer type for the KalmanFilter class */
 };

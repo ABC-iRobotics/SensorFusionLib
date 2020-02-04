@@ -1,13 +1,7 @@
 #include "DataMsg.h"
-
-#include "TimeMicroSec.h"
 #include <iostream>
 
-DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, TimeMicroSec time_) :
-	sourceID(ID), dataType(type), dataSource(source), time(time_),
-	empty(false), hasValue(false), hasVariance(false) {}
-
-DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, TimeMicroSec time_) :
+DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, const SF::Time& time_) :
 	sourceID(ID), dataType(type), dataSource(source), time(time_),
 	empty(false), hasValue(true), hasVariance(true), value(data.vector), variance(data.variance) {}
 
@@ -31,10 +25,8 @@ DataType DataMsg::GetDataType() const { return dataType; }
 
 OperationType DataMsg::GetDataSourceType() const { return dataSource; }
 
-TimeMicroSec DataMsg::GetTime() const { return time; }
-
 void DataMsg::print() const {
-	auto t = TimeMicroSec();
+	auto t = SF::Now();
 	if (IsEmpty()) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
@@ -71,7 +63,7 @@ void DataMsg::print() const {
 	default:
 		break;
 	}
-	printf("\n Age: %f [ms]\n", (t - TimeMicroSec(time)).TimeInS());
+	printf("\n Age: %lld [ms]\n", SF::duration_cast(t - time).count());
 	if (hasValue)
 		std::cout << "Value:\n" << value << std::endl;
 	if (hasVariance)
@@ -80,7 +72,7 @@ void DataMsg::print() const {
 }
 
 DataMsg::DataMsg() // to initialize empty instances
-	: empty(true), hasValue(false), hasVariance(false) {}
+	: empty(true), hasValue(false), hasVariance(false), dataType(INVALID_DATATYPE), dataSource(INVALID_OPERATIONTYPE) {}
 
 void DataMsg::SetVarianceMatrix(const Eigen::MatrixXd & m) {
 	hasVariance = true;

@@ -91,7 +91,7 @@ public:
 * Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
 */
 	// TODO: perform further tests on the adaptive methods
-	void Step(TimeMicroSec dT) override;
+	void Step(DTime dT) override;
 
 	/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
 	*

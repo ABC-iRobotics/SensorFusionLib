@@ -87,7 +87,7 @@ class Msg(object):
     def TimestampInUs(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(14))
         if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Uint64Flags, o + self._tab.Pos)
+            return self._tab.Get(flatbuffers.number_types.Int64Flags, o + self._tab.Pos)
         return 0
 
 def MsgStart(builder): builder.StartObject(6)
@@ -98,5 +98,5 @@ def MsgAddValueVector(builder, valueVector): builder.PrependUOffsetTRelativeSlot
 def MsgStartValueVectorVector(builder, numElems): return builder.StartVector(4, numElems, 4)
 def MsgAddVarianceMatrix(builder, varianceMatrix): builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(varianceMatrix), 0)
 def MsgStartVarianceMatrixVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def MsgAddTimestampInUs(builder, timestampInUs): builder.PrependUint64Slot(5, timestampInUs, 0)
+def MsgAddTimestampInUs(builder, timestampInUs): builder.PrependInt64Slot(5, timestampInUs, 0)
 def MsgEnd(builder): return builder.EndObject()

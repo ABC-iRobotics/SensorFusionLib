@@ -87,6 +87,8 @@
 * -- Step(Ts) for filtering
 * - Get the results or register a Callback via SetCallback()
  */
+using namespace SF;
+
 class SystemManager {
 public:
 /*! \brief If constant value is guessed as the \f$ \mathbf y_i \f$ output of a system, its status is CONSTANT, othervise OBSOLETHE / UPTODATE.
@@ -192,7 +194,7 @@ public:
 	*
 	* It must call SystemManager::StepClock, SystemManager::PredictionDone, SystemManager::FilteringDone protected functions
 	*/
-	virtual void Step(TimeMicroSec Ts) = 0;
+	virtual void Step(DTime dT) = 0;
 
 /*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
 	*
@@ -316,7 +318,7 @@ private:
 	BaseSystemData baseSystem; /*!< Stores the data related to the basesystem */
 	std::vector<SensorData> sensorList;  /*!< Stores the data related to the sensors */
 	StatisticValue state;  /*!< Stores the state of the system */
-	TimeMicroSec time;  /*!< Time, initialized to zero, incremented by Step(Ts) via StepClock(Ts) */
+	//TimeMicroSec time;  /*!< Time, initialized to zero, incremented by Step(Ts) via StepClock(Ts) */
 	bool hasCallback;  /*!< If callback was set */
 	Callback callback;  /*!< The callback if it was set */
 };

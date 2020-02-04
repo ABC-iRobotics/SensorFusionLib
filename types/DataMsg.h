@@ -1,7 +1,6 @@
 #pragma once
 
 #include "defs.h"
-#include "TimeMicroSec.h"
 #include "StatisticValue.h"
 
 /*! \brief General message format containing a StatisticValue, a timestamp and information about its DataType and source
@@ -17,16 +16,20 @@ class DataMsg {
 	bool hasValue;
 	Eigen::MatrixXd variance;
 	bool hasVariance;
-	TimeMicroSec time;
+	SF::Time time;
 
 public:
+	SF::Time GetTime() const {
+		return time;
+	}
+
 	DataMsg(); /*!< Empty constructor */
 
-	DataMsg(unsigned char ID, DataType type, OperationType source,
-		TimeMicroSec time_ = TimeMicroSec()); /*!< Constructor where the data can be set later*/
+	DataMsg(unsigned char ID, DataType type, OperationType source, const SF::Time& time_ = SF::Now())
+		: dataType(type), dataSource(source), sourceID(ID), empty(false), time(time_) {}
 
 	DataMsg(unsigned char ID, DataType type, OperationType source,
-		StatisticValue data, TimeMicroSec time_ = TimeMicroSec()); /*!< Constructor */
+		StatisticValue data, const SF::Time& time = SF::Now()); /*!< Constructor */
 
 	bool IsEmpty() const; /*!< To check if the instance is empty */
 
@@ -48,12 +51,18 @@ public:
 
 	OperationType GetDataSourceType() const; /*!< To get the type of the source as an OperationType */
 
-	TimeMicroSec GetTime() const;  /*!< To get its timestamp */
-
 	void print() const; /*!< To show its content */
 
 	void SetVarianceMatrix(const Eigen::MatrixXd& m); /*!< To set covariance matrix */
 
 	void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
-};
 
+	typedef std::shared_ptr<DataMsg> DataMsgPtr;
+
+	typedef std::vector<DataMsgPtr> DataMsgPtrList;
+
+	template<class... Args>
+	static DataMsg::DataMsgPtr CreateSharedPtr(Args&&... args) {
+		return std::make_shared<DataMsg>(args...);
+	}
+};

@@ -5,13 +5,12 @@ set (HEADERS
 	StatisticValue.h
 	defs.h
 	DataMsg.h
-	TimeMicroSec.h
 	)
 
 set (SOURCES
 	StatisticValue.cpp
+	defs.cpp
 	DataMsg.cpp
-	TimeMicroSec.cpp
 	)
 
 # Add the dinamic library target to the project
