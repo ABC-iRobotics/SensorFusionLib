@@ -83,10 +83,10 @@ bool IsEqual(const DataMsg& d1, const DataMsg& d2) {
 	if (d1.GetTime() != d2.GetTime())
 		return false;
 	if (d1.HasValue())
-		if (d1.GetValue() != d2.GetValue())
+		if (d1.GetValue().isApprox(d2.GetValue()))
 			return false;
 	if (d1.HasVariance())
-		if (d1.GetVariance() != d2.GetVariance())
+		if (d1.GetVariance().isApprox(d2.GetVariance()))
 			return false;
 	return true;
 }

@@ -16,6 +16,8 @@ namespace SF {
 
 		~spdLogWrite();
 
+		spdLogWrite(const spdLogWrite&) = delete;
+
 		void WriteDataMsg(const DataMsg& data);
 	};
 
