@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace SF;
+
 int main() {
 	
 	Eigen::MatrixXd M = Eigen::MatrixXd::Identity(4, 4);

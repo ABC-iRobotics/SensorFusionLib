@@ -1,5 +1,7 @@
 #include "ZMQSubscriber.h"
 
+using namespace SF;
+
 int main(void) {
 	ZMQRTSubscriber sub;
 	sub.addSocket("tcp://localhost:5555");

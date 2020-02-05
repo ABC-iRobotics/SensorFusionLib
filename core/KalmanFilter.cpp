@@ -1,6 +1,6 @@
 #include "KalmanFilter.h"
 
-
+using namespace SF;
 
 KalmanFilter::KalmanFilter(BaseSystemData data, StatisticValue state_) :
 	SystemManager(data, state_) {}

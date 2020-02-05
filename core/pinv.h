@@ -2,6 +2,10 @@
 
 #include <Eigen/QR> 
 
-Eigen::MatrixXd pinv(const Eigen::MatrixXd& in);
+namespace SF {
 
-bool eq(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b);
+	Eigen::MatrixXd pinv(const Eigen::MatrixXd& in);
+
+	bool eq(const Eigen::MatrixXd& a, const Eigen::MatrixXd& b); // Eigen::MatrixXd::isApprox???
+
+}

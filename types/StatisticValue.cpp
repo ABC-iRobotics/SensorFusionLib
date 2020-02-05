@@ -1,5 +1,7 @@
 #include "StatisticValue.h"
 
+using namespace SF;
+
 StatisticValue::StatisticValue(const Eigen::VectorXd& vector_, const Eigen::MatrixXd& variance_, bool isIndependent_) :
 	vector(vector_), variance(variance_), isIndependent(isIndependent_) {
 	if (vector_.size() != variance.rows() || vector_.size() != variance.cols())

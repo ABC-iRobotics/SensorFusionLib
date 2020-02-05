@@ -1,5 +1,8 @@
 #include "Sensor.h"
 #include "pinv.h"
+
+using namespace SF;
+
 // The nonlinear parts and the dependencies are by default zeros
 
 Eigen::VectorXi Sensor::getStateUpdateNonlinXbsDep() const {

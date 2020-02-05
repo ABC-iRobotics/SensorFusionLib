@@ -1,6 +1,8 @@
 #include <iostream>
 #include "PartialCholevski.h"
 
+using namespace SF;
+
 typedef Eigen::LLT<Eigen::MatrixXd>::RealScalar Real;
 
 Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {

@@ -1,28 +1,28 @@
 #pragma once
 #include "Eigen/Dense"
-
-enum DataType {
-	NOISE,
-	DISTURBANCE,
-	STATE,
-	OUTPUT,
-	INVALID_DATATYPE }; /*!< The relevant signal types */
-
-enum TimeUpdateType {
-	STATE_UPDATE,
-	OUTPUT_UPDATE,
-	INVALID_TIMEUPDATETYPE }; /*!< To identify if the STATE_UPDATE or the OUTPUT_UPDATE part of time update is considered */
-
-enum OperationType {
-	FILTER_TIME_UPDATE,
-	FILTER_MEAS_UPDATE,
-	SENSOR,
-	FILTER_PARAM_ESTIMATION,
-	GROUND_TRUTH,
-	INVALID_OPERATIONTYPE }; /*!< The relevant sources of signals */
-
 #include <chrono>
+
 namespace SF {
+
+	enum DataType {
+		NOISE,
+		DISTURBANCE,
+		STATE,
+		OUTPUT,
+		INVALID_DATATYPE }; /*!< The relevant signal types */
+
+	enum TimeUpdateType {
+		STATE_UPDATE,
+		OUTPUT_UPDATE,
+		INVALID_TIMEUPDATETYPE }; /*!< To identify if the STATE_UPDATE or the OUTPUT_UPDATE part of time update is considered */
+
+	enum OperationType {
+		FILTER_TIME_UPDATE,
+		FILTER_MEAS_UPDATE,
+		SENSOR,
+		FILTER_PARAM_ESTIMATION,
+		GROUND_TRUTH,
+		INVALID_OPERATIONTYPE }; /*!< The relevant sources of signals */
 
 	typedef std::chrono::time_point<std::chrono::system_clock> Time;
 

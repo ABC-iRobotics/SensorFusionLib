@@ -1,13 +1,15 @@
 #include "pinv.h"
 
-Eigen::MatrixXd pinv(const Eigen::MatrixXd & in) {
+using namespace SF;
+
+Eigen::MatrixXd SF::pinv(const Eigen::MatrixXd & in) {
 	if (in.cols()*in.rows() == 0)
 		return in.transpose();
 	else
 		return in.completeOrthogonalDecomposition().pseudoInverse();
 }
 
-bool eq(const Eigen::MatrixXd & a, const Eigen::MatrixXd & b) {
+bool SF::eq(const Eigen::MatrixXd & a, const Eigen::MatrixXd & b) {
 	//std::cout << (a - b).norm() << " ?<? " << (a.norm() + b.norm() + 1e-10)*1e-10 << std::endl;
 	return (a - b).norm() < (a.norm() + b.norm() + 1e-10)*1e-10;
 }

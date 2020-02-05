@@ -3,6 +3,8 @@
 #include "msg_generated.h"
 #include <iostream>
 
+using namespace SF;
+
 Buffer::Buffer(const unsigned char * buf_, size_t size_) :
 	size(size_) {
 	_allocandcopy(buf_);
@@ -81,7 +83,7 @@ Buffer::Buffer(const DataMsg & data) {
 	if (data.HasVariance())
 		msgBuilder.add_variance_matrix(fbb_variance);
 
-	msgBuilder.add_timestamp_in_us(SF::duration_since_epoch(data.GetTime()).count());
+	msgBuilder.add_timestamp_in_us(duration_since_epoch(data.GetTime()).count());
 
 	auto msg = msgBuilder.Finish();
 	fbb.Finish(msg);
@@ -150,7 +152,7 @@ DataMsg Buffer::ExtractDataMsg() const {
 
 	auto sourceID = msg->sensorID();
 
-	DataMsg out(sourceID, type, source, SF::Time(SF::DTime(timestamp_in_us)));
+	DataMsg out(sourceID, type, source, Time(DTime(timestamp_in_us)));
 
 	if (flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VALUE_VECTOR)) {
 		auto v = msg->value_vector();

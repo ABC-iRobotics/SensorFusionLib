@@ -1,6 +1,8 @@
 #include "WAUKF.h"
 #include "PartialCholevski.h"
 
+using namespace SF;
+
 const WAUKF::mapOfVectorWindows & WAUKF::_getValueWindows(DataType signal) const {
 	switch (signal) {
 	case DISTURBANCE:

@@ -1,6 +1,8 @@
 #include <thread>
 #include "ZMQPublisher.h"
 
+using namespace SF;
+
 DataMsg msg1(int i) {
 	DataMsg msg(5, STATE, SENSOR);
 	msg.SetVarianceMatrix(Eigen::MatrixXd::Identity(4, 4)*i);

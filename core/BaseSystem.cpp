@@ -2,6 +2,8 @@
 #include "pinv.h"
 // The nonlinear parts and the dependencies are by default zeros
 
+using namespace SF;
+
 BaseSystem::BaseSystem(unsigned int ID)
 	: System(ID) {}
 

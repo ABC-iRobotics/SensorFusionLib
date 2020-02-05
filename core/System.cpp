@@ -1,6 +1,8 @@
 #include "System.h"
 #include <iostream>
 
+using namespace SF;
+
 System::System(unsigned int ID_) : ID(ID_) {}
 
 System::~System() {}

@@ -1,6 +1,8 @@
 #include "SystemManager.h"
 #include "PartialCholevski.h"
 
+using namespace SF;
+
 SystemManager::SystemData::SystemData(const StatisticValue& noise_,
 	const StatisticValue& disturbance_, unsigned int outputSize) :
 	noise(noise_), measurement(StatisticValue(outputSize)), disturbance(disturbance_), measStatus(OBSOLETHE) {}

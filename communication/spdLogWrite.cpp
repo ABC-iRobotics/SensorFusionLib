@@ -12,7 +12,7 @@ spdLogWrite::spdLogWrite(std::string filename, std::string loggername) :
 	my_logger->set_pattern("[%Y/%m/%d-%H:%M:%S-%f] [%^%L%$] %v");
 }
 
-SF::spdLogWrite::~spdLogWrite() {
+spdLogWrite::~spdLogWrite() {
 	spdlog::drop(my_logger->name());
 }
 

@@ -1,7 +1,9 @@
 #include "DataMsg.h"
 #include <iostream>
 
-DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, const SF::Time& time_) :
+using namespace SF;
+
+DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, const Time& time_) :
 	sourceID(ID), dataType(type), dataSource(source), time(time_),
 	empty(false), hasValue(true), hasVariance(true), value(data.vector), variance(data.variance) {}
 
@@ -26,7 +28,7 @@ DataType DataMsg::GetDataType() const { return dataType; }
 OperationType DataMsg::GetDataSourceType() const { return dataSource; }
 
 void DataMsg::print() const {
-	auto t = SF::Now();
+	auto t = Now();
 	if (IsEmpty()) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
@@ -63,12 +65,16 @@ void DataMsg::print() const {
 	default:
 		break;
 	}
-	printf("\n Age: %lld [ms]\n", SF::duration_cast(t - time).count());
+	printf("\n Age: %lld [ms]\n", duration_cast(t - time).count());
 	if (hasValue)
 		std::cout << "Value:\n" << value << std::endl;
 	if (hasVariance)
 		std::cout << "Variance:\n" << variance << std::endl;
 	printf("\n");
+}
+
+Time DataMsg::GetTime() const {
+	return time;
 }
 
 DataMsg::DataMsg() // to initialize empty instances

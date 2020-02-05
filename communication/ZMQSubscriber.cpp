@@ -4,6 +4,8 @@
 #include <iostream>
 #include <thread>
 
+using namespace SF;
+
 ZMQRTSubscriber::ZMQRTSubscriber() : 
 	lastData(std::vector<zmq::message_t>()), novelty(std::vector<bool>()) {}
 

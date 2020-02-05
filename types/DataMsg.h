@@ -4,66 +4,68 @@
 #include "StatisticValue.h"
 #include <memory>
 
-/*! \brief General message format containing a StatisticValue, a timestamp and information about its DataType and source
-*
-* Its used in Lib_SensorFusion, Lib_Communication and Lib_Plotter as well
-*/
-class DataMsg {
-	DataType dataType;
-	OperationType dataSource;
-	bool empty;
-	unsigned char sourceID;
-	Eigen::VectorXd value;
-	bool hasValue;
-	Eigen::MatrixXd variance;
-	bool hasVariance;
-	SF::Time time;
+namespace SF {
 
-public:
-	SF::Time GetTime() const {
-		return time;
-	}
+	/*! \brief General message format containing a StatisticValue, a timestamp and information about its DataType and source
+	*
+	* Its used in Lib_SensorFusion, Lib_Communication and Lib_Plotter as well
+	*/
+	class DataMsg {
+		DataType dataType;
+		OperationType dataSource;
+		bool empty;
+		unsigned char sourceID;
+		Eigen::VectorXd value;
+		bool hasValue;
+		Eigen::MatrixXd variance;
+		bool hasVariance;
+		Time time;
 
-	DataMsg(); /*!< Empty constructor */
+	public:
+		Time GetTime() const;
 
-	DataMsg(unsigned char ID, DataType type, OperationType source, const SF::Time& time_ = SF::Now())
-		: dataType(type), dataSource(source), sourceID(ID), empty(false), time(time_) {}
+		DataMsg(); /*!< Empty constructor */
 
-	DataMsg(unsigned char ID, DataType type, OperationType source,
-		StatisticValue data, const SF::Time& time = SF::Now()); /*!< Constructor */
+		DataMsg(unsigned char ID, DataType type, OperationType source, const Time& time_ = Now())
+			: dataType(type), dataSource(source), sourceID(ID), empty(false), time(time_) {}
 
-	bool IsEmpty() const; /*!< To check if the instance is empty */
+		DataMsg(unsigned char ID, DataType type, OperationType source,
+			StatisticValue data, const Time& time = Now()); /*!< Constructor */
 
-	bool HasValue() const; /*!< To check if value vector was set */
+		bool IsEmpty() const; /*!< To check if the instance is empty */
 
-	bool HasVariance() const; /*!< To check if covariance matrix was set */
+		bool HasValue() const; /*!< To check if value vector was set */
 
-	void ClearValue();  /*!< To remove the stored value vector */
+		bool HasVariance() const; /*!< To check if covariance matrix was set */
 
-	void ClearVariance();  /*!< To remove the stored variance vector */
+		void ClearValue();  /*!< To remove the stored value vector */
 
-	Eigen::VectorXd GetValue() const;  /*!< To get the stored value vector */
+		void ClearVariance();  /*!< To remove the stored variance vector */
 
-	Eigen::MatrixXd GetVariance() const; /*!< To get the stored variance vector */
+		Eigen::VectorXd GetValue() const;  /*!< To get the stored value vector */
 
-	unsigned char GetSourceID() const; /*!< To get source ID */
+		Eigen::MatrixXd GetVariance() const; /*!< To get the stored variance vector */
 
-	DataType GetDataType() const; /*!< To get DataType */
+		unsigned char GetSourceID() const; /*!< To get source ID */
 
-	OperationType GetDataSourceType() const; /*!< To get the type of the source as an OperationType */
+		DataType GetDataType() const; /*!< To get DataType */
 
-	void print() const; /*!< To show its content */
+		OperationType GetDataSourceType() const; /*!< To get the type of the source as an OperationType */
 
-	void SetVarianceMatrix(const Eigen::MatrixXd& m); /*!< To set covariance matrix */
+		void print() const; /*!< To show its content */
 
-	void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
+		void SetVarianceMatrix(const Eigen::MatrixXd& m); /*!< To set covariance matrix */
 
-	typedef std::shared_ptr<DataMsg> DataMsgPtr;
+		void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
 
-	typedef std::vector<DataMsgPtr> DataMsgPtrList;
+		typedef std::shared_ptr<DataMsg> DataMsgPtr;
 
-	template<class... Args>
-	static DataMsg::DataMsgPtr CreateSharedPtr(Args&&... args) {
-		return std::make_shared<DataMsg>(args...);
-	}
-};
+		typedef std::vector<DataMsgPtr> DataMsgPtrList;
+
+		template<class... Args>
+		static DataMsg::DataMsgPtr CreateSharedPtr(Args&&... args) {
+			return std::make_shared<DataMsg>(args...);
+		}
+	};
+
+}

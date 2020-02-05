@@ -4,6 +4,8 @@
 #include <iostream>
 #include <thread>
 
+using namespace SF;
+
 ZMQPublisher::ZMQPublisher(std::string address) : context(1), socket(context, ZMQ_PUB) {
 	socket.bind(address.c_str());
 }
