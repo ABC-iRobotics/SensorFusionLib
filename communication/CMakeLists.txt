@@ -8,6 +8,7 @@ set (HEADERS
 	ZMQPublisher.h
 	spdLogWrite.h
 	spdLogRead.h
+	ZMQClockSynchronizer.h
 	)
 
 set (SOURCES
@@ -16,6 +17,7 @@ set (SOURCES
 	ZMQPublisher.cpp
 	spdLogWrite.cpp
 	spdLogRead.cpp
+	ZMQClockSynchronizer.cpp
 	)
 
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS})
