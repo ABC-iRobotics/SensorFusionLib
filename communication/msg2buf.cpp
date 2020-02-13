@@ -98,9 +98,10 @@ Buffer::Buffer() : size(0), buf(NULL) {}
 bool Buffer::isNull() const { return size == 0; }
 
 void Buffer::print() const {
-	std::cout << "Size: " << size << std::endl;
+	std::cout << "Size: " << size << " - ";
 	for (size_t i = 0; i < size; i++)
-		printf(" %i\n", buf[i]);
+		printf("%i ", buf[i]);
+	printf("\n");
 }
 
 size_t Buffer::Size() const { return size; }
@@ -130,6 +131,8 @@ DataMsg Buffer::ExtractDataMsg() const {
 	case DataMsgNameSpace::DataType_NOISE:
 		type = NOISE;
 		break;
+	default:
+		type = INVALID_DATATYPE;
 	}
 
 	OperationType source;
@@ -146,6 +149,8 @@ DataMsg Buffer::ExtractDataMsg() const {
 	case DataMsgNameSpace::OperationType_SENSOR:
 		source = SENSOR;
 		break;
+	default:
+		source = INVALID_OPERATIONTYPE;
 	}
 
 	auto timestamp_in_us = msg->timestamp_in_us();
