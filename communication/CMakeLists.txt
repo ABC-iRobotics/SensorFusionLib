@@ -2,6 +2,7 @@
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
+	IClockSynchronizer.h
 	)
 set (HEADERS_INL
 	msg_generated.h
@@ -19,6 +20,7 @@ set (SOURCES
 	SenderToSPDLog.cpp
 	SPDLogRead.cpp
 	ZMQClockSynchronizer.cpp
+	IClockSynchronizer.cpp
 	)
 
 set(root ${CMAKE_CURRENT_SOURCE_DIR})

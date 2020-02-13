@@ -6,10 +6,14 @@
 
 using namespace SF;
 
+/*! \brief Serializer for integers to memcpy from/to LittleEndian convention according to the actual processor
+*
+*/
 class LittleEndianSerializer {
 	enum Endianness { LITTLE_ENDIAN, BIG_ENDIAN } endianness;
 public:
-	LittleEndianSerializer() {
+	LittleEndianSerializer() /*!< Constructor */
+	{
 		uint32_t word = 0x0A0B0C0D; // An unsigned 32-bit integer.
 		char *pointer = (char *)&word; // A pointer to the first octet of the word.
 		if (pointer[0] == 0x0D) {
@@ -22,7 +26,8 @@ public:
 		}
 		perror("Unkown endianness");
 	}
-	void memcpy(void* dest, const void* src, int size) {
+	void memcpy(void* dest, const void* src, int size) /*!< memcpy */
+	{
 		const char *srcptr = (const char *)src;
 		char *destptr = (char *)dest;
 		if (endianness == LITTLE_ENDIAN)
@@ -44,6 +49,17 @@ void SF::ZMQClockSynchronizerServer::SetAddress(const std::string & address_) {
 		address = address_;
 	else
 		perror("ZMQClockSynchronizerServer::SetAddress Address cannot be modified during run...");
+}
+
+IClockSyncronizerClient* SF::GetPeripheryClockSynchronizerPtr() {
+	static ZMQClockSyncronizerClient zmqClockSyncronizerClient;
+	return &zmqClockSyncronizerClient;
+}
+
+IClockSynchronizerServer::IClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const std::string& address) {
+	auto out = std::make_shared<ZMQClockSynchronizerServer>(address);
+	out->StartServer();
+	return out;
 }
 
 void SF::ZMQClockSynchronizerServer::StartServer() {
@@ -103,7 +119,7 @@ std::chrono::nanoseconds SF::DetermineClockOffsetFromZMQServer(const std::string
 	long long n_msgs, int zmq_io_threads) {
 	zmq::context_t context = zmq::context_t(zmq_io_threads);	   //  Prepare socket
 	zmq::socket_t socket(context, ZMQ_REQ);
-	std::cout << "Connecting to server...";
+	std::cout << "Connecting to server... (" << address << ")";
 	socket.connect(address);
 	//  Do n_msgs requests, waiting each time for a response
 	long long sumoffset = 0;
@@ -145,11 +161,6 @@ std::chrono::nanoseconds SF::DetermineClockOffsetFromZMQServer(const std::string
 	return std::chrono::nanoseconds((sumoffset * 1000) / n_msgs);
 }
 
-void ClockSynchronizerClient::UpdateOffsetFromServerTime(const std::string& address,
-	long long n_msgs, int zmq_io_threads) { // address = "tcp://localhost:5555"
-	offset = DetermineClockOffsetFromZMQServer(address, n_msgs, zmq_io_threads);
-}
-
-std::chrono::nanoseconds SF::ClockSynchronizerClient::GetOffset() const {
-	return offset;
+DTime SF::ZMQClockSyncronizerClient::SynchronizeClock(const std::string & clockSyncServerAddress) const {
+	return duration_cast(DetermineClockOffsetFromZMQServer(clockSyncServerAddress));
 }

@@ -1,44 +1,43 @@
 #pragma once
 #include <thread>
-#include <chrono>
+#include "IClockSynchronizer.h"
 
 namespace SF {
 
-	/*! \brief 
+	/*! \brief ZMQ based implementation of IClockSynchronizerServer
 	* 
 	* 
 	*/
-	class ZMQClockSynchronizerServer {
+	class ZMQClockSynchronizerServer : public IClockSynchronizerServer {
 		std::string address;
 		std::thread serverthread;
 		bool running;
 	public: 
-		ZMQClockSynchronizerServer(const std::string& address_=""); // eg: "tcp://*:5555"
+		ZMQClockSynchronizerServer(const std::string& address_=""); /*!< Constructor */
 
-		void SetAddress(const std::string& address_);
+		void SetAddress(const std::string& address_) override;
 
-		void StartServer();
+		void StartServer() override;
 
-		void StopServer();
+		void StopServer() override;
 
-		bool IsRunning() const;
+		bool IsRunning() const override;
 
-		~ZMQClockSynchronizerServer();
+		~ZMQClockSynchronizerServer(); /*!< Destructor */
 
 	private:
 		void Run();
 	};
 
-	std::chrono::nanoseconds DetermineClockOffsetFromZMQServer(const std::string& address, long long n_msgs = 10000, int zmq_io_threads = 1);
-
-	class ClockSynchronizerClient {
-		std::chrono::nanoseconds offset;
-	public:
-		ClockSynchronizerClient() : offset(0) {}
-
-		void UpdateOffsetFromServerTime(const std::string& address, long long n_msgs = 10000, int zmq_io_threads = 1);
-
-		std::chrono::nanoseconds GetOffset() const;
-	};
 	
+	std::chrono::nanoseconds DetermineClockOffsetFromZMQServer(const std::string& address, long long n_msgs = 10000, int zmq_io_threads = 1);
+		/*!< To connect to a ZMQClockSyncronizerServer and compute the offset */
+
+	/*! \brief ZMQ based implementation of IClockSyncronizerClient
+	*
+	*
+	*/
+	class ZMQClockSyncronizerClient : public IClockSyncronizerClient {
+		DTime SynchronizeClock(const std::string& clockSyncServerAddress) const override;
+	};
 }
