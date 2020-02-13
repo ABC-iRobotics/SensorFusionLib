@@ -26,6 +26,7 @@ public:
 		}
 		perror("Unkown endianness");
 	}
+
 	void memcpy(void* dest, const void* src, int size) /*!< memcpy */
 	{
 		const char *srcptr = (const char *)src;

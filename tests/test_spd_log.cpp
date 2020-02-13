@@ -91,39 +91,43 @@ bool IsEqual(const DataMsg& d1, const DataMsg& d2) {
 	return true;
 }
 
-void test_read_write(int Ndata) {
-	// Wtite 1000 different messages N times into a file, read them, measuring the elapsed time
+void GenerateMessages(int Ndata, DataMsg::DataMsgPtrList& out) {
 	// Generate datamsgs
 	Eigen::VectorXd t = Eigen::VectorXd::Zero(4);
 	t(2) = 2;
 	Eigen::MatrixXd T = Eigen::MatrixXd::Zero(4, 4);
 	T(1, 2) = 3;
-	auto msgs = DataMsg::DataMsgPtrList();
-	std::string filename = "read_write_test.txt";
 	for (int n = 0; n < Ndata; n++) {
 		auto value1 = Eigen::VectorXd::Ones(4) / double(n + 1);
-		auto value2 = t*(n - 1);
+		auto value2 = t * (n - 1);
 		auto variance1 = Eigen::MatrixXd::Ones(2, 2) / double(n + 1);
-		auto variance2 = T*(n - 1);
+		auto variance2 = T * (n - 1);
 		auto a = DataMsg::CreateSharedPtr(n, DataType::OUTPUT, OperationType::FILTER_MEAS_UPDATE, Time());
 		a->SetValueVector(value1);
-		msgs.push_back(a);
+		out.push_back(a);
 		a = DataMsg::CreateSharedPtr(n, DataType::STATE, OperationType::FILTER_PARAM_ESTIMATION, Time());
 		a->SetValueVector(value2);
 		a->SetVarianceMatrix(variance2);
-		msgs.push_back(a);
+		out.push_back(a);
 		a = DataMsg::CreateSharedPtr(n, DataType::DISTURBANCE, OperationType::FILTER_TIME_UPDATE, Time());
 		a->SetVarianceMatrix(variance2);
-		msgs.push_back(a);
+		out.push_back(a);
 		a = DataMsg::CreateSharedPtr(n, DataType::INVALID_DATATYPE, OperationType::GROUND_TRUTH, Time());
 		a->SetVarianceMatrix(variance1);
-		msgs.push_back(a);
+		out.push_back(a);
 		a = DataMsg::CreateSharedPtr(n, DataType::NOISE, OperationType::INVALID_OPERATIONTYPE, Time());
-		msgs.push_back(a);
+		out.push_back(a);
 		a = DataMsg::CreateSharedPtr(n, DataType::DISTURBANCE, OperationType::SENSOR, Time());
 		a->SetValueVector(value1);
-		msgs.push_back(a);
+		out.push_back(a);
 	}
+}
+
+void test_read_write(int Ndata) {
+	// Wtite 1000 different messages N times into a file, read them, measuring the elapsed time
+	auto msgs = DataMsg::DataMsgPtrList();
+	GenerateMessages(Ndata, msgs);
+	std::string filename = "read_write_test.txt";
 	// Send them into a new logger
 	{
 		SenderToSPDLog w(filename, "read_write_test");

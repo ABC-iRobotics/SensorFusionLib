@@ -11,6 +11,7 @@ endif()
 # SF tests
 set(tests
 	test_spd_log
+	test_clocksync_local
 	)
 foreach(test ${tests})
 	add_executable(${test} ${test}.cpp)
@@ -27,3 +28,4 @@ foreach(test ${tests})
 endforeach()
 
 target_link_libraries(test_spd_log sf_communication)
+target_link_libraries(test_clocksync_local sf_communication)

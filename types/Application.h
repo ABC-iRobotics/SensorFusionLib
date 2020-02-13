@@ -45,6 +45,8 @@ namespace SF {
 	/*! \brief Abstract class for reciever layer of applications
 	*
 	* Implementations: read from logfile, recieve data from network via zmq
+	*
+	* Destructor of subclasses must call Stop()
 	*/
 	class Reciever {
 		std::mutex processorGuard;  /*!< Mutex to guard processor variable */
