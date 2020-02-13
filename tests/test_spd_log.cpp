@@ -2,7 +2,7 @@
 void setUp() {}
 void tearDown() {}
 
-#include "spdLogWrite.h"
+#include "SenderToSPDLog.h"
 #include "spdLogRead.h"
 #include <iostream>
 
@@ -19,11 +19,11 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	std::string filename = "test_log.txt";
 	{
 		std::vector<double> results = std::vector<double>();
-		spdLogWrite logger(filename.c_str(), "log_tester");
+		SenderToSPDLog logger(filename.c_str(), "log_tester");
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++)
-				logger.WriteDataMsg(msg);
+				logger.SendDataMsg(msg);
 			auto elapsed = Now() - start;
 
 			double delapsed = (double)duration_cast(elapsed).count() / (double)Ndata;
@@ -40,7 +40,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	{
 		std::vector<double> results = std::vector<double>();
 		DataMsg msg;
-		auto reader = spdLogRead(filename.c_str());
+		auto reader = SPDLogRead(filename.c_str());
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++) {
@@ -126,15 +126,15 @@ void test_read_write(int Ndata) {
 	}
 	// Send them into a new logger
 	{
-		spdLogWrite w(filename, "read_write_test");
+		SenderToSPDLog w(filename, "read_write_test");
 		for (int i = 0; i < msgs.size(); i++)
-			w.WriteDataMsg(*msgs[i]);
+			w.SendDataMsg(*msgs[i]);
 	}
 	// Read the log - checking the results...
 	{
-		spdLogRead r(filename);
+		SPDLogRead r(filename);
 		int i = 0;
-		while (r.getLatestRowType() == spdLogRead::DATAMSG) {
+		while (r.getLatestRowType() == SPDLogRead::DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
 			if (!IsEqual(msg, *msgs[i]))
 				TEST_ASSERT("Written and read msgs are different!");

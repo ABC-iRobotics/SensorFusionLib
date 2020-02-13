@@ -1,4 +1,4 @@
-#include "spdLogWrite.h"
+#include "SenderToSPDLog.h"
 #include "spdlog/async.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include"spdlog/details/os.h"
@@ -7,16 +7,16 @@
 
 using namespace SF;
 
-spdLogWrite::spdLogWrite(std::string filename, std::string loggername) :
+SenderToSPDLog::SenderToSPDLog(std::string filename, std::string loggername) :
 	my_logger(spdlog::basic_logger_mt<spdlog::async_factory>(loggername, filename)) {
 	my_logger->set_pattern("[%Y/%m/%d-%H:%M:%S-%f] [%^%L%$] %v");
 }
 
-spdLogWrite::~spdLogWrite() {
+SenderToSPDLog::~SenderToSPDLog() {
 	spdlog::drop(my_logger->name());
 }
 
-void spdLogWrite::WriteDataMsg(const DataMsg & msg) {
+void SenderToSPDLog::SendDataMsg(const DataMsg & msg) {
 	buf.clear();
 	fmt::format_to(buf, "MSG [ ");
 	switch (msg.GetDataSourceType()) {
@@ -39,7 +39,7 @@ void spdLogWrite::WriteDataMsg(const DataMsg & msg) {
 		fmt::format_to(buf, "INVALID_OPERATIONTYPE");
 		break;
 	}
-	fmt::format_to(buf, " {} ",msg.GetSourceID());
+	fmt::format_to(buf, " {} ", msg.GetSourceID());
 	switch (msg.GetDataType()) {
 	case DataType::DISTURBANCE:
 		fmt::format_to(buf, "DISTURBANCE");
@@ -93,4 +93,8 @@ void spdLogWrite::WriteDataMsg(const DataMsg & msg) {
 	fmt::format_to(buf, "]");
 	my_logger->info(spdlog::string_view_t(buf.data(), buf.size()));
 	buf.clear();
+}
+
+void SF::SenderToSPDLog::SendString(const std::string & string) {
+	my_logger->info(string.c_str());
 }
