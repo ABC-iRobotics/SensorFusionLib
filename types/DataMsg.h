@@ -13,7 +13,6 @@ namespace SF {
 	class DataMsg {
 		DataType dataType;
 		OperationType dataSource;
-		bool empty;
 		unsigned char sourceID;
 		Eigen::VectorXd value;
 		bool hasValue;
@@ -22,17 +21,16 @@ namespace SF {
 		Time time;
 
 	public:
-		Time GetTime() const;
+		Time GetTime() const; /*!< Timestamp getter */
 
 		DataMsg(); /*!< Empty constructor */
 
-		DataMsg(unsigned char ID, DataType type, OperationType source, const Time& time_ = Now())
-			: dataType(type), dataSource(source), sourceID(ID), empty(false), time(time_) {}
+		DataMsg(unsigned char ID, DataType type, OperationType source, const Time& time_ = Now()); /*!< Constructor without specifying value and variance */
 
 		DataMsg(unsigned char ID, DataType type, OperationType source,
-			StatisticValue data, const Time& time = Now()); /*!< Constructor */
+			StatisticValue data, const Time& time = Now()); /*!< Constructor with StatisticValue */
 
-		bool IsEmpty() const; /*!< To check if the instance is empty */
+		bool IsInvalid() const; /*!< To check if the instance is empty */
 
 		bool HasValue() const; /*!< To check if value vector was set */
 
@@ -58,14 +56,16 @@ namespace SF {
 
 		void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
 
-		typedef std::shared_ptr<DataMsg> DataMsgPtr;
+		typedef std::shared_ptr<DataMsg> DataMsgPtr; /*!< std::shared_ptr for class DataMsg */
 
-		typedef std::vector<DataMsgPtr> DataMsgPtrList;
+		typedef std::vector<DataMsgPtr> DataMsgPtrList; /*!< std::vector for instances of std::shared_ptr<DataMsg> */
 
 		template<class... Args>
 		static DataMsg::DataMsgPtr CreateSharedPtr(Args&&... args) {
 			return std::make_shared<DataMsg>(args...);
-		}
+		} /*!< Init std::shrared_ptr<DataMsg> */
+
+		void ApplyOffset(DTime offset); /*!< Modify timestamp as timestamp += offset*/
 	};
 
 }

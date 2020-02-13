@@ -68,7 +68,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 }
 
 bool IsEqual(const DataMsg& d1, const DataMsg& d2) {
-	if (d1.IsEmpty() != d2.IsEmpty())
+	if (d1.IsInvalid() != d2.IsInvalid())
 		return false;
 	if (d1.HasValue() != d2.HasValue())
 		return false;

@@ -5,9 +5,9 @@ using namespace SF;
 
 DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, StatisticValue data, const Time& time_) :
 	sourceID(ID), dataType(type), dataSource(source), time(time_),
-	empty(false), hasValue(true), hasVariance(true), value(data.vector), variance(data.variance) {}
+	hasValue(true), hasVariance(true), value(data.vector), variance(data.variance) {}
 
-bool DataMsg::IsEmpty() const { return empty; }
+bool DataMsg::IsInvalid() const { return dataType==INVALID_DATATYPE || dataSource==INVALID_OPERATIONTYPE; }
 
 bool DataMsg::HasValue() const { return hasValue; }
 
@@ -29,7 +29,7 @@ OperationType DataMsg::GetDataSourceType() const { return dataSource; }
 
 void DataMsg::print() const {
 	auto t = Now();
-	if (IsEmpty()) {
+	if (IsInvalid()) {
 		printf("EMTPY DataMsg.\n\n");
 		return;
 	}
@@ -78,7 +78,10 @@ Time DataMsg::GetTime() const {
 }
 
 DataMsg::DataMsg() // to initialize empty instances
-	: empty(true), hasValue(false), hasVariance(false), dataType(INVALID_DATATYPE), dataSource(INVALID_OPERATIONTYPE) {}
+	: hasValue(false), hasVariance(false), dataType(INVALID_DATATYPE), dataSource(INVALID_OPERATIONTYPE) {}
+
+SF::DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, const Time & time_)
+	: dataType(type), dataSource(source), sourceID(ID), time(time_) {}
 
 void DataMsg::SetVarianceMatrix(const Eigen::MatrixXd & m) {
 	hasVariance = true;
@@ -88,4 +91,8 @@ void DataMsg::SetVarianceMatrix(const Eigen::MatrixXd & m) {
 void DataMsg::SetValueVector(const Eigen::VectorXd & v) {
 	hasValue = true;
 	value = v;
+}
+
+void SF::DataMsg::ApplyOffset(DTime offset) {
+	time += offset;
 }

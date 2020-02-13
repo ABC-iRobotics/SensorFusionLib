@@ -5,12 +5,14 @@ set (HEADERS
 	StatisticValue.h
 	defs.h
 	DataMsg.h
+	Application.h
 	)
 
 set (SOURCES
 	StatisticValue.cpp
 	defs.cpp
 	DataMsg.cpp
+	Application.cpp
 	)
 
 # Add the dinamic library target to the project
