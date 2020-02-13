@@ -5,13 +5,16 @@
 using namespace SF;
 
 void SF::RecieverViaZMQ::Run(DTime Ts) {
+	int sg = 0;
+	socket.setsockopt(ZMQ_CONFLATE, sg);
+
 	zmq::message_t data;
 	DataMsg dataMsg;
 	int rvctime;
 
 	Time start = Now();
 	long iIteration = 1;
-	while (!toStop) {
+	while (!MustStop()) {
 		Time end = start + iIteration * Ts;
 		while (Now() < end) {
 			bool recv = false;
@@ -39,28 +42,20 @@ void SF::RecieverViaZMQ::Run(DTime Ts) {
 		CallbackSamplingTimeOver();
 		iIteration++;
 	}
+
+	sg = 1;
+	socket.setsockopt(ZMQ_CONFLATE, sg);
 }
 
-SF::RecieverViaZMQ::RecieverViaZMQ() : context(1), toStop(false), Reciever() {
+SF::RecieverViaZMQ::RecieverViaZMQ() : context(1), Reciever() {
 	socket = zmq::socket_t(context, ZMQ_SUB);
 	socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 	int sg = 1;
 	socket.setsockopt(ZMQ_CONFLATE, sg);
 }
 
-void SF::RecieverViaZMQ::Start(DTime Ts) {
-	toStop = false;
-	int sg = 0;
-	socket.setsockopt(ZMQ_CONFLATE, sg);
-	subscriberThread = std::thread(&RecieverViaZMQ::Run, this, Ts);
-}
-
-void SF::RecieverViaZMQ::Stop(bool waitin) {
-	toStop = true;
-	if (waitin)
-		subscriberThread.join();
-	int sg = 1;
-	socket.setsockopt(ZMQ_CONFLATE, sg);
+SF::RecieverViaZMQ::~RecieverViaZMQ() {
+	Stop();
 }
 
 void SF::RecieverViaZMQ::ConnectToAddress(const std::string & address) {

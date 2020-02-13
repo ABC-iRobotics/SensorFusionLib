@@ -51,6 +51,14 @@ namespace SF {
 
 		Processor::ProcessorPtr processor; /*!< Pointer to the next (Processor) layer */
 
+		bool toStop;
+
+		bool isRunning;
+
+		std::thread t;
+
+		virtual void Run(DTime Ts) = 0; /*!< Reciever thread must be defined by the subclass */
+
 	protected:
 		void CallbackSamplingTimeOver(const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
 
@@ -61,9 +69,11 @@ namespace SF {
 	public:
 		Reciever(); /*!< Constructor */
 
-		virtual void Start(DTime Ts) = 0;  /*!< Starts a reciever thread with given sampling time*/
+		void Start(DTime Ts); /*!< Starts a reciever thread with given sampling time*/
 
-		virtual void Stop(bool waitin = true) = 0;   /*!< Stops the reciever thread*/
+		void Stop(bool waitin = true); /*!< Stops the reciever thread*/
+
+		bool MustStop() const; /*!< Getter to check if the Run() thread should stop */
 
 		virtual void ConnectToAddress(const std::string& address) = 0; /*!< Set addresses of remote sources for network communication */
 

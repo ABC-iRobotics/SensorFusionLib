@@ -9,6 +9,7 @@ set (HEADERS_INL
 	ILogReader.h
 	msg2buf.h
 	RecieverViaZMQ.h
+	SenderToZMQ.h
 	SenderToSPDLog.h
 	SPDLogRead.h
 	ZMQClockSynchronizer.h
@@ -17,6 +18,7 @@ set (HEADERS_INL
 set (SOURCES
 	msg2buf.cpp
 	RecieverViaZMQ.cpp
+	SenderToZMQ.cpp
 	SenderToSPDLog.cpp
 	SPDLogRead.cpp
 	ZMQClockSynchronizer.cpp

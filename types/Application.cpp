@@ -23,7 +23,33 @@ void SF::Reciever::CallbackMsgQueueEmpty(const Time& currentTime) {
 	processorGuard.unlock();
 }
 
-SF::Reciever::Reciever() : processor(NULL) {}
+SF::Reciever::Reciever()
+	: processor(NULL), isRunning(false) {}
+
+void SF::Reciever::Start(DTime Ts)
+{
+	if (!isRunning) {
+		isRunning = true;
+		toStop = false;
+		t = std::thread([this, Ts]() {
+			Run(Ts);
+			isRunning = false;
+		});
+	}
+}
+
+void SF::Reciever::Stop(bool waitin)
+{
+	if (isRunning) {
+		toStop = true;
+		if (waitin)
+			t.join();
+	}
+}
+
+bool SF::Reciever::MustStop() const {
+	return toStop;
+}
 
 void SF::Reciever::SetProcessor(Processor::ProcessorPtr processor_) {
 	processorGuard.lock();

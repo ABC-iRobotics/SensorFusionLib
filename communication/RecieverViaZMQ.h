@@ -12,17 +12,13 @@ namespace SF {
 		zmq::context_t context;
 		zmq::socket_t socket;
 		std::mutex socketguard;
-		std::thread subscriberThread;
-		bool toStop;
 
 		void Run(DTime Ts);
 
 	public:
 		RecieverViaZMQ();  /*!< Constructor */
 
-		void Start(DTime Ts) override;
-
-		void Stop(bool waitin = true) override;
+		~RecieverViaZMQ();  /*!< Destructor */
 
 		void ConnectToAddress(const std::string& address) override;
 	};
