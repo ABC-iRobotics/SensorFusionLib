@@ -9,7 +9,7 @@ namespace SF {
 	*/
 	class ILogReader {
 	public:
-		typedef enum RowTypes /*!< Possible types od the rows */
+		enum RowTypes /*!< Possible types od the rows */
 			{DATAMSG, TEXT, NOTLOADED};
 
 		virtual bool readNextRow() = 0; /*!< To read the next row from the log */
