@@ -1,5 +1,5 @@
 #include "RecieverViaZMQ.h"
-#include "ZMQClockSynchronizer.h"
+#include "IClockSynchronizer.h"
 #include "msg2buf.h"
 
 using namespace SF;
