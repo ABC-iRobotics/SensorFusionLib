@@ -81,7 +81,7 @@ DataMsg::DataMsg() // to initialize empty instances
 	: hasValue(false), hasVariance(false), dataType(INVALID_DATATYPE), dataSource(INVALID_OPERATIONTYPE) {}
 
 SF::DataMsg::DataMsg(unsigned char ID, DataType type, OperationType source, const Time & time_)
-	: dataType(type), dataSource(source), sourceID(ID), time(time_) {}
+	: hasValue(false), hasVariance(false), dataType(type), dataSource(source), sourceID(ID), time(time_) {}
 
 void DataMsg::SetVarianceMatrix(const Eigen::MatrixXd & m) {
 	hasVariance = true;
