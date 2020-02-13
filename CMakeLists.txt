@@ -249,8 +249,6 @@ if (ADD_PLOTTER)
 endif()
 add_subdirectory (core)
 add_subdirectory (communication)
-add_subdirectory (ZMQSub_test)
-add_subdirectory (ZMQPub_test)
 
 ## ---------------------------------------------------------------------------------
 ## Target to clean install folder
