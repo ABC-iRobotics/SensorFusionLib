@@ -13,7 +13,6 @@ SenderToZMQ::SenderToZMQ(const std::string& address) : context(1) {
 
 void SF::SenderToZMQ::SendString(const std::string & str) {
 	zmq::message_t msg((void*)str.c_str(), str.length(), NULL);
-	std::cout << "Sent: " << msg.size() << " byte. [1]: " << static_cast<char*>(msg.data())[1] << " \n\n";
 	socket.send(msg, zmq::send_flags::none);
 	std::this_thread::sleep_for(std::chrono::duration<float, std::micro>(5));
 }

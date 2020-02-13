@@ -38,4 +38,6 @@ namespace SF {
 		size_t size;
 	};
 
+	bool ExtractBufIf(void* buf, int size, DataMsg& data);
+
 }

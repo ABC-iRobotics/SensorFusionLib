@@ -10,31 +10,20 @@ void SF::RecieverViaZMQ::Run(DTime Ts) {
 
 	zmq::message_t data;
 	DataMsg dataMsg;
-	int rvctime;
 
 	Time start = Now();
 	long iIteration = 1;
 	while (!MustStop()) {
 		Time end = start + iIteration * Ts;
 		while (Now() < end) {
-			bool recv = false;
-			rvctime = (int)std::chrono::duration_cast<std::chrono::milliseconds>(end - Now()).count(); // milliseconds
-			zmq_setsockopt(socket, ZMQ_RCVTIMEO, &rvctime, sizeof(rvctime));
-			socketguard.lock();
-			auto res = socket.recv(data);
-			socketguard.unlock();
-			while (res.has_value()) {
-				recv = true;
-				Buffer b = Buffer(static_cast<unsigned char*>(data.data()), data.size());
-				dataMsg = b.ExtractDataMsg();
+			bool recv = RecieveDataMsg(dataMsg, duration_cast(end-Now()));
+			while (recv) {
 				// Apply offset
 				if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(dataMsg.GetSourceID())) {
 					dataMsg.ApplyOffset(GetPeripheryClockSynchronizerPtr()->GetOffset(dataMsg.GetSourceID()));
 					CallbackGotDataMsg(dataMsg);
 				}
-				socketguard.lock();
-				res = socket.recv(data, zmq::recv_flags::dontwait); // or set rvctime to zero
-				socketguard.unlock();
+				recv = RecieveDataMsg(dataMsg, DTime(0));
 			}
 			if (recv)
 				CallbackMsgQueueEmpty();
@@ -62,4 +51,30 @@ void SF::RecieverViaZMQ::ConnectToAddress(const std::string & address) {
 	socketguard.lock();
 	socket.connect(address);
 	socketguard.unlock();
+}
+
+bool SF::RecieverViaZMQ::RecieveDataMsg(DataMsg & dataMsg, DTime Twait) {
+	if (Twait < DTime(0))
+		return false;
+	while (!MustStop()) {
+
+		socketguard.lock();
+		zmq::detail::recv_result_t res;
+		if (Twait == DTime(0))
+			res = socket.recv(data, zmq::recv_flags::dontwait);
+		else {
+			rvctime = std::chrono::duration_cast<std::chrono::milliseconds>(Twait).count();
+			socket.setsockopt(ZMQ_RCVTIMEO, rvctime);
+			res = socket.recv(data);
+		}
+		socketguard.unlock();
+
+		if (!res.has_value())
+			return false;
+
+		bool isDataMsg = ExtractBufIf(data.data(), data.size(), dataMsg);
+		if (isDataMsg)
+			return true;
+	}
+	return false;
 }

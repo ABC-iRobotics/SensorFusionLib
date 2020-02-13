@@ -9,6 +9,10 @@ namespace SF {
 	*/
 	class RecieverViaZMQ : public Reciever {
 
+		zmq::message_t data;
+		int rvctime;
+		bool RecieveDataMsg(DataMsg& dataMsg, DTime Twait = DTime(0));
+
 		zmq::context_t context;
 		zmq::socket_t socket;
 		std::mutex socketguard;

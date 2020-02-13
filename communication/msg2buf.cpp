@@ -114,9 +114,11 @@ void Buffer::_allocandcopy(const unsigned char * buf_) {
 		buf[i] = buf_[i];
 }
 
-DataMsg Buffer::ExtractDataMsg() const {
+bool SF::ExtractBufIf(void* buf, int size, DataMsg& data) {
 	auto msg = DataMsgNameSpace::GetMsg(buf);
-
+	flatbuffers::Verifier v((uint8_t*)buf, size);
+	if (!msg->Verify(v))
+		return false;
 	DataType type;
 	switch (msg->type()) {
 	case DataMsgNameSpace::DataType_STATE:
@@ -157,7 +159,7 @@ DataMsg Buffer::ExtractDataMsg() const {
 
 	auto sourceID = msg->sensorID();
 
-	DataMsg out(sourceID, type, source, Time(DTime(timestamp_in_us)));
+	data = DataMsg(sourceID, type, source, Time(DTime(timestamp_in_us)));
 
 	if (flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VALUE_VECTOR)) {
 		auto v = msg->value_vector();
@@ -165,7 +167,7 @@ DataMsg Buffer::ExtractDataMsg() const {
 		auto value = Eigen::VectorXd(N);
 		for (unsigned int n = 0; n < N; n++)
 			value[n] = v->Get(n);
-		out.SetValueVector(value);
+		data.SetValueVector(value);
 	}
 
 	if (flatbuffers::IsFieldPresent(msg, DataMsgNameSpace::Msg::VT_VARIANCE_MATRIX)) {
@@ -180,9 +182,9 @@ DataMsg Buffer::ExtractDataMsg() const {
 				variance(j, i) = variance(i, j);
 				k++;
 			}
-		out.SetVarianceMatrix(variance);
+		data.SetVarianceMatrix(variance);
 	}
-	return out;
+	return true;
 }
 
 Buffer::~Buffer() { delete buf; }
