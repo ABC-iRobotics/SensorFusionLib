@@ -2,21 +2,20 @@
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
+	)
+set (HEADERS_INL
 	msg_generated.h
+	ILogReader.h
 	msg2buf.h
-	ZMQSubscriber.h
-	ZMQPublisher.h
 	spdLogWrite.h
-	spdLogRead.h
+	SPDLogRead.h
 	ZMQClockSynchronizer.h
 	)
 
 set (SOURCES
 	msg2buf.cpp
-	ZMQSubscriber.cpp
-	ZMQPublisher.cpp
 	spdLogWrite.cpp
-	spdLogRead.cpp
+	SPDLogRead.cpp
 	ZMQClockSynchronizer.cpp
 	)
 

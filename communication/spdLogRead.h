@@ -1,15 +1,13 @@
 #pragma once
-#include<string>
-#include"DataMsg.h"
+#include"ILogReader.h"
 #include<fstream>
 
 namespace SF {
 
-	class spdLogRead {
-	public:
-		enum RowTypes { DATAMSG, TEXT, NOTLOADED };
-
-	private:
+	/*! \brief Class for reading spd log
+	*
+	*/
+	class SPDLogRead : public ILogReader {
 		std::ifstream stream;
 		Time firstTime;
 		Time latestTime;
@@ -20,17 +18,16 @@ namespace SF {
 		char buf[BUFSIZE];
 
 	public:
-		spdLogRead(std::string filename);
+		SPDLogRead(std::string filename); /*!< Constructor */
 
-		bool readNextRow();
+		bool readNextRow() override;
 
-		RowTypes getLatestRowType() const;
+		RowTypes getLatestRowType() const override;
 
-		Time getLatestTimeStamp() const;
+		Time getLatestTimeStamp() const override;
 
-		const std::string& getLatestRowIf() const;
+		const std::string& getLatestRowIf() const override;
 
-		const DataMsg& getLatestDataMsgIf() const;
+		const DataMsg& getLatestDataMsgIf() const override;
 	};
-
 }

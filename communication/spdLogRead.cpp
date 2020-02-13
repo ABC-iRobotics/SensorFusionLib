@@ -1,4 +1,4 @@
-#include "spdLogRead.h"
+#include "SPDLogRead.h"
 
 using namespace SF;
 
@@ -70,13 +70,13 @@ Time readTime(char* buf) {
 	return std::chrono::system_clock::from_time_t(std::mktime(&temp)) + std::chrono::microseconds(char2long(buf + 20, 6));
 }
 
-spdLogRead::spdLogRead(std::string filename) : stream(filename), latestRowType(NOTLOADED) {
+SPDLogRead::SPDLogRead(std::string filename) : stream(filename), latestRowType(NOTLOADED) {
 	if (!stream.is_open())
-		throw std::runtime_error(std::string("spdLogRead::spdLogRead File not found!"));
+		throw std::runtime_error(std::string("SPDLogRead::SPDLogRead File not found!"));
 	readNextRow();
 }
 
-bool spdLogRead::readNextRow() {
+bool SPDLogRead::readNextRow() {
 	if (stream.eof()) {
 		latestRowType = NOTLOADED;
 		return false;
@@ -140,18 +140,18 @@ bool spdLogRead::readNextRow() {
 	return true;
 }
 
-spdLogRead::RowTypes spdLogRead::getLatestRowType() const {
+SPDLogRead::RowTypes SPDLogRead::getLatestRowType() const {
 	return latestRowType;
 }
 
-Time spdLogRead::getLatestTimeStamp() const {
+Time SPDLogRead::getLatestTimeStamp() const {
 	return latestTime;
 }
 
-const std::string & spdLogRead::getLatestRowIf() const {
+const std::string & SPDLogRead::getLatestRowIf() const {
 	return latestRow;
 }
 
-const DataMsg& spdLogRead::getLatestDataMsgIf() const {
+const DataMsg& SPDLogRead::getLatestDataMsgIf() const {
 	return latestMsg;
 }
