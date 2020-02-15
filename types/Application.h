@@ -39,6 +39,8 @@ namespace SF {
 
 		virtual void CallbackGotDataMsg(DataMsg& msg, const Time& currentTime = Now());  /*!< Callback called if new DataMsg recieved */
 
+		virtual void CallbackGotString(const std::string& msg, const Time& currentTime = Now()); /*!< Callback called if new string recieved */
+
 		virtual void CallbackMsgQueueEmpty(const Time& currentTime = Now());  /*!< Callback called if the DataMsgs in the queue were read */
 	};
 
@@ -68,6 +70,8 @@ namespace SF {
 
 		void CallbackMsgQueueEmpty(const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
 
+		void CallbackGotString(const std::string& str, const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
+
 	public:
 		Reciever(); /*!< Constructor */
 
@@ -76,8 +80,6 @@ namespace SF {
 		void Stop(bool waitin = true); /*!< Stops the reciever thread*/
 
 		bool MustStop() const; /*!< Getter to check if the Run() thread should stop */
-
-		virtual void ConnectToAddress(const std::string& address) = 0; /*!< Set addresses of remote sources for network communication */
 
 		void SetProcessor(Processor::ProcessorPtr processor_); /*!< Set Processor::ProcessorPtr to be called with data and event */
 

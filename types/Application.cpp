@@ -23,6 +23,13 @@ void SF::Reciever::CallbackMsgQueueEmpty(const Time& currentTime) {
 	processorGuard.unlock();
 }
 
+void SF::Reciever::CallbackGotString(const std::string & str, const Time & currentTime) {
+	processorGuard.lock();
+	if (processor)
+		processor->CallbackGotString(str, currentTime);
+	processorGuard.unlock();
+}
+
 SF::Reciever::Reciever()
 	: processor(NULL), isRunning(false) {}
 
@@ -80,6 +87,13 @@ void SF::Processor::CallbackGotDataMsg(DataMsg & msg, const Time & currentTime) 
 	senderGuard.lock();
 	if (sender)
 		sender->SendDataMsg(msg);
+	senderGuard.unlock();
+}
+
+void SF::Processor::CallbackGotString(const std::string & msg, const Time & currentTime) {
+	senderGuard.lock();
+	if (sender)
+		sender->SendString(msg);
 	senderGuard.unlock();
 }
 
