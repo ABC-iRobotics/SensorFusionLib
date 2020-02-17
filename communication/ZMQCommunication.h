@@ -6,7 +6,7 @@
 #include"zmq_addon.hpp"
 
 namespace SF {
-	class ZMQRecieve : public Reciever {
+	class ZMQReciever : public Reciever {
 	public:
 		struct PeripheryProperties {
 			OperationType source;
@@ -27,10 +27,10 @@ namespace SF {
 				DataType type_, const std::string& address_, bool getstrings_ = false);  // To add an address and recieve datamsgs with given types and ID
 		};
 
-		ZMQRecieve(std::vector<PeripheryProperties> periferies
+		ZMQReciever(std::vector<PeripheryProperties> periferies
 			= std::vector<PeripheryProperties>());
 
-		~ZMQRecieve();
+		~ZMQReciever();
 
 		void AddPeriphery(const PeripheryProperties& prop);
 
@@ -49,30 +49,7 @@ namespace SF {
 			std::shared_ptr<zmq::socket_t> socket;
 		};
 		
-		void ProcessMsg(zmq::message_t& topic, zmq::message_t& msg) {
-			char* t = static_cast<char*>(topic.data());
-			switch (t[0]) {
-			case 'd': {
-				if (topic.size() != 4)
-					perror("ZMQCommunication::ProcessMsg corrupted datamsg topic - d.");
-				unsigned char ID = static_cast<unsigned char>(t[2]);
-				OperationType source = static_cast<OperationType>(t[1]);
-				DataType type = static_cast<DataType>(t[3]);
-				if (VerifyDataMsgContent(msg.data(), (int)msg.size()))
-					CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type));
-				else
-					perror("ZMQCommunication::ProcessMsg corrupted datamsg buffer.");
-				return;
-			}
-			case 'i':
-				if (topic.size() != 1)
-					perror("ZMQCommunication::ProcessMsg corrupted string topic");
-				CallbackGotString(std::string(static_cast<char*>(msg.data()), msg.size()));
-				return;
-			default:
-				perror("ZMQCommunication::ProcessMsg corrupted topic.");
-			}
-		}
+		void ProcessMsg(zmq::message_t& topic, zmq::message_t& msg);
 
 		void Run(DTime Ts) override {
 			zmq::context_t context(2);
@@ -102,11 +79,8 @@ namespace SF {
 				// wait if
 				while (pause)
 					std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
 				// target objects
-				int rc = 0;
 				zmq::poll(&items[0], nItems, static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(Ts).count()));
-
 				for (int i = 0; i < nItems; i++)
 					if (items[i].revents & ZMQ_POLLIN) {
 						auto socket = socketProperties[i].socket;
@@ -123,48 +97,17 @@ namespace SF {
 		}
 	};
 
-
-	class ZMQSend : public Sender {
+	class ZMQSender : public Sender {
 		zmq::socket_t zmq_socket;
 		zmq::context_t zmq_context;
 
 	public:
-		~ZMQSend();
+		~ZMQSender();
 
-		ZMQSend(const std::string& address, int hwm = 5);
+		ZMQSender(const std::string& address, int hwm = 5);
 
-		void SendDataMsg(const DataMsg& data) override {
-			zmq::multipart_t msg;
-			unsigned char topicbuf[4];
-			topicbuf[0] = 'd';
-			topicbuf[1] = to_underlying<OperationType>(data.GetDataSourceType());
-			topicbuf[2] = data.GetSourceID();
-			topicbuf[3] = to_underlying<DataType>(data.GetDataType());
-			msg.addmem(topicbuf,4);
-			void* buf;
-			int bufsize;
-			SerializeDataMsg(data, buf, bufsize);
-			msg.addmem(buf, bufsize);
-			try {
-				msg.send(zmq_socket, ZMQ_DONTWAIT);
-			}
-			catch (zmq::error_t &e) {
-				std::cout << e.what() << std::endl;
-			}
-			delete buf;
-		}
+		void SendDataMsg(const DataMsg& data) override;
 		
-		void SendString(const std::string& data) override {
-			zmq::multipart_t msg;
-			char i = 'i';
-			msg.addmem(&i, 1);
-			msg.addmem(&data.c_str()[0], data.length());
-			try {
-				msg.send(zmq_socket, ZMQ_DONTWAIT);
-			}
-			catch (zmq::error_t &e) {
-				std::cout << e.what() << std::endl;
-			}
-		}
+		void SendString(const std::string& data) override;
 	};
 }

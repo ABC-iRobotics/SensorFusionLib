@@ -35,9 +35,9 @@ void SendAndRecieveDataMsgs(std::string senderaddress, std::string recvaddress, 
 	DataMsg d(1, STATE, SENSOR, Now());
 	d.SetValueVector(Eigen::VectorXd::Ones(10));
 	d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
-	ZMQSend a(senderaddress, N);
-	ZMQRecieve r;
-	r.AddPeriphery(ZMQRecieve::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
+	ZMQSender a(senderaddress, N);
+	ZMQReciever r;
+	r.AddPeriphery(ZMQReciever::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
 		recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -59,9 +59,9 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 	DataMsg d(1, STATE, SENSOR, Now());
 	d.SetValueVector(Eigen::VectorXd::Ones(10));
 	d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
-	ZMQSend a(senderaddress, hwm);
-	ZMQRecieve r;
-	r.AddPeriphery(ZMQRecieve::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
+	ZMQSender a(senderaddress, hwm);
+	ZMQReciever r;
+	r.AddPeriphery(ZMQReciever::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
 		recvaddress, true));
 	r.Start(DTime(1000));
 	int recieved = 0;
@@ -116,11 +116,11 @@ void orderDataMsg(std::string senderaddress, std::string recvaddress, int N) {
 			d.SetVarianceMatrix(Eigen::MatrixXd::Ones(i%6,i%6)*i);
 		msgs.push_back(d);
 	}
-	ZMQSend a(senderaddress, N);
+	ZMQSender a(senderaddress, N);
 	auto checker = std::make_shared<Checker>();
-	ZMQRecieve r;
+	ZMQReciever r;
 	r.SetProcessor(checker);
-	r.AddPeriphery(ZMQRecieve::PeripheryProperties(recvaddress, true));
+	r.AddPeriphery(ZMQReciever::PeripheryProperties(recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -141,11 +141,11 @@ void orderStrings(std::string senderaddress, std::string recvaddress, int N) {
 	strings = std::vector<std::string>();
 	for (int i = 0; i < N; i++)
 		strings.push_back(std::string("asdassv0") + std::to_string(i) + "_" + std::to_string(duration_cast(Now().time_since_epoch()).count()));
-	ZMQSend a(senderaddress, N);
+	ZMQSender a(senderaddress, N);
 	auto checker = std::make_shared<Checker>();
-	ZMQRecieve r;
+	ZMQReciever r;
 	r.SetProcessor(checker);
-	r.AddPeriphery(ZMQRecieve::PeripheryProperties(recvaddress, true));
+	r.AddPeriphery(ZMQReciever::PeripheryProperties(recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 

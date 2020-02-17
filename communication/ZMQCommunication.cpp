@@ -2,18 +2,18 @@
 
 using namespace SF;
 
-SF::ZMQRecieve::PeripheryProperties::PeripheryProperties(const std::string& address_, bool getinfos_) :
+SF::ZMQReciever::PeripheryProperties::PeripheryProperties(const std::string& address_, bool getinfos_) :
 	address(address_), getstrings(getinfos_), nparam(0) {}
-SF::ZMQRecieve::PeripheryProperties::PeripheryProperties(OperationType source_, const std::string& address_, bool getinfos_) : source(source_),
+SF::ZMQReciever::PeripheryProperties::PeripheryProperties(OperationType source_, const std::string& address_, bool getinfos_) : source(source_),
 	address(address_), getstrings(getinfos_), nparam(1) {}
-SF::ZMQRecieve::PeripheryProperties::PeripheryProperties(OperationType source_, unsigned char ID_,
+SF::ZMQReciever::PeripheryProperties::PeripheryProperties(OperationType source_, unsigned char ID_,
 	const std::string& address_, bool getinfos_) : source(source_),
 	ID(ID_), address(address_), getstrings(getinfos_), nparam(2) {}  // To add an address and recieve datamsgs with given type and ID
-SF::ZMQRecieve::PeripheryProperties::PeripheryProperties(OperationType source_,
+SF::ZMQReciever::PeripheryProperties::PeripheryProperties(OperationType source_,
 	unsigned char ID_, DataType type_, const std::string& address_, bool getinfos_) :
 	source(source_), ID(ID_), address(address_), getstrings(getinfos_), type(type_), nparam(3) {}
 
-SF::ZMQRecieve::SocketHandler::SocketHandler(const PeripheryProperties& prop, zmq::context_t& context) :
+SF::ZMQReciever::SocketHandler::SocketHandler(const PeripheryProperties& prop, zmq::context_t& context) :
 	socket(std::make_shared<zmq::socket_t>(context, ZMQ_SUB)) {
 	char topic[4];
 	topic[0] = 'd';
@@ -26,37 +26,96 @@ SF::ZMQRecieve::SocketHandler::SocketHandler(const PeripheryProperties& prop, zm
 	socket->connect(prop.address.c_str());
 }
 
-SF::ZMQRecieve::~ZMQRecieve() {
+SF::ZMQReciever::~ZMQReciever() {
 	Stop();
 }
 
-SF::ZMQRecieve::ZMQRecieve(std::vector<PeripheryProperties> periferies)
+SF::ZMQReciever::ZMQReciever(std::vector<PeripheryProperties> periferies)
 	: peripheryProperties(periferies), pause(false) {}
 
-void SF::ZMQRecieve::AddPeriphery(const PeripheryProperties & prop) {
+void SF::ZMQReciever::AddPeriphery(const PeripheryProperties & prop) {
 	peripheryPropertiesMutex.lock();
 	peripheryProperties.push_back(prop);
 	peripheryPropertiesMutex.unlock();
 }
 
-unsigned long long SF::ZMQRecieve::GetNumOfRecievedMsgs(int n) {
+unsigned long long SF::ZMQReciever::GetNumOfRecievedMsgs(int n) {
 	peripheryPropertiesMutex.lock();
 	long long out = peripheryProperties[n].nRecieved;
 	peripheryPropertiesMutex.unlock();
 	return out;
 }
 
-void SF::ZMQRecieve::Pause(bool pause_) {
+void SF::ZMQReciever::Pause(bool pause_) {
 	pause = pause_;
 }
 
-SF::ZMQSend::~ZMQSend() {
+void SF::ZMQReciever::ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) {
+	char* t = static_cast<char*>(topic.data());
+	switch (t[0]) {
+	case 'd': {
+		if (topic.size() != 4)
+			perror("ZMQCommunication::ProcessMsg corrupted datamsg topic - d.");
+		unsigned char ID = static_cast<unsigned char>(t[2]);
+		OperationType source = static_cast<OperationType>(t[1]);
+		DataType type = static_cast<DataType>(t[3]);
+		if (VerifyDataMsgContent(msg.data(), (int)msg.size()))
+			CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type));
+		else
+			perror("ZMQCommunication::ProcessMsg corrupted datamsg buffer.");
+		return;
+	}
+	case 'i':
+		if (topic.size() != 1)
+			perror("ZMQCommunication::ProcessMsg corrupted string topic");
+		CallbackGotString(std::string(static_cast<char*>(msg.data()), msg.size()));
+		return;
+	default:
+		perror("ZMQCommunication::ProcessMsg corrupted topic.");
+	}
+}
+
+SF::ZMQSender::~ZMQSender() {
 	zmq_socket.close();
 	zmq_context.close();
 }
 
-SF::ZMQSend::ZMQSend(const std::string & address, int hwm) : zmq_context(2) {
+SF::ZMQSender::ZMQSender(const std::string & address, int hwm) : zmq_context(2) {
 	zmq_socket = zmq::socket_t(zmq_context, ZMQ_PUB);
 	zmq_socket.setsockopt(ZMQ_SNDHWM, &hwm, sizeof(hwm));
 	zmq_socket.bind(address);
+}
+
+void SF::ZMQSender::SendDataMsg(const DataMsg & data) {
+	zmq::multipart_t msg;
+	unsigned char topicbuf[4];
+	topicbuf[0] = 'd';
+	topicbuf[1] = to_underlying<OperationType>(data.GetDataSourceType());
+	topicbuf[2] = data.GetSourceID();
+	topicbuf[3] = to_underlying<DataType>(data.GetDataType());
+	msg.addmem(topicbuf, 4);
+	void* buf;
+	int bufsize;
+	SerializeDataMsg(data, buf, bufsize);
+	msg.addmem(buf, bufsize);
+	try {
+		msg.send(zmq_socket, ZMQ_DONTWAIT);
+	}
+	catch (zmq::error_t &e) {
+		std::cout << e.what() << std::endl;
+	}
+	delete buf;
+}
+
+void SF::ZMQSender::SendString(const std::string & data) {
+	zmq::multipart_t msg;
+	char i = 'i';
+	msg.addmem(&i, 1);
+	msg.addmem(&data.c_str()[0], data.length());
+	try {
+		msg.send(zmq_socket, ZMQ_DONTWAIT);
+	}
+	catch (zmq::error_t &e) {
+		std::cout << e.what() << std::endl;
+	}
 }
