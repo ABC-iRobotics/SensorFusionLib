@@ -2,6 +2,7 @@
 
 #include<map>
 #include<mutex>
+#include<thread>
 #include"DataMsg.h"
 
 namespace SF {
@@ -37,7 +38,7 @@ namespace SF {
 
 		virtual void CallbackSamplingTimeOver(const Time& currentTime = Now()); /*!< Callback called in each sampling time - input: time for the filter*/
 
-		virtual void CallbackGotDataMsg(DataMsg& msg, const Time& currentTime = Now());  /*!< Callback called if new DataMsg recieved */
+		virtual void CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime = Now());  /*!< Callback called if new DataMsg recieved */
 
 		virtual void CallbackGotString(const std::string& msg, const Time& currentTime = Now()); /*!< Callback called if new string recieved */
 
@@ -66,7 +67,7 @@ namespace SF {
 	protected:
 		void CallbackSamplingTimeOver(const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
 
-		void CallbackGotDataMsg(DataMsg& msg, const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
+		void CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
 
 		void CallbackMsgQueueEmpty(const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
 

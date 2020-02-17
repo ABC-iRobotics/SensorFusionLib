@@ -9,7 +9,7 @@ void SF::Reciever::CallbackSamplingTimeOver(const Time& currentTime) {
 	processorGuard.unlock();
 }
 
-void SF::Reciever::CallbackGotDataMsg(DataMsg & msg, const Time& currentTime) {
+void SF::Reciever::CallbackGotDataMsg(const DataMsg & msg, const Time& currentTime) {
 	processorGuard.lock();
 	if (processor)
 		processor->CallbackGotDataMsg(msg, currentTime);
@@ -83,7 +83,7 @@ void SF::Processor::CallbackSamplingTimeOver(const Time & currentTime) {
 	senderGuard.unlock();
 }
 
-void SF::Processor::CallbackGotDataMsg(DataMsg & msg, const Time & currentTime) {
+void SF::Processor::CallbackGotDataMsg(const DataMsg & msg, const Time & currentTime) {
 	senderGuard.lock();
 	if (sender)
 		sender->SendDataMsg(msg);

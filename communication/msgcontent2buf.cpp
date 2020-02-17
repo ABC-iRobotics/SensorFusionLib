@@ -39,7 +39,7 @@ DataMsg SF::InitDataMsg(void* buf, OperationType source, unsigned char ID, DataT
 	return data;
 }
 
-void SF::SerializeDataMsg(const DataMsg & dataMsg, void*& buf, int & length) {
+void SF::SerializeDataMsg(const DataMsg & dataMsg, unsigned char*& buf, int & length) {
 	flatbuffers::FlatBufferBuilder fbb(1024);
 
 	flatbuffers::Offset<flatbuffers::Vector<float>> fbb_value;
@@ -84,10 +84,9 @@ void SF::SerializeDataMsg(const DataMsg & dataMsg, void*& buf, int & length) {
 
 	length = fbb.GetSize();
 
-	auto buf_ = new unsigned char[length];
+	buf = new unsigned char[length];
 	for (size_t i = 0; i < length; i++)
-		buf_[i] = fbb.GetBufferPointer()[i];
-	buf = buf_;
+		buf[i] = fbb.GetBufferPointer()[i];
 
 	if (dataMsg.HasValue())
 		delete v;

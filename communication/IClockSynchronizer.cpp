@@ -1,5 +1,6 @@
 #include "IClockSynchronizer.h"
 #include<iostream>
+#include<thread>
 using namespace SF;
 
 SF::IClockSyncronizerClient::PublisherClockProperties::PublisherClockProperties(const std::string & address_) :

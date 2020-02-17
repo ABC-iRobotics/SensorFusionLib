@@ -7,7 +7,7 @@ set (HEADERS
 set (HEADERS_INL
 	ILogReader.h
 	SenderToSPDLog.h
-	SPDLogRead.h
+	spdLogRead.h
 	ZMQClockSynchronizer.h
 	ZMQCommunication.h
 	msgcontent2buf.h
@@ -15,7 +15,7 @@ set (HEADERS_INL
 
 set (SOURCES
 	SenderToSPDLog.cpp
-	SPDLogRead.cpp
+	spdLogRead.cpp
 	ZMQClockSynchronizer.cpp
 	IClockSynchronizer.cpp
 	ZMQCommunication.cpp
@@ -24,7 +24,7 @@ set (SOURCES
 
 set(root ${CMAKE_CURRENT_SOURCE_DIR})
 
-source_group(FILES ${HEADERS_INL}  PREFIX "Resource Headers" TREE ${root})
+source_group(h_inl FILES ${HEADERS_INL}  PREFIX "Resource Headers" TREE ${root})
 
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS} ${HEADERS_INL})
 

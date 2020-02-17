@@ -2,6 +2,7 @@
 #include"defs.h"
 #include<map>
 #include<mutex>
+#include<memory>
 
 namespace SF {
 

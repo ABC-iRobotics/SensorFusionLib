@@ -162,10 +162,10 @@ void SF::ZMQSender::SendDataMsg(const DataMsg & data) {
 	topicbuf[2] = data.GetSourceID();
 	topicbuf[3] = to_underlying<DataType>(data.GetDataType());
 	msg.addmem(topicbuf, 4);
-	void* buf;
+	unsigned char* buf;
 	int bufsize;
 	SerializeDataMsg(data, buf, bufsize);
-	msg.addmem(buf, bufsize);
+	msg.addmem((void*)buf, bufsize);
 	try {
 		msg.send(zmq_socket, ZMQ_DONTWAIT);
 	}

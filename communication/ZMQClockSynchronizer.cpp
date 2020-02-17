@@ -10,18 +10,18 @@ using namespace SF;
 *
 */
 class LittleEndianSerializer {
-	enum Endianness { LITTLE_ENDIAN, BIG_ENDIAN } endianness;
+	enum Endianness { LITTLE_ENDIAN_ = 0, BIG_ENDIAN_ } endianness;
 public:
 	LittleEndianSerializer() /*!< Constructor */
 	{
 		uint32_t word = 0x0A0B0C0D; // An unsigned 32-bit integer.
 		char *pointer = (char *)&word; // A pointer to the first octet of the word.
 		if (pointer[0] == 0x0D) {
-			endianness = LITTLE_ENDIAN;
+			endianness = LITTLE_ENDIAN_;
 			return;
 		}
 		if (pointer[0] == 0x0A) {
-			endianness = BIG_ENDIAN;
+			endianness = BIG_ENDIAN_;
 			return;
 		}
 		perror("Unkown endianness");
@@ -31,10 +31,10 @@ public:
 	{
 		const char *srcptr = (const char *)src;
 		char *destptr = (char *)dest;
-		if (endianness == LITTLE_ENDIAN)
+		if (endianness == LITTLE_ENDIAN_)
 			for (int i = 0; i < size; i++)
 				destptr[i] = srcptr[i];
-		if (endianness == BIG_ENDIAN)
+		if (endianness == BIG_ENDIAN_)
 			for (int i = 0; i < size; i++)
 				destptr[size - i - 1] = srcptr[i];
 	}

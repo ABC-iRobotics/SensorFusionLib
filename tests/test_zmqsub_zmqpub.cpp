@@ -1,4 +1,4 @@
-#include "Common/unity.h"
+#include "common/unity.h"
 void setUp() {}
 void tearDown() {}
 
@@ -12,7 +12,7 @@ using namespace SF;
 
 void DataMsgContentSerialization(long N) {
 	for (long long i = 0; i < N; i++) {
-		void* buf;
+		unsigned char* buf;
 		int length;
 		OperationType source(SENSOR);
 		DataType type(OUTPUT);
@@ -89,7 +89,7 @@ static std::vector<std::string> strings;
 class Checker : public Processor {
 	int n = 0;
 public:
-	void CallbackGotDataMsg(DataMsg& msg, const Time& currentTime = Now()) override {
+	void CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
 		if (msg != msgs[n]) {
 			printf("Error:\n");
 			msg.print();
