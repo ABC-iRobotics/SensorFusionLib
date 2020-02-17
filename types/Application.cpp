@@ -39,7 +39,7 @@ void SF::Reciever::Start(DTime Ts)
 		isRunning = true;
 		toStop = false;
 		t = std::thread([this, Ts]() {
-			Run(Ts);
+			_Run(Ts);
 			isRunning = false;
 		});
 	}

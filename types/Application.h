@@ -61,7 +61,7 @@ namespace SF {
 
 		std::thread t;
 
-		virtual void Run(DTime Ts) = 0; /*!< Reciever thread must be defined by the subclass */
+		virtual void _Run(DTime Ts) = 0; /*!< Reciever thread must be defined by the subclass */
 
 	protected:
 		void CallbackSamplingTimeOver(const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
@@ -79,7 +79,7 @@ namespace SF {
 
 		void Stop(bool waitin = true); /*!< Stops the reciever thread*/
 
-		bool MustStop() const; /*!< Getter to check if the Run() thread should stop */
+		bool MustStop() const; /*!< Getter to check if the _Run() thread should stop */
 
 		void SetProcessor(Processor::ProcessorPtr processor_); /*!< Set Processor::ProcessorPtr to be called with data and event */
 

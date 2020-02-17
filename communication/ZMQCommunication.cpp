@@ -99,7 +99,7 @@ bool SF::ZMQReciever::_PollItems(zmq::pollitem_t * items, int nItems, int TwaitM
 	return out;
 }
 
-void SF::ZMQReciever::Run(DTime Ts) {
+void SF::ZMQReciever::_Run(DTime Ts) {
 	zmq::context_t context(2);
 	std::vector<SocketHandler> socketProperties = std::vector<SocketHandler>();
 	zmq::pollitem_t items[100];

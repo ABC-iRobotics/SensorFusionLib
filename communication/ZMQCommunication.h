@@ -50,7 +50,7 @@ namespace SF {
 
 		bool _PollItems(zmq::pollitem_t* items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties);
 
-		void Run(DTime Ts) override;
+		void _Run(DTime Ts) override;
 	};
 
 	class ZMQSender : public Sender {
