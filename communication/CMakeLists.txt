@@ -9,6 +9,8 @@ set (HEADERS_INL
 	SenderToSPDLog.h
 	SPDLogRead.h
 	ZMQClockSynchronizer.h
+	ZMQCommunication.h
+	msgcontent2buf.h
 	)
 
 set (SOURCES
@@ -16,6 +18,8 @@ set (SOURCES
 	SPDLogRead.cpp
 	ZMQClockSynchronizer.cpp
 	IClockSynchronizer.cpp
+	ZMQCommunication.cpp
+	msgcontent2buf.cpp
 	)
 
 set(root ${CMAKE_CURRENT_SOURCE_DIR})

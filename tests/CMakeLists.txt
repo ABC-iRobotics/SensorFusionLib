@@ -12,6 +12,7 @@ endif()
 set(tests
 	test_spd_log
 	test_clocksync_local
+	test_zmqsub_zmqpub
 	)
 foreach(test ${tests})
 	add_executable(${test} ${test}.cpp)
@@ -29,3 +30,4 @@ endforeach()
 
 target_link_libraries(test_spd_log sf_communication)
 target_link_libraries(test_clocksync_local sf_communication)
+target_link_libraries(test_zmqsub_zmqpub sf_communication)

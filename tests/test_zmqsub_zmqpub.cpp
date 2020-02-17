@@ -2,27 +2,154 @@
 void setUp() {}
 void tearDown() {}
 
-#include "ClockSynchronizer.h"
-#include "zmqPublisher.h"
-#include "zmqSubscriber.h"
+#include <thread>
 #include <iostream>
+
+#include"ZMQCommunication.h"
+#include"msgcontent2buf.h"
 
 using namespace SF;
 
-void testLocalClockSynchronizationOnTCP(int nCases = 5, int nmsgs = 10000) {
-	ClockSynchronizerServer sv("tcp://*:5555");
-	sv.StartServer();
-	for (int i = 0; i < nCases; i++) {
-		long long offset = GetOffsetFromServerTime("tcp://localhost:5555", nmsgs);
-		std::cout << "Computed offset: " << offset << "us\n";
-		TEST_ASSERT_LESS_THAN(offset, -3);
-		TEST_ASSERT_GREATER_THAN(offset, 3);
+void DataMsgContentSerialization(long N) {
+	for (long long i = 0; i < N; i++) {
+		void* buf;
+		int length;
+		OperationType source(SENSOR);
+		DataType type(OUTPUT);
+		unsigned char ID = 5;
+		Time t(Now());
+		DataMsg d(ID, type, source, t);
+		d.SetValueVector(Eigen::VectorXd::Ones(10));
+		d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
+		SerializeDataMsg(d, buf, length);
+		if (VerifyDataMsgContent(buf, length)) {
+			if (InitDataMsg(buf, source, ID, type) != d)
+				TEST_ASSERT("Serialization error!");
+		}
+		else
+			printf("Error...");
+		delete buf;
 	}
+}
+
+void SendAndRecieveDataMsgs(std::string senderaddress, std::string recvaddress, int N, int K, bool sendstring = false) {
+	DataMsg d(1, STATE, SENSOR, Now());
+	d.SetValueVector(Eigen::VectorXd::Ones(10));
+	d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
+	ZMQSend a(senderaddress, N);
+	ZMQRecieve r;
+	r.AddPeriphery(ZMQRecieve::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
+		recvaddress, true));
+	r.Start(DTime(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	for (int k = 0; k < K; k++) {
+		Time start = Now();
+		for (long long n = 0; n < N; n++)
+			if (sendstring)
+				a.SendString("abasdasdfasf");
+			else
+				a.SendDataMsg(d);
+		while (r.GetNumOfRecievedMsgs(0) != N * (k + 1))
+			std::this_thread::sleep_for(std::chrono::microseconds(1));
+		DTime dt = duration_cast(Now() - start);
+		printf("MSGs got: Nx%i us (=%i us)\n", dt.count() / N, dt.count());
+	}
+}
+
+void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm) {
+	DataMsg d(1, STATE, SENSOR, Now());
+	d.SetValueVector(Eigen::VectorXd::Ones(10));
+	d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
+	ZMQSend a(senderaddress, hwm);
+	ZMQRecieve r;
+	r.AddPeriphery(ZMQRecieve::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
+		recvaddress, true));
+	r.Start(DTime(1000));
+	int recieved = 0;
+	for (int j = 0; j < N; j++) {
+		r.Pause(true);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		for (int i = 0; i < hwm*100; i++)
+			a.SendDataMsg(d);
+		
+		int recieved0 = r.GetNumOfRecievedMsgs(0);
+		r.Pause(false);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		while (r.GetNumOfRecievedMsgs(0) != recieved) {
+			recieved = r.GetNumOfRecievedMsgs(0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
+		printf("  n: %i, %f\n", recieved - recieved0, (float)(recieved-recieved0)/float(hwm));
+	}
+	printf("\n DONE \n");
+}
+
+static std::vector<DataMsg> msgs;
+
+class Checker : public Processor {
+	int n = 0;
+public:
+	void CallbackGotDataMsg(DataMsg& msg, const Time& currentTime = Now()) override {
+		if (msg != msgs[n])
+			TEST_ASSERT("MSG lost!");
+		n++;
+	}
+};
+
+void order(std::string senderaddress, std::string recvaddress, int N) {
+	msgs = std::vector<DataMsg>();
+	for (int i = 0; i < N; i++) {
+		DataMsg d(5, DataType(i % 4), OperationType(i % 3));
+		if (i%3==0)
+			d.SetValueVector(Eigen::VectorXd::Ones(4)*i);
+		if (i % 2 == 0)
+			d.SetVarianceMatrix(Eigen::MatrixXd::Ones(i%6,i%6)*i);
+		msgs.push_back(d);
+	}
+	ZMQSend a(senderaddress, N);
+	auto checker = std::make_shared<Checker>();
+	ZMQRecieve r;
+	r.SetProcessor(checker);
+	r.AddPeriphery(ZMQRecieve::PeripheryProperties(recvaddress, true));
+	r.Start(DTime(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+	for (int i = 0; i < N; i++)
+		a.SendDataMsg(msgs[i]);
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+	while (r.GetNumOfRecievedMsgs(0) != N)
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 int main (void) {
 	UNITY_BEGIN();
-	RUN_TEST([]() {testLocalClockSynchronizationOnTCP(); });
-	//TODO: IPC
+	RUN_TEST([]() { order("tcp://*:1234", "tcp://localhost:1234", 100); });
+	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 100); });
+	RUN_TEST([]() {	DataMsgContentSerialization(100000); });
+	RUN_TEST([]() {
+		printf("TCP: 1000x5 datamsg\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5);
+		printf("TCP: 1000x5 string\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5, true);
+		printf("TCP: 10000x5 datamsg\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5);
+		printf("TCP: 10000x5 string\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);	
+	});
+#ifdef UNIX
+	//ipc, inproc...
+	RUN_TEST([]() {
+		printf("1000,5, datamsg\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5);
+		printf("1000,5, string\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5, true);
+		printf("10000,5\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5);
+		printf("10000,5, string\n");
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);
+	});
+#endif
 	return UNITY_END();
 }

@@ -1,1 +1,1 @@
-./flatc --cpp --python msg.fbs
+./flatc --cpp --python msgcontent.fbs
