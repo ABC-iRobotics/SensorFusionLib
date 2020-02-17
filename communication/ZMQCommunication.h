@@ -1,7 +1,6 @@
 #pragma once
 #include <zmq.hpp>
 #include"Application.h"
-#include"msgcontent2buf.h"
 
 #include"zmq_addon.hpp"
 
@@ -49,7 +48,9 @@ namespace SF {
 			std::shared_ptr<zmq::socket_t> socket;
 		};
 		
-		void ProcessMsg(zmq::message_t& topic, zmq::message_t& msg);
+		void _ProcessMsg(zmq::message_t& topic, zmq::message_t& msg);
+
+		bool _PollItems(zmq::pollitem_t* items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties);
 
 		void Run(DTime Ts) override {
 			zmq::context_t context(2);
@@ -57,12 +58,6 @@ namespace SF {
 			zmq::pollitem_t items[100];
 			int nItems = 0;
 
-			zmq::message_t msg;
-			zmq::message_t topic;
-
-			
-
-			Time start;
 			while (!MustStop()) {
 				// Create sockets if there are elements of socketproperties not set
 				peripheryPropertiesMutex.lock();
@@ -76,23 +71,12 @@ namespace SF {
 					}
 				}
 				peripheryPropertiesMutex.unlock();
-				// wait if
+				// wait if pause
 				while (pause)
 					std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				// target objects
-				zmq::poll(&items[0], nItems, static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(Ts).count()));
-				for (int i = 0; i < nItems; i++)
-					if (items[i].revents & ZMQ_POLLIN) {
-						auto socket = socketProperties[i].socket;
-						zmq::multipart_t t;
-						if (t.recv(*socket, ZMQ_DONTWAIT))
-						{
-							peripheryPropertiesMutex.lock();
-							peripheryProperties[i].nRecieved++;
-							peripheryPropertiesMutex.unlock();
-							ProcessMsg(t[0], t[1]);
-						}
-					}
+				// poll and handle msgs
+				_PollItems(&items[0], nItems, static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(Ts).count()), socketProperties);
+
 			}
 		}
 	};

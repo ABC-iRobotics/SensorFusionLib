@@ -1,4 +1,5 @@
 #include "ZMQCommunication.h"
+#include"msgcontent2buf.h"
 
 using namespace SF;
 
@@ -50,29 +51,47 @@ void SF::ZMQReciever::Pause(bool pause_) {
 	pause = pause_;
 }
 
-void SF::ZMQReciever::ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) {
+void SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) {
 	char* t = static_cast<char*>(topic.data());
 	switch (t[0]) {
 	case 'd': {
 		if (topic.size() != 4)
-			perror("ZMQCommunication::ProcessMsg corrupted datamsg topic - d.");
+			perror("ZMQCommunication::_ProcessMsg corrupted datamsg topic - d.");
 		unsigned char ID = static_cast<unsigned char>(t[2]);
 		OperationType source = static_cast<OperationType>(t[1]);
 		DataType type = static_cast<DataType>(t[3]);
 		if (VerifyDataMsgContent(msg.data(), (int)msg.size()))
 			CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type));
 		else
-			perror("ZMQCommunication::ProcessMsg corrupted datamsg buffer.");
+			perror("ZMQCommunication::_ProcessMsg corrupted datamsg buffer.");
 		return;
 	}
 	case 'i':
 		if (topic.size() != 1)
-			perror("ZMQCommunication::ProcessMsg corrupted string topic");
+			perror("ZMQCommunication::_ProcessMsg corrupted string topic");
 		CallbackGotString(std::string(static_cast<char*>(msg.data()), msg.size()));
 		return;
 	default:
-		perror("ZMQCommunication::ProcessMsg corrupted topic.");
+		perror("ZMQCommunication::_ProcessMsg corrupted topic.");
 	}
+}
+
+bool SF::ZMQReciever::_PollItems(zmq::pollitem_t * items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties) {
+	zmq::poll(&items[0], nItems, TwaitMilliSeconds);
+	bool out = false;
+	for (int i = 0; i < nItems; i++)
+		if (items[i].revents & ZMQ_POLLIN) {
+			auto socket = socketProperties[i].socket;
+			zmq::multipart_t t;
+			if (t.recv(*socket, ZMQ_DONTWAIT)) {
+				peripheryPropertiesMutex.lock();
+				peripheryProperties[i].nRecieved++;
+				peripheryPropertiesMutex.unlock();
+				_ProcessMsg(t[0], t[1]);
+				out = true;
+			}
+		}
+	return out;
 }
 
 SF::ZMQSender::~ZMQSender() {
