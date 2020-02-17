@@ -65,7 +65,7 @@ void DataMsg::print() const {
 	default:
 		break;
 	}
-	printf("\n Age: %lld [ms]\n", duration_cast(t - time).count());
+	printf("\n TimeStamp: %lld  Age: %lld [us]\n", duration_cast(time.time_since_epoch()).count(), duration_cast(t - time).count());
 	if (hasValue)
 		std::cout << "Value:\n" << value << std::endl;
 	if (hasVariance)
@@ -95,4 +95,34 @@ void DataMsg::SetValueVector(const Eigen::VectorXd & v) {
 
 void SF::DataMsg::ApplyOffset(DTime offset) {
 	time += offset;
+}
+
+bool SF::DataMsg::operator!=(const DataMsg& data) const {
+	return !(operator==(data));
+}
+
+bool SF::DataMsg::operator==(const DataMsg& data) const {
+	if (IsInvalid() != data.IsInvalid())
+		return false;
+	if (HasValue() != data.HasValue())
+		return false;
+	if (HasVariance() != data.HasVariance())
+		return false;
+	if (GetSourceID() != data.GetSourceID())
+		return false;
+	if (GetDataSourceType() != data.GetDataSourceType())
+		return false;
+	if (GetDataType() != data.GetDataType())
+		return false;
+	if (GetTime() != data.GetTime())
+		return false;
+	if (HasValue())
+		if (!GetValue().isApprox(data.GetValue())) {
+			std::cout << GetValue().transpose() << "  !=  " << data.GetValue().transpose() << std::endl;
+			return false;
+		}
+	if (HasVariance())
+		if (!GetVariance().isApprox(data.GetVariance()))
+			return false;
+	return true;
 }

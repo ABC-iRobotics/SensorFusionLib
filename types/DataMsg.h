@@ -66,6 +66,10 @@ namespace SF {
 		} /*!< Init std::shrared_ptr<DataMsg> */
 
 		void ApplyOffset(DTime offset); /*!< Modify timestamp as timestamp += offset*/
+
+		bool operator!=(const DataMsg& data) const;
+
+		bool operator==(const DataMsg& data) const;
 	};
 
 }
