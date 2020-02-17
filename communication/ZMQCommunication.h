@@ -2,8 +2,6 @@
 #include <zmq.hpp>
 #include"Application.h"
 
-#include"zmq_addon.hpp"
-
 namespace SF {
 	class ZMQReciever : public Reciever {
 	public:
@@ -52,33 +50,7 @@ namespace SF {
 
 		bool _PollItems(zmq::pollitem_t* items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties);
 
-		void Run(DTime Ts) override {
-			zmq::context_t context(2);
-			std::vector<SocketHandler> socketProperties = std::vector<SocketHandler>();
-			zmq::pollitem_t items[100];
-			int nItems = 0;
-
-			while (!MustStop()) {
-				// Create sockets if there are elements of socketproperties not set
-				peripheryPropertiesMutex.lock();
-				for (size_t i = socketProperties.size(); i < peripheryProperties.size(); i++) {
-					socketProperties.push_back(SocketHandler(peripheryProperties[i], context));
-					if (nItems == 100)
-						perror("Error");
-					else {
-						items[nItems] = { *(socketProperties[i].socket), 0, ZMQ_POLLIN, 0 };
-						nItems++;
-					}
-				}
-				peripheryPropertiesMutex.unlock();
-				// wait if pause
-				while (pause)
-					std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				// poll and handle msgs
-				_PollItems(&items[0], nItems, static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(Ts).count()), socketProperties);
-
-			}
-		}
+		void Run(DTime Ts) override;
 	};
 
 	class ZMQSender : public Sender {

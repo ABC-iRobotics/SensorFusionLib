@@ -10,10 +10,10 @@ bool SF::VerifyDataMsgContent(void * buf, int length) {
 	return msg->Verify(v);
 }
 
-DataMsg SF::InitDataMsg(void* buf, OperationType source, unsigned char ID, DataType type) {
+DataMsg SF::InitDataMsg(void* buf, OperationType source, unsigned char ID, DataType type, DTime offset) {
 	auto msg = DataMsgContentNameSpace::GetMsg(buf);
 	auto timestamp_in_us = msg->timestamp_in_us();
-	DataMsg data = DataMsg(ID, type, source, Time(std::chrono::microseconds(timestamp_in_us)));
+	DataMsg data = DataMsg(ID, type, source, Time(std::chrono::microseconds(timestamp_in_us))+offset);
 	if (flatbuffers::IsFieldPresent(msg, DataMsgContentNameSpace::Msg::VT_VALUE_VECTOR)) {
 		auto v = msg->value_vector();
 		size_t N = v->size();

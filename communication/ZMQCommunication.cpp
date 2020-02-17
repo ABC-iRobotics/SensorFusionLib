@@ -1,5 +1,7 @@
 #include "ZMQCommunication.h"
 #include"msgcontent2buf.h"
+#include"IClockSynchronizer.h"
+#include"zmq_addon.hpp"
 
 using namespace SF;
 
@@ -58,10 +60,13 @@ void SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) 
 		if (topic.size() != 4)
 			perror("ZMQCommunication::_ProcessMsg corrupted datamsg topic - d.");
 		unsigned char ID = static_cast<unsigned char>(t[2]);
+		// Apply offset
 		OperationType source = static_cast<OperationType>(t[1]);
 		DataType type = static_cast<DataType>(t[3]);
-		if (VerifyDataMsgContent(msg.data(), (int)msg.size()))
-			CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type));
+		if (VerifyDataMsgContent(msg.data(), (int)msg.size())) {
+			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(ID))
+				CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(ID)));
+		}
 		else
 			perror("ZMQCommunication::_ProcessMsg corrupted datamsg buffer.");
 		return;
@@ -92,6 +97,50 @@ bool SF::ZMQReciever::_PollItems(zmq::pollitem_t * items, int nItems, int TwaitM
 			}
 		}
 	return out;
+}
+
+void SF::ZMQReciever::Run(DTime Ts) {
+	zmq::context_t context(2);
+	std::vector<SocketHandler> socketProperties = std::vector<SocketHandler>();
+	zmq::pollitem_t items[100];
+	int nItems = 0;
+	// For managing sampling time
+	Time start = Now();
+	long iIteration = 1; // next = start + iIteration*Ts
+						 // Main iteration
+	while (!MustStop()) {
+		// Create sockets if there are elements of socketproperties not set
+		peripheryPropertiesMutex.lock();
+		for (size_t i = socketProperties.size(); i < peripheryProperties.size(); i++) {
+			socketProperties.push_back(SocketHandler(peripheryProperties[i], context));
+			if (nItems == 100)
+				perror("Error");
+			else {
+				items[nItems] = { *(socketProperties[i].socket), 0, ZMQ_POLLIN, 0 };
+				nItems++;
+			}
+		}
+		peripheryPropertiesMutex.unlock();
+		// wait if pause
+		while (pause)
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		// Single iteration step
+		Time end = start + iIteration * Ts;
+		static auto MSsToEllapse = [](Time end)->int {
+			auto out = static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(end - Now()).count());
+			return (out<0 ? 0 : out);
+		};
+		while (Now() < end) {
+			// Read the queue
+			bool got = false;
+			while (_PollItems(&items[0], nItems, MSsToEllapse(end), socketProperties))
+				got = true;
+			if (got)
+				CallbackMsgQueueEmpty(); // if there were msg read
+		}
+		CallbackSamplingTimeOver();
+		iIteration++;
+	}
 }
 
 SF::ZMQSender::~ZMQSender() {
