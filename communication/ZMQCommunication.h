@@ -3,6 +3,8 @@
 #include"Application.h"
 #include"msgcontent2buf.h"
 
+#include"zmq_addon.hpp"
+
 namespace SF {
 	class ZMQRecieve : public Reciever {
 	public:
@@ -108,18 +110,13 @@ namespace SF {
 				for (int i = 0; i < nItems; i++)
 					if (items[i].revents & ZMQ_POLLIN) {
 						auto socket = socketProperties[i].socket;
-#pragma warning (suppress:4996)
-						rc = socket->recv(&topic, ZMQ_RCVMORE);  // Works fine
-						//std::string address = s_recv(msg);
-#pragma warning (suppress:4996)
-						rc = socket->recv(&msg) && rc;
-
-						if (rc > 0) // Do no print trace when recv return from timeout
+						zmq::multipart_t t;
+						if (t.recv(*socket, ZMQ_DONTWAIT))
 						{
 							peripheryPropertiesMutex.lock();
 							peripheryProperties[i].nRecieved++;
 							peripheryPropertiesMutex.unlock();
-							ProcessMsg(topic, msg);
+							ProcessMsg(t[0], t[1]);
 						}
 					}
 			}

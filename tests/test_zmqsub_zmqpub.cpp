@@ -125,9 +125,6 @@ void order(std::string senderaddress, std::string recvaddress, int N) {
 
 int main (void) {
 	UNITY_BEGIN();
-	RUN_TEST([]() { order("tcp://*:1234", "tcp://localhost:1234", 100); });
-	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 100); });
-	RUN_TEST([]() {	DataMsgContentSerialization(100000); });
 	RUN_TEST([]() {
 		printf("TCP: 1000x5 datamsg\n");
 		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5);
@@ -136,8 +133,12 @@ int main (void) {
 		printf("TCP: 10000x5 datamsg\n");
 		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5);
 		printf("TCP: 10000x5 string\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);	
+		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);
 	});
+	RUN_TEST([]() { order("tcp://*:1234", "tcp://localhost:1234", 100); });
+	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 100); });
+	RUN_TEST([]() {	DataMsgContentSerialization(100000); });
+	
 #ifdef UNIX
 	//ipc, inproc...
 	RUN_TEST([]() {
