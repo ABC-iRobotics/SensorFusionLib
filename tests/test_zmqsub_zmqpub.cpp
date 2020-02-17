@@ -23,8 +23,7 @@ void DataMsgContentSerialization(long N) {
 		d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
 		SerializeDataMsg(d, buf, length);
 		if (VerifyDataMsgContent(buf, length)) {
-			if (InitDataMsg(buf, source, ID, type) != d)
-				TEST_ASSERT("Serialization error!");
+			TEST_ASSERT(InitDataMsg(buf, source, ID, type) == d);
 		}
 		else
 			printf("Error...");
@@ -81,25 +80,36 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 		}
 		printf("  n: %i, %f\n", recieved - recieved0, (float)(recieved-recieved0)/float(hwm));
 	}
-	printf("\n DONE \n");
+	printf("DONE \n");
 }
 
+bool error;
 static std::vector<DataMsg> msgs;
-
+static std::vector<std::string> strings;
 class Checker : public Processor {
 	int n = 0;
 public:
 	void CallbackGotDataMsg(DataMsg& msg, const Time& currentTime = Now()) override {
-		if (msg != msgs[n])
-			TEST_ASSERT("MSG lost!");
+		if (msg != msgs[n]) {
+			printf("Error:\n");
+			msg.print();
+			msgs[n].print();
+		}
+		error |= (msg != msgs[n]);
+		n++;
+	}
+
+	void CallbackGotString(const std::string& msg, const Time& currentTime = Now()) override {
+		error |= (msg.compare(strings[n]) != 0);
 		n++;
 	}
 };
 
-void order(std::string senderaddress, std::string recvaddress, int N) {
+void orderDataMsg(std::string senderaddress, std::string recvaddress, int N) {
+	error = false;
 	msgs = std::vector<DataMsg>();
 	for (int i = 0; i < N; i++) {
-		DataMsg d(5, DataType(i % 4), OperationType(i % 3));
+		DataMsg d(5, DataType(i % 4), OperationType(i % 3), Now());
 		if (i%3==0)
 			d.SetValueVector(Eigen::VectorXd::Ones(4)*i);
 		if (i % 2 == 0)
@@ -121,10 +131,40 @@ void order(std::string senderaddress, std::string recvaddress, int N) {
 
 	while (r.GetNumOfRecievedMsgs(0) != N)
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	r.Stop();
+	if (error)
+		TEST_ASSERT(0);
+}
+
+void orderStrings(std::string senderaddress, std::string recvaddress, int N) {
+	error = false;
+	strings = std::vector<std::string>();
+	for (int i = 0; i < N; i++)
+		strings.push_back(std::string("asdassv0") + std::to_string(i) + "_" + std::to_string(duration_cast(Now().time_since_epoch()).count()));
+	ZMQSend a(senderaddress, N);
+	auto checker = std::make_shared<Checker>();
+	ZMQRecieve r;
+	r.SetProcessor(checker);
+	r.AddPeriphery(ZMQRecieve::PeripheryProperties(recvaddress, true));
+	r.Start(DTime(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+	for (int i = 0; i < N; i++)
+		a.SendString(strings[i]);
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+	while (r.GetNumOfRecievedMsgs(0) != N)
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	r.Stop();
+	if (error)
+		TEST_ASSERT(0);
 }
 
 int main (void) {
 	UNITY_BEGIN();
+	RUN_TEST([]() { orderDataMsg("tcp://*:1234", "tcp://localhost:1234", 100); });
+	RUN_TEST([]() { orderStrings("tcp://*:1234", "tcp://localhost:1234", 100); });
 	RUN_TEST([]() {
 		printf("TCP: 1000x5 datamsg\n");
 		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5);
@@ -135,7 +175,7 @@ int main (void) {
 		printf("TCP: 10000x5 string\n");
 		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);
 	});
-	RUN_TEST([]() { order("tcp://*:1234", "tcp://localhost:1234", 100); });
+	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 10); });
 	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 100); });
 	RUN_TEST([]() {	DataMsgContentSerialization(100000); });
 	

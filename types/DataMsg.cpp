@@ -114,7 +114,7 @@ bool SF::DataMsg::operator==(const DataMsg& data) const {
 		return false;
 	if (GetDataType() != data.GetDataType())
 		return false;
-	if (GetTime() != data.GetTime())
+	if (duration_since_epoch(GetTime()).count() != duration_since_epoch(data.GetTime()).count())
 		return false;
 	if (HasValue())
 		if (!GetValue().isApprox(data.GetValue())) {

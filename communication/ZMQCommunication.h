@@ -127,8 +127,6 @@ namespace SF {
 	class ZMQSend : public Sender {
 		zmq::socket_t zmq_socket;
 		zmq::context_t zmq_context;
-		//zmq::message_t msg;
-		//zmq::message_t topic;
 
 	public:
 		~ZMQSend();
@@ -136,22 +134,19 @@ namespace SF {
 		ZMQSend(const std::string& address, int hwm = 5);
 
 		void SendDataMsg(const DataMsg& data) override {
+			zmq::multipart_t msg;
 			unsigned char topicbuf[4];
 			topicbuf[0] = 'd';
 			topicbuf[1] = to_underlying<OperationType>(data.GetDataSourceType());
 			topicbuf[2] = data.GetSourceID();
 			topicbuf[3] = to_underlying<DataType>(data.GetDataType());
-			zmq::message_t topic(&topicbuf[0], 4);
-
+			msg.addmem(topicbuf,4);
 			void* buf;
 			int bufsize;
 			SerializeDataMsg(data, buf, bufsize);
-			zmq::message_t msg(buf, bufsize);
+			msg.addmem(buf, bufsize);
 			try {
-#pragma warning (suppress:4996)
-				zmq_socket.send(topic, ZMQ_SNDMORE);// | ZMQ_DONTWAIT);
-#pragma warning (suppress:4996)
-				zmq_socket.send(msg);// , ZMQ_DONTWAIT);
+				msg.send(zmq_socket, ZMQ_DONTWAIT);
 			}
 			catch (zmq::error_t &e) {
 				std::cout << e.what() << std::endl;
@@ -160,15 +155,12 @@ namespace SF {
 		}
 		
 		void SendString(const std::string& data) override {
+			zmq::multipart_t msg;
 			char i = 'i';
-			zmq::message_t topic(&i, 1), msg;
-			char msg_t[] = "asdfghjkloiuztrewqaasdfdhfg";
-			msg = zmq::message_t(&msg_t[0], 10);
+			msg.addmem(&i, 1);
+			msg.addmem(&data.c_str()[0], data.length());
 			try {
-#pragma warning (suppress:4996)
-				zmq_socket.send(topic, ZMQ_SNDMORE);
-#pragma warning (suppress:4996)
-				zmq_socket.send(msg);
+				msg.send(zmq_socket, ZMQ_DONTWAIT);
 			}
 			catch (zmq::error_t &e) {
 				std::cout << e.what() << std::endl;
