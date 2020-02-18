@@ -5,7 +5,7 @@
 namespace SF {
 	/*! \brief ZMQ-based implementation of Reciever class
 	*
-	* Peripheries to be connected to must be defined in the contructor or by using method AddPeriphery
+	* Peripheries to be connected must be defined in the contructor or by using method AddPeriphery
 	*/
 	class ZMQReciever : public Reciever {
 	public:
@@ -14,7 +14,7 @@ namespace SF {
 
 		~ZMQReciever();
 
-		void AddPeriphery(const PeripheryProperties& prop);
+		void AddPeriphery(const PeripheryProperties& prop) override; /*!< Add peripheries for networked recievers */
 
 		unsigned long long GetNumOfRecievedMsgs(int n);
 

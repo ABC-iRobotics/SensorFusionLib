@@ -75,16 +75,16 @@ Time readTime(char* buf) {
 	return std::chrono::system_clock::from_time_t(std::mktime(&temp)) + std::chrono::microseconds(char2long(buf + 20, 6));
 }
 
-SPDLogRead::SPDLogRead(std::string filename) : stream(filename), latestRowType(NOTLOADED) {
+SPDLogReader::SPDLogReader(std::string filename) : stream(filename), latestRowType(NOTLOADED) {
 	if (!stream.is_open())
-		throw std::runtime_error(std::string("SPDLogRead::SPDLogRead File not found!"));
+		throw std::runtime_error(std::string("SPDLogReader::SPDLogReader File not found!"));
 	readNextRow();
 }
 
-bool SPDLogRead::readNextRow() {
+SPDLogReader::RowType SPDLogReader::readNextRow() {
 	if (stream.eof()) {
 		latestRowType = NOTLOADED;
-		return false;
+		return RowType::NOTLOADED;
 	}
 
 	stream.getline(buf, BUFSIZE, ' '); // logging time
@@ -136,28 +136,29 @@ bool SPDLogRead::readNextRow() {
 			latestMsg.SetVarianceMatrix(m);
 		} // else: NOVAR...
 		stream.ignore(100000, '\n');
+		return RowType::DATAMSG;
 	}
 	else {
 		stream.getline(buf, BUFSIZE, '\n');
 		latestRow = buf;
 		latestRowType = TEXT;
+		return RowType::TEXT;
 	}
-	return true;
 }
 
-SPDLogRead::RowTypes SPDLogRead::getLatestRowType() const {
+SPDLogReader::RowType SPDLogReader::getLatestRowType() const {
 	return latestRowType;
 }
 
-Time SPDLogRead::getLatestTimeStamp() const {
+Time SPDLogReader::getLatestTimeStamp() const {
 	return latestTime;
 }
 
-const std::string & SPDLogRead::getLatestRowIf() const {
+const std::string & SPDLogReader::getLatestRowIf() const {
 	return latestRow;
 }
 
-const DataMsg& SPDLogRead::getLatestDataMsgIf() const {
+const DataMsg& SPDLogReader::getLatestDataMsgIf() const {
 	return latestMsg;
 }
 

@@ -39,7 +39,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	{
 		std::vector<double> results = std::vector<double>();
 		DataMsg msg;
-		auto reader = SPDLogRead(filename.c_str());
+		auto reader = SPDLogReader(filename.c_str());
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++) {
@@ -135,9 +135,9 @@ void test_read_write(int Ndata) {
 	}
 	// Read the log - checking the results...
 	{
-		SPDLogRead r(filename);
+		SPDLogReader r(filename);
 		int i = 0;
-		while (r.getLatestRowType() == SPDLogRead::DATAMSG) {
+		while (r.getLatestRowType() == SPDLogReader::DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
 			if (!IsEqual(msg, *msgs[i]))
 				TEST_ASSERT("Written and read msgs are different!");

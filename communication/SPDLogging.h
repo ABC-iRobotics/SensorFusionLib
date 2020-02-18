@@ -8,31 +8,32 @@ namespace SF {
 	/*! \brief Class for reading spd log
 	*
 	*/
-	class SPDLogRead {
+	class SPDLogReader {
 	public:
-		enum RowTypes /*!< Possible types od the rows */
+		enum RowType /*!< Possible types od the rows */
 		{
 			DATAMSG, TEXT, NOTLOADED
 		};
 
-		SPDLogRead(std::string filename); /*!< Constructor */
+		SPDLogReader(std::string filename); /*!< Constructor */
 
-		bool readNextRow();
+		RowType readNextRow(); /*!< Read the next row, returns its type */
 
-		RowTypes getLatestRowType() const;
+		RowType getLatestRowType() const;  /*!< Get the type of the latest row read */
 
-		Time getLatestTimeStamp() const;
+		Time getLatestTimeStamp() const; /*!< Get the timestamp of the latest row read */
 
-		const std::string& getLatestRowIf() const;
+		const std::string& getLatestRowIf() const; /*!< Get the std::string read last time */
 
-		const DataMsg& getLatestDataMsgIf() const;
+		const DataMsg& getLatestDataMsgIf() const; /*!< Get the DataMsg read last time */
 
+		typedef std::shared_ptr<SPDLogReader> LogReaderPtr; /*!< std::shared_ptr for ILogReader */
 	private:
 		std::ifstream stream;
 		Time firstTime;
 		Time latestTime;
 		DataMsg latestMsg;
-		RowTypes latestRowType;
+		RowType latestRowType;
 		std::string latestRow;
 		static const int BUFSIZE = 200;
 		char buf[BUFSIZE];

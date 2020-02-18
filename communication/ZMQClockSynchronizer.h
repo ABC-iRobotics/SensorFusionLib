@@ -6,7 +6,7 @@ namespace SF {
 
 	/*! \brief ZMQ based implementation of IClockSynchronizerServer
 	* 
-	* 
+	* A request-reply server, that answers its SystemClock in us.
 	*/
 	class ZMQClockSynchronizerServer : public IClockSynchronizerServer {
 		std::string address;
@@ -35,7 +35,16 @@ namespace SF {
 
 	/*! \brief ZMQ based implementation of IClockSyncronizerClient
 	*
+	* It implements the private method of connecting to a server and computing th offset
 	*
+	* Use function
+	* IClockSyncronizerClient* GetPeripheryClockSynchronizerPtr();
+	* to get the pointer to the static client, and use functions
+	* void IClockSyncronizerClient::SynchronizePeriphery(unsigned char ID, const std::string& address);
+	* bool IClockSyncronizerClient::IsClockSynchronisationInProgress(unsigned char ID);
+	* DTime IClockSyncronizerClient::GetOffset(unsigned char ID);
+	* void IClockSyncronizerClient::PrintStatus();
+	* for its functionalities
 	*/
 	class ZMQClockSyncronizerClient : public IClockSyncronizerClient {
 		DTime SynchronizeClock(const std::string& clockSyncServerAddress) const override;
