@@ -65,10 +65,10 @@ endif()
 # if(NOT LINUX) should work, too, if you need that
 if(LINUX) 
 	message(STATUS ">>> Linux")
-	set (CMAKE_CXX_STANDARD 11)
+	set (CMAKE_CXX_STANDARD 14)
 elseif(WIN32)
         # for Windows operating system in general
-        # on *nixes we need this to use C++11 
+        # on *nixes we need this to use C++14
         if (MSVC_VERSION GREATER_EQUAL "1900")
             include(CheckCXXCompilerFlag)
             CHECK_CXX_COMPILER_FLAG("/std:c++latest" _cpp_latest_flag_supported)

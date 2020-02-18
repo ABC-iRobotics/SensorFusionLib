@@ -9,6 +9,6 @@ namespace SF {
 	DataMsg InitDataMsg(void* buf, OperationType source,
 		unsigned char ID, DataType type, DTime offset = DTime(0));
 
-	void SerializeDataMsg(const DataMsg& msg, void*& buf, int& length);
+	void SerializeDataMsg(const DataMsg& msg, unsigned char*& buf, int& length);
 
 }

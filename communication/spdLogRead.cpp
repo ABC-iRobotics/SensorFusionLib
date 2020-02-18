@@ -1,4 +1,4 @@
-#include "SPDLogRead.h"
+#include "spdLogRead.h"
 
 using namespace SF;
 

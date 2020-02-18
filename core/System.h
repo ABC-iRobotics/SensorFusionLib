@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <vector>
 #include "defs.h"
 #include "StatisticValue.h"
 #include <string>

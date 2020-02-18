@@ -1,4 +1,4 @@
-add_subdirectory(Common)
+add_subdirectory(common)
 
 # ZMQ tests
 if (ZeroMQ_FOUND)

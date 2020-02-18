@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "StatisticValue.h"
 #include <memory>
+#include <vector>
 
 namespace SF {
 
