@@ -2,8 +2,7 @@
 void setUp() {}
 void tearDown() {}
 
-#include "SenderToSPDLog.h"
-#include "spdLogRead.h"
+#include "SPDLogging.h"
 #include <iostream>
 
 using namespace SF;
@@ -19,7 +18,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	std::string filename = "test_log.txt";
 	{
 		std::vector<double> results = std::vector<double>();
-		SenderToSPDLog logger(filename.c_str(), "log_tester");
+		SPDSender logger(filename.c_str(), "log_tester");
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++)
@@ -130,7 +129,7 @@ void test_read_write(int Ndata) {
 	std::string filename = "read_write_test.txt";
 	// Send them into a new logger
 	{
-		SenderToSPDLog w(filename, "read_write_test");
+		SPDSender w(filename, "read_write_test");
 		for (int i = 0; i < msgs.size(); i++)
 			w.SendDataMsg(*msgs[i]);
 	}

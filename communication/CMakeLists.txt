@@ -6,19 +6,16 @@ set (HEADERS
 	Periphery.h
 	)
 set (HEADERS_INL
-	ILogReader.h
-	SenderToSPDLog.h
-	spdLogRead.h
 	ZMQClockSynchronizer.h
+	SPDLogging.h
 	ZMQCommunication.h
 	msgcontent2buf.h
 	)
 
 set (SOURCES
-	SenderToSPDLog.cpp
-	spdLogRead.cpp
 	ZMQClockSynchronizer.cpp
 	IClockSynchronizer.cpp
+	SPDLogging.cpp
 	ZMQCommunication.cpp
 	msgcontent2buf.cpp
 	Periphery.cpp
