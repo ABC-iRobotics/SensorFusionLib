@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.2) # is enough??
+CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
 
 PROJECT(SensorFusion)
 
@@ -179,7 +179,7 @@ macro(requires_eigen NAME)
 	target_link_libraries (${NAME} Eigen3::Eigen)
 endmacro(requires_eigen)
 
-option(ADD_PLOTTER "To use OpenCV-based plotters" TRUE)
+option(ADD_PLOTTER "To use OpenCV-based plotters" FALSE)
 if (ADD_PLOTTER)
 	## ---------------------------------------------------------------------------------
 	## Find or OpenCV
