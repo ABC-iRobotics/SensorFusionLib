@@ -18,10 +18,16 @@ void testLocalClockSynchronizationOnTCP(int nCases = 5, int nmsgs = 10000) {
 	GetPeripheryClockSynchronizerPtr()->SynchronizePeriphery(2,"tcp://localhost:5566");
 	GetPeripheryClockSynchronizerPtr()->SynchronizePeriphery(3,"tcp://localhost:5567");
 	
-	for (int i = 0; i < 100; i++) {
-		GetPeripheryClockSynchronizerPtr()->PrintStatus();
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
+	while (GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(1) ||
+		GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(2) ||
+		GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(3) ||
+		GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(10))
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+	TEST_ASSERT_LESS_THAN(4, abs(GetPeripheryClockSynchronizerPtr()->GetOffset(1).count()));
+	TEST_ASSERT_LESS_THAN(4, abs(GetPeripheryClockSynchronizerPtr()->GetOffset(2).count()));
+	TEST_ASSERT_LESS_THAN(4, abs(GetPeripheryClockSynchronizerPtr()->GetOffset(3).count()));
+	TEST_ASSERT_LESS_THAN(4, abs(GetPeripheryClockSynchronizerPtr()->GetOffset(10).count()));
 }
 
 int main (void) {
