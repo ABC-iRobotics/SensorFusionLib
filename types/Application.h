@@ -101,6 +101,8 @@ namespace SF {
 
 		Reciever(); /*!< Constructor */
 
+		virtual void AddPeriphery(const PeripheryProperties& prop) = 0; /*!< Virtual function to add peripheries for networked recievers */
+
 		void Start(DTime Ts); /*!< Starts a reciever thread with given sampling time*/
 
 		void Stop(bool waitin = true); /*!< Stops the reciever thread*/
