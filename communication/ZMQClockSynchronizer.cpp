@@ -27,7 +27,8 @@ public:
 		perror("Unkown endianness");
 	}
 
-	void memcpy(void* dest, const void* src, int size) /*!< memcpy */
+	/*! \brief To copy integer with LITTLE_ENDIAN convention */
+	void memcpy(void* dest, const void* src, int size)
 	{
 		const char *srcptr = (const char *)src;
 		char *destptr = (char *)dest;

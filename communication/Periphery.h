@@ -5,6 +5,7 @@ namespace SF {
 
 	/*! \brief Class to send datamsgs from sensors, basesystem, etc
 	*
+	* The class is NOT thread safe! The same thread must initialize the class and call its functions.
 	*/
 	class Periphery {
 		Sender::SenderPtr ptr;

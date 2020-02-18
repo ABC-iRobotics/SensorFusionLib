@@ -4,32 +4,40 @@
  * - Kalman filter-based centralized filtering methods and an interface to build complex sensor systems based on their known dynamics and output characteristics
  * - an interface to use ZMQ and flatbuffers-based communication between the sensors and the filter and filter and controller/plotter applications.
  *
- * The source contains CMake building system (tested on windows).
+ * The source contains CMake building system, tested on windows (Win10 x64), and linux (ubuntu x64).
  *
- * \section intro_sec Structure of the package
+ * \section intro_sec Installation
  *
- *	\image html structure.png
- *  \image latex structure.eps
+ * - Clone the repository
  *
+ * - Run CMake
+ *    - enable test, set policies for the third parties (easiest way: policy for third parties - download all), disable plot, set install folder
+ *    - configure & generate
  *
- * \section install_sec Installation
+ * - Build the makefile/solution (cmake --build . from the build folder)
  *
- * Third Parties:
- * - Download Eigen and install it via CMake (http://eigen.tuxfamily.org/index.php?title=Main_Page)
- * - Download and build ZeroMQ (http://zeromq.org/)
- * - Download and build CPPZMQ (https://github.com/zeromq/cppzmq)
- * - (Download and build OpenCV)
+ * - Run ctest (ctest .)
  *
- * Generate Visual Studio Solution:
- * - run CMake, set the pathes manually if it cannot find the installed libraries, as
- *	\image html CMakeOptions.png
- *  \image latex CMakeOptions.png
- * - generate, build and use it...
- *
- *
+ * - Install package: (cmake --install .)
  *
  * \section usage Usage
  *
+ * \subsection peripheries Peripheries
+ *
+ * The applications which process signals of sensors, must initialize an SF::Periphery class, defining an address where it is available as
+ * - "tcp://*:1234" where 1234 is the port
+ * - "ipc://" - cannot used on Windows
+ * - "inproc://" - cannot used on Windows
+ * Then the measured values can be published via SF::Periphery::SendValue(), SF::Periphery::SendVariance(), SF::Periphery::SendValueAndVariance()
+ * 
+ * (The class SF::Periphery is NOT thread safe! The same thread must initialize the class and call its functions.)
+ *
+ * If there are Peripheries runned by an other unit, clocks can be synchronized by initializing a clock synchronizer instance via
+ *		IClockSynchronizerServer::IClockSynchronizerServerPtr InitClockSynchronizerServer(const std::string& address)
+ *
+ * \subsection centre Central unit (Data collecting / Filtering / Emulating situations)
+ *
+ * - Connecting to peripheries for real time filtering / data collecting
  *
  * \subsection  step1 Define a BaseSystem:
  * See KUKAyouBot or Truck classes for 2D localisation examples
@@ -64,7 +72,6 @@
  * - (The PlotterApp visualizes the results of filtering realtime)
  *
  * \section todo TODO:
- * - to use poll?
  * - to omit mesg.-s based on timestamp?
  * - to apply saturation on state values / covariances?
  * - to extend the methods for time-delayed sensor signals?

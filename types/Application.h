@@ -74,6 +74,31 @@ namespace SF {
 		void CallbackGotString(const std::string& str, const Time& currentTime = Now()); /*!< Calls the appropriate callback of the processor if it was set */
 
 	public:
+		/*! \brief Struct that describes data necessary to connect to peripheries
+		*
+		* The address of the Periphery must be specified and if it is subscribed to string msgs too.
+		*
+		* Subscriptions can be specified to SF::OperationType, ID and SF::DataType - see the defined constructors.
+		*/
+		struct PeripheryProperties {
+			OperationType source; /*!< Subscription: OperationType if it was specified (as SENSOR/...) */
+			unsigned char ID; /*!< Subscription: ID if it was specified */
+			DataType type; /*!< Subscription: DataType if it was specified (as STATE/OUTPUT/...)*/
+			std::string address; /*!< Address of the periphery */
+			bool getstrings; /*!< If the string msgs must be recieved too */
+			unsigned char nparam; /*!< how many parameters are checked in the datamsg topic - set by the constructors */
+			unsigned long long nRecieved = 0; /*!< Number of recieved msgs */
+			PeripheryProperties() = delete;
+			PeripheryProperties(const std::string& address_,
+				bool getstrings_ = false); /*!< To subscribe to the address to recieve arbitrary datamsgs */
+			PeripheryProperties(OperationType source_, const std::string& address_,
+				bool getstrings_ = false); /*!< To subscribe to the address to recieve datamsgs with given OperationType */
+			PeripheryProperties(OperationType source_, unsigned char ID_,
+				const std::string& address_, bool getstrings_ = false); /*!< To subscribe to the address to recieve datamsgs with given OperationType and ID */
+			PeripheryProperties(OperationType source_, unsigned char ID_,
+				DataType type_, const std::string& address_, bool getstrings_ = false); /*!< To subscribe to the address to recieve datamsgs with given OperationType, ID and DataType */
+		};
+
 		Reciever(); /*!< Constructor */
 
 		void Start(DTime Ts); /*!< Starts a reciever thread with given sampling time*/

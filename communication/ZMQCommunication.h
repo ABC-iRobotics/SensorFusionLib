@@ -3,27 +3,12 @@
 #include"Application.h"
 
 namespace SF {
+	/*! \brief ZMQ-based implementation of Reciever class
+	*
+	* Peripheries to be connected to must be defined in the contructor or by using method AddPeriphery
+	*/
 	class ZMQReciever : public Reciever {
 	public:
-		struct PeripheryProperties {
-			OperationType source;
-			unsigned char ID;
-			DataType type;
-			std::string address;
-			bool getstrings;
-			unsigned char nparam; // how many parameters are checked in the datamsg topic - set by the constructors
-			unsigned long long nRecieved = 0;
-			PeripheryProperties() = delete;
-			PeripheryProperties(const std::string& address_,
-				bool getstrings_ = false); // To add an address and recieve arbitrary datamsgs
-			PeripheryProperties(OperationType source_, const std::string& address_,
-				bool getstrings_ = false); // To add an address and recieve datamsgs with given type
-			PeripheryProperties(OperationType source_, unsigned char ID_,
-				const std::string& address_, bool getstrings_ = false);  // To add an address and recieve datamsgs with given type and ID
-			PeripheryProperties(OperationType source_, unsigned char ID_,
-				DataType type_, const std::string& address_, bool getstrings_ = false);  // To add an address and recieve datamsgs with given types and ID
-		};
-
 		ZMQReciever(std::vector<PeripheryProperties> periferies
 			= std::vector<PeripheryProperties>());
 
@@ -53,17 +38,21 @@ namespace SF {
 		void _Run(DTime Ts) override;
 	};
 
+	/*! \brief ZMQ-based implementation of Sender class
+	*
+	* The class is NOT thread safe! The same thread must initialize the class and call its functions.
+	*/
 	class ZMQSender : public Sender {
 		zmq::socket_t zmq_socket;
 		zmq::context_t zmq_context;
 
 	public:
-		~ZMQSender();
+		~ZMQSender(); /*!< Destructor */
 
-		ZMQSender(const std::string& address, int hwm = 5);
+		ZMQSender(const std::string& address, int hwm = 5); /*!< Constructor that initializes the zmq::context and the ZMQ_PUB socket, with out queue size "hwm" */
 
-		void SendDataMsg(const DataMsg& data) override;
+		void SendDataMsg(const DataMsg& data) override; /*!< Sending DataMsg */
 		
-		void SendString(const std::string& data) override;
+		void SendString(const std::string& data) override; /*!< Sending string */
 	};
 }

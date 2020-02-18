@@ -51,7 +51,7 @@ void SendAndRecieveDataMsgs(std::string senderaddress, std::string recvaddress, 
 		while (r.GetNumOfRecievedMsgs(0) != N * (k + 1))
 			std::this_thread::sleep_for(std::chrono::microseconds(1));
 		DTime dt = duration_cast(Now() - start);
-		printf("MSGs got: Nx%i us (=%i us)\n", dt.count() / N, dt.count());
+		printf("MSGs got: Nx%lli us (=%lli us)\n", dt.count() / N, dt.count());
 	}
 }
 
@@ -64,21 +64,21 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 	r.AddPeriphery(ZMQReciever::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
 		recvaddress, true));
 	r.Start(DTime(1000));
-	int recieved = 0;
+	long long recieved = 0;
 	for (int j = 0; j < N; j++) {
 		r.Pause(true);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		for (int i = 0; i < hwm*100; i++)
 			a.SendDataMsg(d);
 		
-		int recieved0 = r.GetNumOfRecievedMsgs(0);
+		long long recieved0 = r.GetNumOfRecievedMsgs(0);
 		r.Pause(false);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		while (r.GetNumOfRecievedMsgs(0) != recieved) {
 			recieved = r.GetNumOfRecievedMsgs(0);
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
-		printf("  n: %i, %f\n", recieved - recieved0, (float)(recieved-recieved0)/float(hwm));
+		printf("  n: %lli, %f\n", recieved - recieved0, (float)(recieved-recieved0)/float(hwm));
 	}
 	printf("DONE \n");
 }
