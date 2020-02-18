@@ -3,6 +3,7 @@
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	IClockSynchronizer.h
+	Periphery.h
 	)
 set (HEADERS_INL
 	ILogReader.h
@@ -20,6 +21,7 @@ set (SOURCES
 	IClockSynchronizer.cpp
 	ZMQCommunication.cpp
 	msgcontent2buf.cpp
+	Periphery.cpp
 	)
 
 set(root ${CMAKE_CURRENT_SOURCE_DIR})
