@@ -1,4 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
+cmake_policy(SET CMP0091 OLD) #to set mt/md via cmake_C/CXX_flags
 
 PROJECT(SensorFusion)
 
