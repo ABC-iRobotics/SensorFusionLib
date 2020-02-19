@@ -7,6 +7,8 @@
 
 namespace SF {
 
+	enum MsgType { DATAMSG, TEXT, NOTHING};
+
 	/*! \brief Class for output layer of applications
 	*
 	* By default it only prints messages and DataMsg-s, implementations: log via spd, zmq publisher

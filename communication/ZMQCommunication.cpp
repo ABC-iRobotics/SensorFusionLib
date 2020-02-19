@@ -53,7 +53,7 @@ void SF::ZMQReciever::Pause(bool pause_) {
 	pause = pause_;
 }
 
-void SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) {
+MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) {
 	char* t = static_cast<char*>(topic.data());
 	switch (t[0]) {
 	case 'd': {
@@ -69,15 +69,16 @@ void SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) 
 		}
 		else
 			perror("ZMQCommunication::_ProcessMsg corrupted datamsg buffer.");
-		return;
+		return MsgType::DATAMSG;
 	}
 	case 'i':
 		if (topic.size() != 1)
 			perror("ZMQCommunication::_ProcessMsg corrupted string topic");
 		CallbackGotString(std::string(static_cast<char*>(msg.data()), msg.size()));
-		return;
+		return MsgType::TEXT;
 	default:
 		perror("ZMQCommunication::_ProcessMsg corrupted topic.");
+		return MsgType::NOTHING;
 	}
 }
 
@@ -92,8 +93,7 @@ bool SF::ZMQReciever::_PollItems(zmq::pollitem_t * items, int nItems, int TwaitM
 				peripheryPropertiesMutex.lock();
 				peripheryProperties[i].nRecieved++;
 				peripheryPropertiesMutex.unlock();
-				_ProcessMsg(t[0], t[1]);
-				out = true;
+				out |= _ProcessMsg(t[0], t[1]) != MsgType::NOTHING;
 			}
 		}
 	return out;
@@ -105,9 +105,9 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 	zmq::pollitem_t items[100];
 	int nItems = 0;
 	// For managing sampling time
-	Time start = Now();
-	long iIteration = 1; // next = start + iIteration*Ts
-						 // Main iteration
+	Time tNext = Now() + Ts;
+	// Main iteration
+	bool got = false;
 	while (!MustStop()) {
 		// Create sockets if there are elements of socketproperties not set
 		peripheryPropertiesMutex.lock();
@@ -124,22 +124,24 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 		// wait if pause
 		while (pause)
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		// Single iteration step
-		Time end = start + iIteration * Ts;
-		static auto MSsToEllapse = [](Time end)->int {
-			auto out = static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(end - Now()).count());
-			return (out<0 ? 0 : out);
-		};
-		while (Now() < end) {
-			// Read the queue
-			bool got = false;
-			while (_PollItems(&items[0], nItems, MSsToEllapse(end), socketProperties))
-				got = true;
-			if (got)
-				CallbackMsgQueueEmpty(); // if there were msg read
+		// handle step
+		if (Now() > tNext) {
+			CallbackSamplingTimeOver();
+			tNext += Ts;
+			got = false;
+			continue;
 		}
-		CallbackSamplingTimeOver();
-		iIteration++;
+		// poll
+		int msToEllapse = 0;
+		if (!got) {
+			msToEllapse = static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(tNext - Now()).count());
+			msToEllapse = msToEllapse < 0 ? 0 : msToEllapse;
+		}
+		if (!_PollItems(&items[0], nItems, msToEllapse, socketProperties))
+			if (got) {
+				CallbackMsgQueueEmpty(); // if there were msg read
+				got = false;
+			}
 	}
 }
 

@@ -6,6 +6,10 @@ namespace SF {
 	/*! \brief ZMQ-based implementation of Reciever class
 	*
 	* Peripheries to be connected must be defined in the contructor or by using method AddPeriphery
+	*
+	* \htmlonly
+	* <embed src="Recieving messages.pdf" width="800px" height="550px" href="Recieving messages.pdf"></embed>
+	* \endhtmlonly
 	*/
 	class ZMQReciever : public Reciever {
 	public:
@@ -31,7 +35,7 @@ namespace SF {
 			std::shared_ptr<zmq::socket_t> socket;
 		};
 		
-		void _ProcessMsg(zmq::message_t& topic, zmq::message_t& msg);
+		MsgType _ProcessMsg(zmq::message_t& topic, zmq::message_t& msg); // returns if got DataMsg
 
 		bool _PollItems(zmq::pollitem_t* items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties);
 
