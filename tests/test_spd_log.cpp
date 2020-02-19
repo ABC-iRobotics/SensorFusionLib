@@ -44,7 +44,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++) {
 				reader.readNextRow();
-				if (reader.getLatestRowType() != reader.DATAMSG)
+				if (reader.getLatestRowType() != DATAMSG)
 					TEST_ASSERT("Read error!");
 				msg = reader.getLatestDataMsgIf();
 			}
@@ -137,7 +137,7 @@ void test_read_write(int Ndata) {
 	{
 		SPDLogReader r(filename);
 		int i = 0;
-		while (r.getLatestRowType() == SPDLogReader::DATAMSG) {
+		while (r.getLatestRowType() == DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
 			if (!IsEqual(msg, *msgs[i]))
 				TEST_ASSERT("Written and read msgs are different!");

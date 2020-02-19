@@ -75,16 +75,16 @@ Time readTime(char* buf) {
 	return std::chrono::system_clock::from_time_t(std::mktime(&temp)) + std::chrono::microseconds(char2long(buf + 20, 6));
 }
 
-SPDLogReader::SPDLogReader(std::string filename) : stream(filename), latestRowType(NOTLOADED) {
+SPDLogReader::SPDLogReader(std::string filename) : stream(filename), latestRowType(NOTHING) {
 	if (!stream.is_open())
 		throw std::runtime_error(std::string("SPDLogReader::SPDLogReader File not found!"));
 	readNextRow();
 }
 
-SPDLogReader::RowType SPDLogReader::readNextRow() {
+MsgType SPDLogReader::readNextRow() {
 	if (stream.eof()) {
-		latestRowType = NOTLOADED;
-		return RowType::NOTLOADED;
+		latestRowType = NOTHING;
+		return MsgType::NOTHING;
 	}
 
 	stream.getline(buf, BUFSIZE, ' '); // logging time
@@ -136,17 +136,17 @@ SPDLogReader::RowType SPDLogReader::readNextRow() {
 			latestMsg.SetVarianceMatrix(m);
 		} // else: NOVAR...
 		stream.ignore(100000, '\n');
-		return RowType::DATAMSG;
+		return MsgType::DATAMSG;
 	}
 	else {
 		stream.getline(buf, BUFSIZE, '\n');
 		latestRow = buf;
 		latestRowType = TEXT;
-		return RowType::TEXT;
+		return MsgType::TEXT;
 	}
 }
 
-SPDLogReader::RowType SPDLogReader::getLatestRowType() const {
+MsgType SPDLogReader::getLatestRowType() const {
 	return latestRowType;
 }
 
@@ -252,4 +252,170 @@ void SPDSender::SendDataMsg(const DataMsg & msg) {
 
 void SF::SPDSender::SendString(const std::string & string) {
 	my_logger->info(string.c_str());
+}
+
+/*! The core of the thread that reads the log and forwards it to the processor with the logged time stamps without checking the real time clocks
+*
+* \htmlonly
+* <embed src="Reading log - steppable.pdf" width="700px" height="830px" href="Reading log (steppable mode)"></embed>
+* \endhtmlonly
+*/
+
+void SF::SPDReciever::_Run(DTime Ts) {
+	if (realtime)
+		_RunRT(Ts);
+	else
+		_RunSteppable(Ts);
+}
+
+
+class LogSteppablePoller {
+	SPDLogReader logread;
+	bool readInAdvance;
+	Time t;
+public:
+	DataMsg data;
+
+	std::string string;
+
+	MsgType type;
+
+	LogSteppablePoller(const std::string& filename) : logread(filename), readInAdvance(true) {
+		logread.readNextRow();
+		t = logread.getLatestTimeStamp();
+	}
+
+	Time Now() const { return t; }
+
+	bool eof() const { return logread.getLatestRowType() == NOTHING; }
+
+	MsgType Poll(DTime dt) {
+		DTime dt2 = dt + DTime(15);
+		if (!readInAdvance) {
+			logread.readNextRow();
+		}
+		if (logread.getLatestTimeStamp() > t + dt2) {
+			readInAdvance = true;
+			t += dt2;
+			type = NOTHING;
+			return type;
+		}
+		else {
+			readInAdvance = false;
+			t = logread.getLatestTimeStamp();
+			type = logread.getLatestRowType();
+			data = logread.getLatestDataMsgIf();
+			string = logread.getLatestRowIf();
+			return type;
+		}
+	}
+};
+
+void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
+	DTime tRead(15);
+	Time tLast, tNext;
+	bool got, first = true;
+	while (true) {
+		// Read the next row
+		logread.readNextRow();
+		// Initialize the variables
+		if (first) {
+			tLast = logread.getLatestTimeStamp();
+			tNext = tLast + Ts;
+			first = false;
+			got = false;
+		}
+		// Inner iteration
+		while (true) {
+			// exit condition
+			if (MustStop() || logread.getLatestRowType() == NOTHING)
+				return;
+			// Sampling ended
+			if (logread.getLatestTimeStamp() > tNext && (tNext<tLast+tRead || !got)) {
+				CallbackSamplingTimeOver(tNext);
+				tNext += Ts;
+				got = false;
+				continue;
+			}
+			// Read queue is empty
+			if (got && (logread.getLatestTimeStamp() > tLast + tRead)) {
+				CallbackMsgQueueEmpty(tLast + tRead);
+				got = false;
+				continue;
+			}
+			break;
+		}
+		// Process the current row
+		switch (logread.getLatestRowType()) {
+		case DATAMSG:
+			CallbackGotDataMsg(logread.getLatestDataMsgIf(), logread.getLatestTimeStamp());
+			got = true;
+			break;
+		case TEXT:
+			CallbackGotString(logread.getLatestRowIf(), logread.getLatestTimeStamp());
+			break;
+		}
+		tLast = logread.getLatestTimeStamp();
+	}
+}
+
+/*! The core of the thread that reads the log and forwards it to the processor according to the real time clocks
+*
+* \htmlonly
+* <embed src="Reading log - real time.pdf" width="700px" height="950px" href="Reading log - real time.pdf"></embed>
+* \endhtmlonly
+*/
+
+void SF::SPDReciever::_RunRT(DTime Ts) {
+	DTime tRead(15);
+	Time tNext;
+	//DTime offset;
+	std::function<Time()> Now2;
+	bool got, first = true;
+	while (true) {
+		// Read the next row
+		logread.readNextRow();
+		// Initialize the variables
+		if (first) {
+			DTime offset = duration_cast(Now() - logread.getLatestTimeStamp());
+			Now2 = [offset]() { return Now() - offset; };
+			tNext = logread.getLatestTimeStamp() + Ts;
+			first = false;
+			got = false;
+		}
+		// Inner iteration
+		while (true) {
+			// exit condition
+			if (MustStop() || logread.getLatestRowType() == NOTHING)
+				return;
+			// Sampling ended
+			if ((Now2() > tNext) || (logread.getLatestTimeStamp() > tNext && !got)) {
+				if (Now2() < tNext)
+					std::this_thread::sleep_for(tNext - Now2());
+				CallbackSamplingTimeOver(Now2());
+				tNext += Ts;
+				got = false;
+				continue;
+			}
+			// Read queue is empty
+			if (got && (logread.getLatestTimeStamp() > Now2() + tRead)) {
+				CallbackMsgQueueEmpty(Now2());
+				got = false;
+				continue;
+			}
+			break;
+		}
+		if (Now2() < logread.getLatestTimeStamp())
+			std::this_thread::sleep_for(logread.getLatestTimeStamp() - Now2());
+		// Process the current row
+		switch (logread.getLatestRowType()) {
+		case DATAMSG:
+			CallbackGotDataMsg(logread.getLatestDataMsgIf(), Now2());
+			got = true;
+			break;
+		case TEXT:
+			CallbackGotString(logread.getLatestRowIf(), Now2());
+			break;
+		}
+	}
 }
