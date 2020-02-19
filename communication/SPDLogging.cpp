@@ -254,13 +254,6 @@ void SF::SPDSender::SendString(const std::string & string) {
 	my_logger->info(string.c_str());
 }
 
-/*! The core of the thread that reads the log and forwards it to the processor with the logged time stamps without checking the real time clocks
-*
-* \htmlonly
-* <embed src="Reading log - steppable.pdf" width="700px" height="830px" href="Reading log (steppable mode)"></embed>
-* \endhtmlonly
-*/
-
 void SF::SPDReciever::_Run(DTime Ts) {
 	if (realtime)
 		_RunRT(Ts);
@@ -358,13 +351,6 @@ void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 		tLast = logread.getLatestTimeStamp();
 	}
 }
-
-/*! The core of the thread that reads the log and forwards it to the processor according to the real time clocks
-*
-* \htmlonly
-* <embed src="Reading log - real time.pdf" width="700px" height="950px" href="Reading log - real time.pdf"></embed>
-* \endhtmlonly
-*/
 
 void SF::SPDReciever::_RunRT(DTime Ts) {
 	DTime tRead(15);
