@@ -5,6 +5,7 @@ set (HEADERS
 	IClockSynchronizer.h
 	Periphery.h
 	Logger.h
+	CentralUnit.h
 	)
 set (HEADERS_INL
 	ZMQClockSynchronizer.h
@@ -21,6 +22,7 @@ set (SOURCES
 	msgcontent2buf.cpp
 	Periphery.cpp
 	Logger.cpp
+	CentralUnit.cpp
 	)
 
 set(root ${CMAKE_CURRENT_SOURCE_DIR})
