@@ -7,6 +7,9 @@
 
 namespace SF {
 
+	static DTime tWaitNextMsg = DTime(200);
+	static int tReadAMsgInUs = 50;
+
 	enum MsgType { DATAMSG, TEXT, NOTHING};
 
 	/*! \brief Class for output layer of applications

@@ -137,7 +137,7 @@ void test_read_write(int Ndata) {
 	{
 		SPDLogReader r(filename);
 		int i = 0;
-		while (r.getLatestRowType() == DATAMSG) {
+		while (r.readNextRow() == DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
 			if (!IsEqual(msg, *msgs[i]))
 				TEST_ASSERT("Written and read msgs are different!");

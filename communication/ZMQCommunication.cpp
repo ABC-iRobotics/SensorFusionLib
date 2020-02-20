@@ -82,32 +82,17 @@ MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & ms
 	}
 }
 
-bool SF::ZMQReciever::_PollItems(zmq::pollitem_t * items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties) {
-	zmq::poll(&items[0], nItems, TwaitMilliSeconds);
-	bool out = false;
-	for (int i = 0; i < nItems; i++)
-		if (items[i].revents & ZMQ_POLLIN) {
-			auto socket = socketProperties[i].socket;
-			zmq::multipart_t t;
-			if (t.recv(*socket, ZMQ_DONTWAIT)) {
-				peripheryPropertiesMutex.lock();
-				peripheryProperties[i].nRecieved++;
-				peripheryPropertiesMutex.unlock();
-				out |= _ProcessMsg(t[0], t[1]) != MsgType::NOTHING;
-			}
-		}
-	return out;
-}
-
 void SF::ZMQReciever::_Run(DTime Ts) {
 	zmq::context_t context(2);
 	std::vector<SocketHandler> socketProperties = std::vector<SocketHandler>();
 	zmq::pollitem_t items[100];
+	Time tLast;
 	int nItems = 0;
+	int msToEllapse;
 	// For managing sampling time
 	Time tNext = Now() + Ts;
 	// Main iteration
-	bool got = false;
+	bool gotDataMsg = false;
 	while (!MustStop()) {
 		// Create sockets if there are elements of socketproperties not set
 		peripheryPropertiesMutex.lock();
@@ -128,20 +113,40 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 		if (Now() > tNext) {
 			CallbackSamplingTimeOver();
 			tNext += Ts;
-			got = false;
+			gotDataMsg = false;
 			continue;
 		}
-		// poll
-		int msToEllapse = 0;
-		if (!got) {
+		// poll: time to compute it
+		if (gotDataMsg)
+			msToEllapse = 0;
+		else {
 			msToEllapse = static_cast<long>(std::chrono::duration_cast<std::chrono::milliseconds>(tNext - Now()).count());
 			msToEllapse = msToEllapse < 0 ? 0 : msToEllapse;
 		}
-		if (!_PollItems(&items[0], nItems, msToEllapse, socketProperties))
-			if (got) {
-				CallbackMsgQueueEmpty(); // if there were msg read
-				got = false;
+		// poll
+		zmq::poll(&items[0], nItems, msToEllapse);
+		bool gotSg = false;
+		bool gotDataMsgNow = false;
+		for (int i = 0; i < nItems; i++)
+			if (items[i].revents & ZMQ_POLLIN) {
+				auto socket = socketProperties[i].socket;
+				zmq::multipart_t t;
+				if (t.recv(*socket, ZMQ_DONTWAIT)) {
+					peripheryPropertiesMutex.lock();
+					peripheryProperties[i].nRecieved++;
+					peripheryPropertiesMutex.unlock();
+					MsgType type = _ProcessMsg(t[0], t[1]);
+					gotSg |= type != MsgType::NOTHING;
+					gotDataMsgNow |= type == MsgType::DATAMSG;
+				}
 			}
+		gotDataMsg |= gotDataMsgNow;
+		if (gotDataMsg && !gotSg && Now() > tLast + tWaitNextMsg) {
+			CallbackMsgQueueEmpty(); // if there were msg read
+			gotDataMsg = false;
+		}
+		if (gotDataMsgNow)
+			tLast = Now();
 	}
 }
 

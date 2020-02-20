@@ -3,6 +3,7 @@
 #include"Application.h"
 
 namespace SF {
+
 	/*! \brief ZMQ-based implementation of Reciever class
 	*
 	* Peripheries to be connected must be defined in the contructor or by using method AddPeriphery
@@ -36,8 +37,6 @@ namespace SF {
 		};
 		
 		MsgType _ProcessMsg(zmq::message_t& topic, zmq::message_t& msg); // returns if got DataMsg
-
-		bool _PollItems(zmq::pollitem_t* items, int nItems, int TwaitMilliSeconds, std::vector<SocketHandler>& socketProperties);
 
 		void _Run(DTime Ts) override;
 	};

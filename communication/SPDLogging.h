@@ -92,6 +92,10 @@ namespace SF {
 		* \endhtmlonly
 		*/
 		void _RunRT(DTime Ts);
+
+		~SPDReciever() {
+			Stop();
+		}
 	};
 
 }

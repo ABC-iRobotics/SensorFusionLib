@@ -136,11 +136,16 @@ MsgType SPDLogReader::readNextRow() {
 			latestMsg.SetVarianceMatrix(m);
 		} // else: NOVAR...
 		stream.ignore(100000, '\n');
+		latestRowType = DATAMSG;
 		return MsgType::DATAMSG;
 	}
 	else {
 		stream.getline(buf, BUFSIZE, '\n');
 		latestRow = buf;
+		if (latestRow.size() == 0) {
+			latestRowType = NOTHING;
+			return MsgType::NOTHING;
+		}
 		latestRowType = TEXT;
 		return MsgType::TEXT;
 	}
@@ -251,7 +256,7 @@ void SPDSender::SendDataMsg(const DataMsg & msg) {
 }
 
 void SF::SPDSender::SendString(const std::string & string) {
-	my_logger->info(string.c_str());
+	my_logger->info(("STR " + string).c_str());
 }
 
 void SF::SPDReciever::_Run(DTime Ts) {
@@ -305,7 +310,7 @@ public:
 };
 
 void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
-	DTime tRead(15);
+	DTime tRead(tReadAMsgInUs);
 	Time tLast, tNext;
 	bool got, first = true;
 	while (true) {
@@ -353,7 +358,7 @@ void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 }
 
 void SF::SPDReciever::_RunRT(DTime Ts) {
-	DTime tRead(15);
+	DTime tRead(tReadAMsgInUs);
 	Time tNext;
 	//DTime offset;
 	std::function<Time()> Now2;
@@ -377,7 +382,7 @@ void SF::SPDReciever::_RunRT(DTime Ts) {
 			// Sampling ended
 			if ((Now2() > tNext) || (logread.getLatestTimeStamp() > tNext && !got)) {
 				if (Now2() < tNext)
-					std::this_thread::sleep_for(tNext - Now2());
+					;// std::this_thread::sleep_for(tNext - Now2());
 				CallbackSamplingTimeOver(Now2());
 				tNext += Ts;
 				got = false;
@@ -392,7 +397,7 @@ void SF::SPDReciever::_RunRT(DTime Ts) {
 			break;
 		}
 		if (Now2() < logread.getLatestTimeStamp())
-			std::this_thread::sleep_for(logread.getLatestTimeStamp() - Now2());
+			;// std::this_thread::sleep_for(logread.getLatestTimeStamp() - Now2());
 		// Process the current row
 		switch (logread.getLatestRowType()) {
 		case DATAMSG:
