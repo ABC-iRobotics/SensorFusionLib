@@ -167,8 +167,11 @@ const DataMsg& SPDLogReader::getLatestDataMsgIf() const {
 	return latestMsg;
 }
 
-SPDSender::SPDSender(std::string filename, std::string loggername) :
-	my_logger(spdlog::basic_logger_mt<spdlog::async_factory>(loggername, filename)) {
+static int i = 0;
+
+SPDSender::SPDSender(std::string filename) :
+	my_logger(spdlog::basic_logger_mt<spdlog::async_factory>(std::to_string(i), filename)) {
+	i++;
 	my_logger->set_pattern("[%Y/%m/%d-%H:%M:%S-%f] [%^%L%$] %v");
 }
 
@@ -181,7 +184,7 @@ void SPDSender::SendDataMsg(const DataMsg & msg) {
 	fmt::format_to(buf, "MSG [ ");
 	switch (msg.GetDataSourceType()) {
 	case OperationType::FILTER_MEAS_UPDATE:
-		fmt::format_to(buf, "DISTURBANCE");
+		fmt::format_to(buf, "FILTER_MEAS_UPDATE");
 		break;
 	case OperationType::FILTER_PARAM_ESTIMATION:
 		fmt::format_to(buf, "FILTER_PARAM_ESTIMATION");
@@ -266,56 +269,14 @@ void SF::SPDReciever::_Run(DTime Ts) {
 		_RunSteppable(Ts);
 }
 
-
-class LogSteppablePoller {
-	SPDLogReader logread;
-	bool readInAdvance;
-	Time t;
-public:
-	DataMsg data;
-
-	std::string string;
-
-	MsgType type;
-
-	LogSteppablePoller(const std::string& filename) : logread(filename), readInAdvance(true) {
-		logread.readNextRow();
-		t = logread.getLatestTimeStamp();
-	}
-
-	Time Now() const { return t; }
-
-	bool eof() const { return logread.getLatestRowType() == NOTHING; }
-
-	MsgType Poll(DTime dt) {
-		DTime dt2 = dt + DTime(15);
-		if (!readInAdvance) {
-			logread.readNextRow();
-		}
-		if (logread.getLatestTimeStamp() > t + dt2) {
-			readInAdvance = true;
-			t += dt2;
-			type = NOTHING;
-			return type;
-		}
-		else {
-			readInAdvance = false;
-			t = logread.getLatestTimeStamp();
-			type = logread.getLatestRowType();
-			data = logread.getLatestDataMsgIf();
-			string = logread.getLatestRowIf();
-			return type;
-		}
-	}
-};
-
 void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 	DTime tRead(tReadAMsgInUs);
 	Time tLast, tNext;
 	bool got, first = true;
 	while (true) {
 		// Read the next row
-		logread.readNextRow();
+		if (!first)
+			logread.readNextRow();
 		// Initialize the variables
 		if (first) {
 			tLast = logread.getLatestTimeStamp();
@@ -359,45 +320,43 @@ void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 
 void SF::SPDReciever::_RunRT(DTime Ts) {
 	DTime tRead(tReadAMsgInUs);
-	Time tNext;
-	//DTime offset;
-	std::function<Time()> Now2;
-	bool got, first = true;
+	bool got = false, first = true;
+	DTime offset = duration_cast(Now() - logread.getLatestTimeStamp());
+	std::function<Time()> Now2 = [offset]() { return Now() - offset; };
+	Time tNext = logread.getLatestTimeStamp() + Ts;
 	while (true) {
 		// Read the next row
-		logread.readNextRow();
-		// Initialize the variables
-		if (first) {
-			DTime offset = duration_cast(Now() - logread.getLatestTimeStamp());
-			Now2 = [offset]() { return Now() - offset; };
-			tNext = logread.getLatestTimeStamp() + Ts;
+		if (!first)
+			logread.readNextRow();
+		else
 			first = false;
-			got = false;
-		}
 		// Inner iteration
 		while (true) {
 			// exit condition
 			if (MustStop() || logread.getLatestRowType() == NOTHING)
 				return;
+			Time deadline = Now2() + tWaitNextMsg;
 			// Sampling ended
-			if ((Now2() > tNext) || (logread.getLatestTimeStamp() > tNext && !got)) {
-				if (Now2() < tNext)
-					;// std::this_thread::sleep_for(tNext - Now2());
+			if ((deadline > tNext) || (logread.getLatestTimeStamp() > tNext && !got)) {
+				while (Now2() < tNext)
+					;
 				CallbackSamplingTimeOver(Now2());
 				tNext += Ts;
 				got = false;
 				continue;
 			}
 			// Read queue is empty
-			if (got && (logread.getLatestTimeStamp() > Now2() + tRead)) {
+			if (got && (logread.getLatestTimeStamp() > deadline)) {
+				while (Now2() < deadline)
+					;
 				CallbackMsgQueueEmpty(Now2());
 				got = false;
 				continue;
 			}
 			break;
 		}
-		if (Now2() < logread.getLatestTimeStamp())
-			;// std::this_thread::sleep_for(logread.getLatestTimeStamp() - Now2());
+		while (Now2() < logread.getLatestTimeStamp())
+			;
 		// Process the current row
 		switch (logread.getLatestRowType()) {
 		case DATAMSG:
@@ -409,4 +368,8 @@ void SF::SPDReciever::_RunRT(DTime Ts) {
 			break;
 		}
 	}
+}
+
+SF::SPDReciever::~SPDReciever() {
+	Stop();
 }

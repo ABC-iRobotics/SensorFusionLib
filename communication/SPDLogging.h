@@ -43,7 +43,7 @@ namespace SF {
 		spdlog::memory_buf_t buf;
 
 	public:
-		SPDSender(std::string filename, std::string loggername); /*!< Constructor */
+		SPDSender(std::string filename); /*!< Constructor */
 
 		~SPDSender();  /*!< Destructor */
 
@@ -63,8 +63,8 @@ namespace SF {
 	* \endhtmlonly
 	*
 	* \htmlonly
-		* <embed src="Reading log - real time.pdf" width="700px" height="950px" href="Reading log - real time.pdf"></embed>
-		* \endhtmlonly
+	* <embed src="Reading log - real time.pdf" width="700px" height="950px" href="Reading log - real time.pdf"></embed>
+	* \endhtmlonly
 	*/
 	class SPDReciever : public Reciever {
 		SPDLogReader logread;
@@ -93,9 +93,7 @@ namespace SF {
 		*/
 		void _RunRT(DTime Ts);
 
-		~SPDReciever() {
-			Stop();
-		}
+		~SPDReciever();
 	};
 
 }

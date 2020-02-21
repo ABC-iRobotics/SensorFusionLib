@@ -47,9 +47,11 @@ void SF::Reciever::Start(DTime Ts)
 
 void SF::Reciever::Stop(bool waitin)
 {
-	if (isRunning) {
-		toStop = true;
-		if (waitin)
+	toStop = true;
+	if (waitin) {
+		while (isRunning)
+			std::this_thread::sleep_for(std::chrono::milliseconds(5)); // or use mutexes...
+		if (t.joinable())
 			t.join();
 	}
 }
@@ -63,6 +65,8 @@ void SF::Reciever::SetProcessor(Processor::ProcessorPtr processor_) {
 	processor = processor_;
 	processorGuard.unlock();
 }
+
+bool SF::Reciever::IsRunning() const { return isRunning; }
 
 void SF::Sender::SendDataMsg(const DataMsg & data) { data.print(); }
 
@@ -134,3 +138,5 @@ void SF::Application::Stop() {
 	if (reciever)
 		reciever->Stop();
 }
+
+bool SF::Application::isRunning() const { return reciever->IsRunning(); }

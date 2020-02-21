@@ -8,7 +8,7 @@
 namespace SF {
 
 	static DTime tWaitNextMsg = DTime(150);
-	static int tReadAMsgInUs = 50;
+	static int tReadAMsgInUs = 150;
 
 	enum MsgType { DATAMSG, TEXT, NOTHING};
 
@@ -117,6 +117,8 @@ namespace SF {
 		void SetProcessor(Processor::ProcessorPtr processor_); /*!< Set Processor::ProcessorPtr to be called with data and event */
 
 		typedef std::shared_ptr<Reciever> RecieverPtr;  /*!< std::shared_ptr to Reciever class*/
+
+		bool IsRunning() const; /*!< To check if the reciever thread is still running */
 	};
 
 	/*! \brief Class for applications constructed by reciever-processor-sender layers
@@ -145,6 +147,8 @@ namespace SF {
 
 		void Stop(); /*!< Stop the separated thread */
 
-		typedef std::shared_ptr<Application> ApplicationPtr; /*!< std::shared_ptr to Application class*/
+		typedef std::shared_ptr<Application> ApplicationPtr; /*!< std::shared_ptr to Application class */
+
+		bool isRunning() const; /*!< To check if the application is running */
 	};
 }

@@ -9,7 +9,7 @@ SF::CentralUnit::CentralUnit(Processor::ProcessorPtr processor, const std::vecto
 
 SF::CentralUnit::CentralUnit(const std::string & logfilename, Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
 	Application(std::make_shared<ZMQReciever>(peripheries), processor,
-		std::make_shared<SPDSender>(logfilename, "CentralUnitOutput")) {}
+		std::make_shared<SPDSender>(logfilename)) {}
 
 SF::CentralUnit::CentralUnit(const std::string & socketaddressforresults, int hwm, Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
 	Application(std::make_shared<ZMQReciever>(peripheries), processor,
@@ -31,16 +31,18 @@ SF::CentralUnit::~CentralUnit() {
 	Stop();
 }
 
-SF::CentralUnitEmulator::CentralUnitEmulator(Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
-	Application(std::make_shared<SPDReciever>(inputlogfilename, "emulatorinput"),
+SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
+	Application(std::make_shared<SPDReciever>(inputlogfilename, realtime), //TODO!!!
 		processor, NULL) {}
 
-SF::CentralUnitEmulator::CentralUnitEmulator(const std::string & outputlogfilename, Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
-	Application(std::make_shared<SPDReciever>(inputlogfilename, "emulatorinput"),
-		processor, std::make_shared<SPDSender>(outputlogfilename, "CentralUnitOutput")) {}
+SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, const std::string & outputlogfilename, Processor::ProcessorPtr processor,
+	const std::string & inputlogfilename) :
+	Application(std::make_shared<SPDReciever>(inputlogfilename, realtime),
+		processor, std::make_shared<SPDSender>(outputlogfilename)) {}
 
-SF::CentralUnitEmulator::CentralUnitEmulator(const std::string & socketaddressforresults, int hwm, Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
-	Application(std::make_shared<SPDReciever>(inputlogfilename, "emulatorinput"),
+SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, const std::string & socketaddressforresults, int hwm,
+	Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
+	Application(std::make_shared<SPDReciever>(inputlogfilename, realtime),
 		processor, std::make_shared<ZMQSender>(socketaddressforresults, hwm)) {}
 
 void SF::CentralUnitEmulator::Start(DTime Ts) {
@@ -52,5 +54,5 @@ void SF::CentralUnitEmulator::Stop() {
 }
 
 SF::CentralUnitEmulator::~CentralUnitEmulator() {
-	Stop();
+	//Stop();
 }

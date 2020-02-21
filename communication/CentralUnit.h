@@ -3,57 +3,53 @@
 
 namespace SF {
 
-	/*! \brief Class to recieve DataMsgs from zmq publishers and writes them into an spdlog file
+	/*! \brief Class to connect to peripheries, process the msgs and save the output into a logfile or publish it on a socket
 	*
-	* The class initializes a zmq context and a subscriber socket, and save the recieved data via sdp logging
+	*
 	*/
-	/*!< Constructor: initializes a zmq context and a publisher socket ("tcp://*:15555" or ipc:///tmp/feeds/0 ...) and spd log*/
 	class CentralUnit : public Application {
 	public:
 		CentralUnit(Processor::ProcessorPtr processor,
 			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>());
+			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries process them */
 
 		CentralUnit(const std::string& logfilename, Processor::ProcessorPtr processor,
 			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>());
+			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries process them and save the output into a logfile */
 
 		CentralUnit(const std::string& socketaddressforresults, int hwm, Processor::ProcessorPtr processor,
 			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>());
+			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries and publish its output via a ZMQ socket */
 
 		void AddPeriphery(const Reciever::PeripheryProperties& prop); /*!< Add peripheries for networked recievers */
 
-		void Start(DTime Ts);
+		void Start(DTime Ts); /*!< Start recieving and processing thread with given sampling time */
 
-		void Stop();
+		void Stop(); /*!< Stop recieving and processing thread */
 
-	protected:
-		~CentralUnit();
+		~CentralUnit(); /*!< Destructor */
 	};
 
 
-	/*! \brief Class to recieve DataMsgs from zmq publishers and writes them into an spdlog file
+	/*! \brief Class to emulate the behavior of a central unit from a log: processors can be tested, the output can be written into a logfile or published into a socket
 	*
-	* The class initializes a zmq context and a subscriber socket, and save the recieved data via sdp logging
+	* 
 	*/
 	class CentralUnitEmulator : public Application {
 	public:
-		CentralUnitEmulator(Processor::ProcessorPtr processor,
-			const std::string& inputlogfilename);
+		CentralUnitEmulator(bool realtime, Processor::ProcessorPtr processor,
+			const std::string& inputlogfilename); /*!< Constructor to create an application with given processor to read data from logfile and process them */
 
+		CentralUnitEmulator(bool realtime, const std::string& outputlogfilename, Processor::ProcessorPtr processor,
+			const std::string& inputlogfilename); /*!< Constructor to create an application with given processor to read data from logfile and process them, the output is logged*/
 
-		CentralUnitEmulator(const std::string& outputlogfilename, Processor::ProcessorPtr processor,
-			const std::string& inputlogfilename);
+		CentralUnitEmulator(bool realtime, const std::string& socketaddressforresults, int hwm, Processor::ProcessorPtr processor,
+			const std::string& inputlogfilename); /*!< Constructor to create an application with given processor to read data from logfile and process them, the output is published on a socket */
 
-		CentralUnitEmulator(const std::string& socketaddressforresults, int hwm, Processor::ProcessorPtr processor,
-			const std::string& inputlogfilename);
+		void Start(DTime Ts); /*!< Start recieving and processing thread with given sampling time */
 
-		void Start(DTime Ts);
+		void Stop();  /*!< Stop recieving and processing thread */
 
-		void Stop();
-
-	protected:
-		~CentralUnitEmulator();
+		~CentralUnitEmulator(); /*!< Destructor */
 	};
 }

@@ -15,10 +15,10 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	Eigen::MatrixXd m = Eigen::MatrixXd::Identity(3, 3) / 1000.;
 	msg.SetVarianceMatrix(m);
 	double a = 0.001;
-	std::string filename = "test_log.txt";
+	std::string filename = "test_log_" + std::to_string(Now().time_since_epoch().count()) + ".txt";
 	{
 		std::vector<double> results = std::vector<double>();
-		SPDSender logger(filename.c_str(), "log_tester");
+		SPDSender logger(filename.c_str());
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++)
@@ -43,10 +43,10 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++) {
-				reader.readNextRow();
 				if (reader.getLatestRowType() != DATAMSG)
-					TEST_ASSERT("Read error!");
+					TEST_ASSERT(false);
 				msg = reader.getLatestDataMsgIf();
+				reader.readNextRow();
 			}
 			auto elapsed = Now() - start;
 
@@ -66,36 +66,13 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 		perror("Error deleting file");
 }
 
-bool IsEqual(const DataMsg& d1, const DataMsg& d2) {
-	if (d1.IsInvalid() != d2.IsInvalid())
-		return false;
-	if (d1.HasValue() != d2.HasValue())
-		return false;
-	if (d1.HasVariance() != d2.HasVariance())
-		return false;
-	if (d1.GetSourceID() != d2.GetSourceID())
-		return false;
-	if (d1.GetDataSourceType() != d2.GetDataSourceType())
-		return false;
-	if (d1.GetDataType() != d2.GetDataType())
-		return false;
-	if (d1.GetTime() != d2.GetTime())
-		return false;
-	if (d1.HasValue())
-		if (d1.GetValue().isApprox(d2.GetValue()))
-			return false;
-	if (d1.HasVariance())
-		if (d1.GetVariance().isApprox(d2.GetVariance()))
-			return false;
-	return true;
-}
-
 void GenerateMessages(int Ndata, DataMsg::DataMsgPtrList& out) {
 	// Generate datamsgs
 	Eigen::VectorXd t = Eigen::VectorXd::Zero(4);
 	t(2) = 2;
 	Eigen::MatrixXd T = Eigen::MatrixXd::Zero(4, 4);
 	T(1, 2) = 3;
+	T(2, 1) = 3;
 	for (int n = 0; n < Ndata; n++) {
 		auto value1 = Eigen::VectorXd::Ones(4) / double(n + 1);
 		auto value2 = t * (n - 1);
@@ -126,27 +103,30 @@ void test_read_write(int Ndata) {
 	// Wtite 1000 different messages N times into a file, read them, measuring the elapsed time
 	auto msgs = DataMsg::DataMsgPtrList();
 	GenerateMessages(Ndata, msgs);
-	std::string filename = "read_write_test.txt";
+	std::string filename = "read_write_test_" + std::to_string(Now().time_since_epoch().count()) + ".txt";
 	// Send them into a new logger
 	{
-		SPDSender w(filename, "read_write_test");
+		SPDSender w(filename);
 		for (int i = 0; i < msgs.size(); i++)
 			w.SendDataMsg(*msgs[i]);
 	}
 	// Read the log - checking the results...
+	bool ok = true;
 	{
 		SPDLogReader r(filename);
 		int i = 0;
-		while (r.readNextRow() == DATAMSG) {
+		while (r.getLatestRowType() == DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
-			if (!IsEqual(msg, *msgs[i]))
-				TEST_ASSERT("Written and read msgs are different!");
+			if (msg != *msgs[i])
+				ok = false;
 			i++;
+			r.readNextRow();
 		}
 	}
 	// delete created log file
 	if (remove(filename.c_str()) != 0)
 		perror("Error deleting file");
+	TEST_ASSERT(ok);
 }
 
 int main (void) {
