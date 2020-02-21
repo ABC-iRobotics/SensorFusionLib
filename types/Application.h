@@ -7,7 +7,7 @@
 
 namespace SF {
 
-	static DTime tWaitNextMsg = DTime(200);
+	static DTime tWaitNextMsg = DTime(150);
 	static int tReadAMsgInUs = 50;
 
 	enum MsgType { DATAMSG, TEXT, NOTHING};

@@ -12,6 +12,48 @@ void tearDown() {}
 
 using namespace SF;
 
+template<class T>
+class Statistics {
+	int N = 0;
+	T sum = T(0);
+	T max = T(0);
+	static const int K = 5;
+	T buf[K];
+	int i = 0;
+	int filled = 0;
+	T maxK = T(0);
+public:
+	void Add(T value) {
+		N++;
+		sum += value;
+		max = max > value ? max : value;
+
+		buf[i % K] = value;
+		i++;
+		if (filled < K)
+			filled++;
+		else {
+			T sumK = T(0);
+			for (int k = 0; k < K; k++)
+				sumK += buf[k];
+			sumK /= K;
+			maxK = maxK > sumK ? maxK : sumK;
+		}
+	}
+
+	T GetMax() const {
+		return max;
+	}
+
+	T GetMaxK() const {
+		return maxK;
+	}
+
+	T GetAverage() const {
+		return sum / N;
+	}
+};
+
 void test_periphery_logger() {
 	std::string filename("test_periphery.txt");
 	{
@@ -19,7 +61,7 @@ void test_periphery_logger() {
 		Logger l(filename);
 		for (int i = 0; i < 5; i++)
 			l.AddPeriphery(Reciever::PeripheryProperties("tcp://localhost:234" + std::to_string(i), true));
-		l.Start(DTime(1000 * 10));
+		l.Start(DTime(1000 * 25));
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -63,30 +105,66 @@ void test_periphery_logger() {
 			}
 			rows.push_back(row);
 		}
-		// Check max elapsed time between the 5 msgs
-		DTime maxbetween5DataMsgs(0);
+		Statistics<DTime> between5msgs;
+		Statistics<DTime> afterfifthmsg;
+		Statistics<DTime> samplingTime;
 		int j = 0;
 		Time start;
+		bool last = false;
+		int errors = 0;
+		int wrongqueueended = 0;
+		bool firstsamplingtimeover = true;
+		Time lastSamplingTime;
+
 		for (int i=0;i<rows.size();i++) {
+			if (rows[i].type == Row::SAMPLINGOVER) {
+				if (!firstsamplingtimeover)
+					samplingTime.Add(duration_cast(rows[i].time- lastSamplingTime));
+				else
+				firstsamplingtimeover = false;
+				lastSamplingTime = rows[i].time;
+			}
+			if (rows[i].type == Row::QUEUEENDED && !last)
+				wrongqueueended++;
+			if (last) {
+				if (rows[i].type == Row::DATAMSG)
+					errors++;
+				else
+					afterfifthmsg.Add(duration_cast(rows[i].time - rows[i - 1].time));
+				last = false;
+			}
 			if (rows[i].type == Row::DATAMSG) {
 				if (j % 5 == 0)
 					start = rows[i].time;
 				j++;
 				if (j % 5 == 0) {
-					DTime temp = duration_cast(rows[i].time - start);
-					maxbetween5DataMsgs = maxbetween5DataMsgs > temp ? maxbetween5DataMsgs : temp;
+					between5msgs.Add(duration_cast(rows[i].time - start));
+					last = true;
 				}
 			}
 		}
-		std::cout << "max: " << maxbetween5DataMsgs.count() << " us\n";
-		// Check max time between two "SamplingTimeOver"
-
-
+		std::cout << "between 5 :\n max: " << between5msgs.GetMax().count() << " us\n";
+		std::cout << " average: " << between5msgs.GetAverage().count() << " us\n";
+		std::cout << "after 5. msg :\n max: " << afterfifthmsg.GetMax().count() << " us\n";
+		std::cout << " average: " << afterfifthmsg.GetAverage().count() << " us\n";
+		std::cout << "sampling time 5. msg :\n max: " << samplingTime.GetMax().count() << " us\n";
+		std::cout << " maxK: " << samplingTime.GetMaxK().count() << " us\n";
+		std::cout << " average: " << samplingTime.GetAverage().count() << " us\n";
+		std::cout << "Missing closing msg: " << errors << "\nUnnecessary closing msgs: " << wrongqueueended << std::endl;
 	}
 	// delete created log file
 	if (remove(filename.c_str()) != 0)
 		perror("Error deleting file");
 }
+
+void centralunit_test() {
+
+}
+
+
+
+
+
 
 /*
 void DataMsgContentSerialization(long N) {
