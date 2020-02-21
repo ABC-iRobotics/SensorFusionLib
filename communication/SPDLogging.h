@@ -73,7 +73,7 @@ namespace SF {
 		void AddPeriphery(const PeripheryProperties& prop) override {};
 
 	public:
-		SPDReciever(const std::string& filename, bool realTime_) : logread(filename), realtime(realTime_) {}
+		SPDReciever(const std::string& filename, bool realTime_); /*!< Constructor */
 
 		void _Run(DTime Ts) override;
 

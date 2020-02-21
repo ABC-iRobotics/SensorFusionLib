@@ -4,6 +4,10 @@
 
 using namespace SF;
 
+/*! \brief Processor implementation that only forwards the datamsgs
+*
+*
+*/
 class DataMsgForwarding : public Processor {
 public:
 	void CallbackSamplingTimeOver(const Time& currentTime = Now()) override {} /*!< Callback called in each sampling time - input: time for the filter*/

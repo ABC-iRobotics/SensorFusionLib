@@ -15,15 +15,15 @@ namespace SF {
 	class ZMQReciever : public Reciever {
 	public:
 		ZMQReciever(std::vector<PeripheryProperties> periferies
-			= std::vector<PeripheryProperties>());
+			= std::vector<PeripheryProperties>()); /*!< Constructor */
 
 		~ZMQReciever();
 
 		void AddPeriphery(const PeripheryProperties& prop) override; /*!< Add peripheries for networked recievers */
 
-		unsigned long long GetNumOfRecievedMsgs(int n);
+		unsigned long long GetNumOfRecievedMsgs(int n); /*!< Get number of recieved msgs of the i-th periphery*/
 
-		void Pause(bool pause_);
+		void Pause(bool pause_); /*!< Pause the recieving and processing thread */
 
 	private:
 		bool pause;

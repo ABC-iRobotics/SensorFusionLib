@@ -252,6 +252,8 @@ void SF::SPDSender::SendString(const std::string & string) {
 	my_logger->info(("STR " + string).c_str());
 }
 
+SF::SPDReciever::SPDReciever(const std::string & filename, bool realTime_) : logread(filename), realtime(realTime_) {}
+
 void SF::SPDReciever::_Run(DTime Ts) {
 	if (realtime)
 		_RunRT(Ts);
