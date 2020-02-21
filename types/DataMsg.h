@@ -66,8 +66,6 @@ namespace SF {
 			return std::make_shared<DataMsg>(args...);
 		} /*!< Init std::shrared_ptr<DataMsg> */
 
-		void ApplyOffset(DTime offset); /*!< Modify timestamp as timestamp += offset*/
-
 		bool operator!=(const DataMsg& data) const; /*!< To check inequality of DataMsgs */
 
 		bool operator==(const DataMsg& data) const; /*!< To check equality of DataMsgs */

@@ -66,6 +66,11 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 		perror("Error deleting file");
 }
 
+Time RandTime() {
+	long long temp = duration_cast(Now().time_since_epoch()).count() % 1000000;
+	return Time(DTime(temp*temp));
+}
+
 void GenerateMessages(int Ndata, DataMsg::DataMsgPtrList& out) {
 	// Generate datamsgs
 	Eigen::VectorXd t = Eigen::VectorXd::Zero(4);
@@ -78,22 +83,23 @@ void GenerateMessages(int Ndata, DataMsg::DataMsgPtrList& out) {
 		auto value2 = t * (n - 1);
 		auto variance1 = Eigen::MatrixXd::Ones(2, 2) / double(n + 1);
 		auto variance2 = T * (n - 1);
-		auto a = DataMsg::CreateSharedPtr(n, DataType::OUTPUT, OperationType::FILTER_MEAS_UPDATE, Time());
+
+		auto a = DataMsg::CreateSharedPtr(n, DataType::OUTPUT, OperationType::FILTER_MEAS_UPDATE, RandTime());
 		a->SetValueVector(value1);
 		out.push_back(a);
-		a = DataMsg::CreateSharedPtr(n, DataType::STATE, OperationType::FILTER_PARAM_ESTIMATION, Time());
+		a = DataMsg::CreateSharedPtr(n, DataType::STATE, OperationType::FILTER_PARAM_ESTIMATION, RandTime());
 		a->SetValueVector(value2);
 		a->SetVarianceMatrix(variance2);
 		out.push_back(a);
-		a = DataMsg::CreateSharedPtr(n, DataType::DISTURBANCE, OperationType::FILTER_TIME_UPDATE, Time());
+		a = DataMsg::CreateSharedPtr(n, DataType::DISTURBANCE, OperationType::FILTER_TIME_UPDATE, RandTime());
 		a->SetVarianceMatrix(variance2);
 		out.push_back(a);
-		a = DataMsg::CreateSharedPtr(n, DataType::INVALID_DATATYPE, OperationType::GROUND_TRUTH, Time());
+		a = DataMsg::CreateSharedPtr(n, DataType::INVALID_DATATYPE, OperationType::GROUND_TRUTH, RandTime());
 		a->SetVarianceMatrix(variance1);
 		out.push_back(a);
-		a = DataMsg::CreateSharedPtr(n, DataType::NOISE, OperationType::INVALID_OPERATIONTYPE, Time());
+		a = DataMsg::CreateSharedPtr(n, DataType::NOISE, OperationType::INVALID_OPERATIONTYPE, RandTime());
 		out.push_back(a);
-		a = DataMsg::CreateSharedPtr(n, DataType::DISTURBANCE, OperationType::SENSOR, Time());
+		a = DataMsg::CreateSharedPtr(n, DataType::DISTURBANCE, OperationType::SENSOR, RandTime());
 		a->SetValueVector(value1);
 		out.push_back(a);
 	}

@@ -42,17 +42,6 @@ OperationType OperationType2char(const char* buf) {
 
 #include<ctime>
 
-Time BuildTime(int year, int month, int day, int hour, int min, int sec, int micro) {
-	std::tm temp;
-	temp.tm_year = year - 1900;
-	temp.tm_mon = month - 1;
-	temp.tm_mday = day;
-	temp.tm_hour = hour;
-	temp.tm_min = min;
-	temp.tm_sec = sec;
-	return std::chrono::system_clock::from_time_t(std::mktime(&temp)) + std::chrono::microseconds(micro);
-}
-
 long char2long(char* buf, size_t length) {
 	long out = 0;
 	for (int i = 0; i < length; i++) {
@@ -65,6 +54,7 @@ long char2long(char* buf, size_t length) {
 
 Time readTime(char* buf) {
 	std::tm temp;
+	temp.tm_isdst = 0;
 	temp.tm_year = char2long(buf, 4) - 1900;
 	temp.tm_mon = char2long(buf + 5, 2) - 1;
 	temp.tm_mday = char2long(buf + 8, 2);

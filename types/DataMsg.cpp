@@ -93,10 +93,6 @@ void DataMsg::SetValueVector(const Eigen::VectorXd & v) {
 	value = v;
 }
 
-void SF::DataMsg::ApplyOffset(DTime offset) {
-	time += offset;
-}
-
 bool SF::DataMsg::operator!=(const DataMsg& data) const {
 	return !(operator==(data));
 }
