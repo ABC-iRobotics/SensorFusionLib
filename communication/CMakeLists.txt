@@ -6,13 +6,13 @@ set (HEADERS
 	Periphery.h
 	Logger.h
 	CentralUnit.h
+	NetworkConfig.h
 	)
 set (HEADERS_INL
 	ZMQClockSynchronizer.h
 	SPDLogging.h
 	ZMQCommunication.h
 	msgcontent2buf.h
-	NetworkConfig.h
 	)
 
 set (SOURCES

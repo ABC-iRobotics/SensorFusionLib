@@ -33,6 +33,8 @@ endif()
 find_dependency_in_install(ZeroMQ "")
 #Find CPPZMQ
 find_dependency_in_install(cppzmq "")
+#Find spdlog
+find_dependency_in_install(spdlog "")
 
 #Create targets
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/@export_targets_name@.cmake)
