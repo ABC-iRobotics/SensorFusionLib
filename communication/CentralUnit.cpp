@@ -8,13 +8,19 @@ using namespace SF;
 SF::CentralUnit::CentralUnit(Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
 	Application(std::make_shared<ZMQReciever>(peripheries), processor, NULL) {}
 
-SF::CentralUnit::CentralUnit(const std::string & logfilename, Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
+SF::CentralUnit::CentralUnit(const std::string & logfilename, Processor::ProcessorPtr processor,
+	const std::vector<Reciever::PeripheryProperties>& peripheries) :
 	Application(std::make_shared<ZMQReciever>(peripheries), processor,
 		std::make_shared<SPDSender>(logfilename)) {}
 
-SF::CentralUnit::CentralUnit(const std::string & socketaddressforresults, int hwm, Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
+SF::CentralUnit::CentralUnit(const std::string & socketaddressforresults, int hwm,
+	Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
 	Application(std::make_shared<ZMQReciever>(peripheries), processor,
 		std::make_shared<ZMQSender>(socketaddressforresults, hwm)) {}
+
+SF::CentralUnit::CentralUnit(Sender::SenderPtr sender, Processor::ProcessorPtr processor,
+	const std::vector<Reciever::PeripheryProperties>& peripheries) :
+	Application(std::make_shared<ZMQReciever>(peripheries), processor, sender) {}
 
 void SF::CentralUnit::AddPeriphery(const Reciever::PeripheryProperties & prop) {
 	GetRecieverPtr()->AddPeriphery(prop);
