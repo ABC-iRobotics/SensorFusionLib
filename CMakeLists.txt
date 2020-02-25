@@ -321,11 +321,10 @@ endif()
 
 ## ---------------------------------------------------------------------------------
 ## To generate doxygen documentation automatically during install
-option(WITH_DOCS "To generate documentation into the package during install (neeeds doxygen and latex - MikTex)" false)
+option(WITH_DOCS "To generate documentation into the package during install (neeeds doxygen)" false)
 if(WITH_DOCS)
 	configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/docs/Doxyfile.in" "${CMAKE_BINARY_DIR}/Doxyfile" @ONLY)
 	find_program(DOXYGEN doxygen)
-	find_program(LATEX latex)
 	install(CODE "EXEC_PROGRAM(doxygen \"${CMAKE_BINARY_DIR}/Doxyfile\")
 		file(COPY \"${CMAKE_SOURCE_DIR}/cmake/docs/index.html\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/Docs\" )
 	" )
