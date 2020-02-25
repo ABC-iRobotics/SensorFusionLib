@@ -12,6 +12,7 @@ set (HEADERS_INL
 	SPDLogging.h
 	ZMQCommunication.h
 	msgcontent2buf.h
+	NetworkConfig.h
 	)
 
 set (SOURCES
@@ -23,6 +24,7 @@ set (SOURCES
 	Periphery.cpp
 	Logger.cpp
 	CentralUnit.cpp
+	NetworkConfig.cpp
 	)
 
 set(root ${CMAKE_CURRENT_SOURCE_DIR})
