@@ -1,5 +1,6 @@
 #pragma once
 #include "Application.h"
+#include "NetworkConfig.h"
 
 namespace SF {
 
@@ -13,5 +14,7 @@ namespace SF {
 			const std::vector<Reciever::PeripheryProperties>& peripheries = std::vector<Reciever::PeripheryProperties>()); /*!< Constructor: initializes a zmq context and a publisher socket ("tcp://*:15555" or ipc:///tmp/feeds/0 ...) and spd log*/
 
 		void AddPeriphery(const Reciever::PeripheryProperties& prop); /*!< Add peripheries for networked recievers */
+
+		void AddPeripheries(const NetworkConfig& config);
 	};
 }

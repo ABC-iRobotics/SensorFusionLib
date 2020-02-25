@@ -1,5 +1,6 @@
 #pragma once
 #include"defs.h"
+#include"NetworkConfig.h"
 #include<map>
 #include<mutex>
 #include<memory>
@@ -24,6 +25,9 @@ namespace SF {
 	};
 
 	IClockSynchronizerServer::IClockSynchronizerServerPtr InitClockSynchronizerServer(const std::string& address);
+			/*!< Initializes and start a ClockSyncronizerServer with the given address on ZMQ impl. */
+
+	IClockSynchronizerServer::IClockSynchronizerServerPtr InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config);
 			/*!< Initializes and start a ClockSyncronizerServer with the given address on ZMQ impl. */
 
 	/*! \brief Abstract class to run a ClockSynchronizer client that connects to Servers with given addresses
@@ -53,6 +57,8 @@ namespace SF {
 		IClockSyncronizerClient(); /*!< Constructor */
 
 		void SynchronizePeriphery(const std::string& address, const std::string& port); /*!< Add Servers to be synchronized to */
+
+		void SynchronizePeriphery(const NetworkConfig::ConnectionData& config);
 
 		bool IsClockSynchronisationInProgress(const std::string& address); /*!< Check if synchronisation for a given device is in progress */
 

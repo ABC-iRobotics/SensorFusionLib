@@ -4,6 +4,9 @@
 SF::Periphery::Periphery(const std::string& address, int hwm) :
 	ptr(std::make_shared<ZMQSender>(address, hwm)) {}
 
+SF::Periphery::Periphery(const NetworkConfig::ConnectionData & config) :
+	ptr(std::make_shared<ZMQSender>(config.SenderAddress(), config.hwm != -1 ? config.hwm : 10)) {}
+
 void SF::Periphery::SendValue(unsigned char sensorID, const Eigen::VectorXd & value, DataType type, Time t, OperationType source) {
 	DataMsg msg(sensorID, type, source, t);
 	msg.SetValueVector(value);

@@ -5,12 +5,6 @@
 namespace SF {
 
 	class NetworkConfig {
-		struct ConnectionData;
-
-		std::map<std::string, ConnectionData> clockSyncData;
-
-		std::map<std::string, ConnectionData> peripheryData;
-
 	public:
 		struct ConnectionData {
 			std::string commType; // tcp/ipc
@@ -22,6 +16,10 @@ namespace SF {
 			std::string RecieverAddress() const;
 			std::string SenderAddress() const;
 		};
+
+		std::map<std::string, ConnectionData> clockSyncData;
+
+		std::map<std::string, ConnectionData> peripheryData;
 
 		NetworkConfig(const std::string& filename);
 

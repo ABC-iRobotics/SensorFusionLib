@@ -1,6 +1,7 @@
 #include "CentralUnit.h"
 #include "SPDLogging.h"
 #include "ZMQCommunication.h"
+#include "IClockSynchronizer.h"
 
 using namespace SF;
 
@@ -17,6 +18,15 @@ SF::CentralUnit::CentralUnit(const std::string & socketaddressforresults, int hw
 
 void SF::CentralUnit::AddPeriphery(const Reciever::PeripheryProperties & prop) {
 	GetRecieverPtr()->AddPeriphery(prop);
+}
+
+void SF::CentralUnit::AddPeripheries(const NetworkConfig & config) {
+	// Add clocks to synchronise
+	for (auto clock : config.clockSyncData)
+		GetPeripheryClockSynchronizerPtr()->SynchronizePeriphery(clock.second);
+	// Add peripheries
+	for (auto periphery : config.peripheryData)
+		AddPeriphery(Reciever::PeripheryProperties(OperationType::SENSOR, periphery.second.RecieverAddress(), true));
 }
 
 void SF::CentralUnit::Start(DTime Ts) {

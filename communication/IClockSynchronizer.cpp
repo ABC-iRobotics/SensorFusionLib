@@ -11,6 +11,10 @@ void SF::IClockSyncronizerClient::PublisherClockProperties::Set(DTime offset_) {
 	offset = offset_;
 }
 
+IClockSynchronizerServer::IClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config) {
+	return InitClockSynchronizerServer(config.SenderAddress());
+}
+
 void SF::IClockSyncronizerClient::Run() {
 	bool found = true;
 	while (found) {
@@ -61,6 +65,10 @@ void SF::IClockSyncronizerClient::SynchronizePeriphery(const std::string & addre
 		std::thread t(&IClockSyncronizerClient::Run, this);
 		t.detach();
 	}
+}
+
+void SF::IClockSyncronizerClient::SynchronizePeriphery(const NetworkConfig::ConnectionData & config) {
+	SynchronizePeriphery(config.address, config.port);
 }
 
 bool SF::IClockSyncronizerClient::IsClockSynchronisationInProgress(const std::string& address) { //address: tcp://192.168.0.1:1234

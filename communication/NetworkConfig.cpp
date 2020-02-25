@@ -36,34 +36,36 @@ NetworkConfig::NetworkConfig(const std::string & filename) {
 	nlohmann::json config;
 	configFile >> config;
 
-	for (auto remote : config.at("Remote").items()) {
-		auto remote_ = remote.value();
-		std::string IP = remote_.at("IP");
-		if (remote_.find("ClockServerPort") != remote_.end())
-			clockSyncData.insert(std::pair<std::string, ConnectionData>(remote.key(), ConnectionData("tcp", IP, remote_.at("ClockServerPort"))));
-		auto peripheries = remote_.at("Peripheries");
-		for (auto periphery : peripheries.items()) {
-			peripheryData.insert(std::pair<std::string, ConnectionData>(periphery.key(), ConnectionData("tcp", IP, periphery.value().at("Port"))));
+	if (config.find("Remote") != config.end())
+		for (auto remote : config.at("Remote").items()) {
+			auto remote_ = remote.value();
+			std::string IP = remote_.at("IP");
+			if (remote_.find("ClockServerPort") != remote_.end())
+				clockSyncData.insert(std::pair<std::string, ConnectionData>(remote.key(), ConnectionData("tcp", IP, remote_.at("ClockServerPort"))));
+			auto peripheries = remote_.at("Peripheries");
+			for (auto periphery : peripheries.items()) {
+				peripheryData.insert(std::pair<std::string, ConnectionData>(periphery.key(), ConnectionData("tcp", IP, periphery.value().at("Port"))));
+				if (periphery.value().find("hwm") != periphery.value().end())
+					peripheryData.at(periphery.key()).SetHWM(periphery.value().at("hwm"));
+			}
+			
+		}
+
+	if (config.find("LocalPeripheries") != config.end())
+		for (auto periphery : config.at("LocalPeripheries").items()) {
+			std::string type = periphery.value().at("type");
+			std::string address, port = "";
+			if (type.compare("tcp") == 0) {
+				address = "localhost";
+				port = periphery.value().at("address");
+			}
+			if (type.compare("ipc") == 0)
+				address = periphery.value().at("address");
+			peripheryData.insert(std::pair<std::string, ConnectionData>(periphery.key(),
+				ConnectionData(type, address, port)));
 			if (periphery.value().find("hwm") != periphery.value().end())
 				peripheryData.at(periphery.key()).SetHWM(periphery.value().at("hwm"));
 		}
-			
-	}
-
-	for (auto periphery : config.at("LocalPeripheries").items()) {
-		std::string type = periphery.value().at("type");
-		std::string address, port = "";
-		if (type.compare("tcp") == 0) {
-			address = "localhost";
-			port = periphery.value().at("address");
-		}
-		if (type.compare("ipc") == 0)
-			address = periphery.value().at("address");
-		peripheryData.insert(std::pair<std::string, ConnectionData>(periphery.key(),
-			ConnectionData(type, address, port)));
-		if (periphery.value().find("hwm") != periphery.value().end())
-			peripheryData.at(periphery.key()).SetHWM(periphery.value().at("hwm"));
-	}
 }
 
 void NetworkConfig::Print() const {

@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "SPDLogging.h"
 #include "ZMQCommunication.h"
+#include "IClockSynchronizer.h"
 
 using namespace SF;
 
@@ -21,4 +22,13 @@ SF::Logger::Logger(const std::string& filename,
 
 void SF::Logger::AddPeriphery(const Reciever::PeripheryProperties & prop) {
 	GetRecieverPtr()->AddPeriphery(prop);
+}
+
+void SF::Logger::AddPeripheries(const NetworkConfig & config) {
+	// Add clocks to synchronise
+	for (auto clock : config.clockSyncData)
+		GetPeripheryClockSynchronizerPtr()->SynchronizePeriphery(clock.second);
+	// Add peripheries
+	for (auto periphery : config.peripheryData)
+		AddPeriphery(Reciever::PeripheryProperties(OperationType::SENSOR, periphery.second.RecieverAddress(), true));
 }

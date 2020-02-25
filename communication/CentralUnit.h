@@ -1,5 +1,6 @@
 #pragma once
 #include "Application.h"
+#include "NetworkConfig.h"
 
 namespace SF {
 
@@ -22,6 +23,8 @@ namespace SF {
 			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries and publish its output via a ZMQ socket */
 
 		void AddPeriphery(const Reciever::PeripheryProperties& prop); /*!< Add peripheries for networked recievers */
+
+		void AddPeripheries(const NetworkConfig& config);
 
 		void Start(DTime Ts); /*!< Start recieving and processing thread with given sampling time */
 
