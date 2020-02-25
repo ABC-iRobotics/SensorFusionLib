@@ -1,7 +1,7 @@
 #include "Logger.h"
 #include "SPDLogging.h"
 #include "ZMQCommunication.h"
-#include "IClockSynchronizer.h"
+#include "ClockSynchronizer.h"
 
 using namespace SF;
 

@@ -2,7 +2,7 @@
 
 # Add all header and cpp files in the directory to the project
 set (HEADERS
-	IClockSynchronizer.h
+	ClockSynchronizer.h
 	Periphery.h
 	Logger.h
 	CentralUnit.h
@@ -17,7 +17,7 @@ set (HEADERS_INL
 
 set (SOURCES
 	ZMQClockSynchronizer.cpp
-	IClockSynchronizer.cpp
+	ClockSynchronizer.cpp
 	SPDLogging.cpp
 	ZMQCommunication.cpp
 	msgcontent2buf.cpp

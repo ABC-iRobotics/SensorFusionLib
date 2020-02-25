@@ -2,7 +2,7 @@
 void setUp() {}
 void tearDown() {}
 
-#include "IClockSynchronizer.h"
+#include "ClockSynchronizer.h"
 #include <thread>
 #include <iostream>
 

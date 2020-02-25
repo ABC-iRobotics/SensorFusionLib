@@ -1,6 +1,6 @@
 #include "ZMQCommunication.h"
 #include"msgcontent2buf.h"
-#include"IClockSynchronizer.h"
+#include"ClockSynchronizer.h"
 #include"zmq_addon.hpp"
 
 using namespace SF;

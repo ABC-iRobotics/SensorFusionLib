@@ -11,7 +11,7 @@ namespace SF {
 	*
 	*
 	*/
-	class IClockSynchronizerServer {
+	class ClockSynchronizerServer {
 	public:
 		virtual void SetAddress(const std::string& address_) = 0; /*!< Set server address (if the server does not run). E.g.: "tcp://*:5678" */
 
@@ -21,20 +21,20 @@ namespace SF {
 
 		virtual bool IsRunning() const = 0;  /*!< Returns if the server is working */
 
-		typedef std::shared_ptr<IClockSynchronizerServer> IClockSynchronizerServerPtr; /*!< std::shared_ptr for IClockSynchronizerServer */
+		typedef std::shared_ptr<ClockSynchronizerServer> ClockSynchronizerServerPtr; /*!< std::shared_ptr for ClockSynchronizerServer */
 	};
 
-	IClockSynchronizerServer::IClockSynchronizerServerPtr InitClockSynchronizerServer(const std::string& address);
+	ClockSynchronizerServer::ClockSynchronizerServerPtr InitClockSynchronizerServer(const std::string& address);
 			/*!< Initializes and start a ClockSyncronizerServer with the given address on ZMQ impl. */
 
-	IClockSynchronizerServer::IClockSynchronizerServerPtr InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config);
+	ClockSynchronizerServer::ClockSynchronizerServerPtr InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config);
 			/*!< Initializes and start a ClockSyncronizerServer with the given address on ZMQ impl. */
 
 	/*! \brief Abstract class to run a ClockSynchronizer client that connects to Servers with given addresses
 	*
 	* 
 	*/
-	class IClockSyncronizerClient {
+	class ClockSyncronizerClient {
 		
 		struct PublisherClockProperties {
 			DTime offset;
@@ -54,7 +54,7 @@ namespace SF {
 		void Run(); /*!< core of the separated synchronizer thread */
 
 	public:
-		IClockSyncronizerClient(); /*!< Constructor */
+		ClockSyncronizerClient(); /*!< Constructor */
 
 		void SynchronizePeriphery(const std::string& address, const std::string& port); /*!< Add Servers to be synchronized to */
 
@@ -67,6 +67,6 @@ namespace SF {
 		void PrintStatus(); /*!< Print the actual status of the synchronizer client */
 	};
 
-	IClockSyncronizerClient* GetPeripheryClockSynchronizerPtr();
+	ClockSyncronizerClient* GetPeripheryClockSynchronizerPtr();
 		/*!< Get the pointer of the statically inicialized implemented instance */
 }

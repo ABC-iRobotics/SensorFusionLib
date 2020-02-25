@@ -53,12 +53,12 @@ void SF::ZMQClockSynchronizerServer::SetAddress(const std::string & address_) {
 		perror("ZMQClockSynchronizerServer::SetAddress Address cannot be modified during run...");
 }
 
-IClockSyncronizerClient* SF::GetPeripheryClockSynchronizerPtr() {
+ClockSyncronizerClient* SF::GetPeripheryClockSynchronizerPtr() {
 	static ZMQClockSyncronizerClient zmqClockSyncronizerClient;
 	return &zmqClockSyncronizerClient;
 }
 
-IClockSynchronizerServer::IClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const std::string& address) {
+ClockSynchronizerServer::ClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const std::string& address) {
 	auto out = std::make_shared<ZMQClockSynchronizerServer>(address);
 	out->StartServer();
 	return out;

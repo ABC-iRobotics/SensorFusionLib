@@ -1,21 +1,21 @@
-#include "IClockSynchronizer.h"
+#include "ClockSynchronizer.h"
 #include<iostream>
 #include<thread>
 using namespace SF;
 
-SF::IClockSyncronizerClient::PublisherClockProperties::PublisherClockProperties(std::string port_) :
+SF::ClockSyncronizerClient::PublisherClockProperties::PublisherClockProperties(std::string port_) :
 	offset(0), inprogress(true), port(port_) {}
 
-void SF::IClockSyncronizerClient::PublisherClockProperties::Set(DTime offset_) {
+void SF::ClockSyncronizerClient::PublisherClockProperties::Set(DTime offset_) {
 	inprogress = false;
 	offset = offset_;
 }
 
-IClockSynchronizerServer::IClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config) {
+ClockSynchronizerServer::ClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config) {
 	return InitClockSynchronizerServer(config.SenderAddress());
 }
 
-void SF::IClockSyncronizerClient::Run() {
+void SF::ClockSyncronizerClient::Run() {
 	bool found = true;
 	while (found) {
 		// look for new problem to syncronize
@@ -46,10 +46,10 @@ void SF::IClockSyncronizerClient::Run() {
 	isRunning = false;
 }
 
-SF::IClockSyncronizerClient::IClockSyncronizerClient() : clockOffsets(std::map<std::string, std::shared_ptr<PublisherClockProperties>>()),
+SF::ClockSyncronizerClient::ClockSyncronizerClient() : clockOffsets(std::map<std::string, std::shared_ptr<PublisherClockProperties>>()),
 isRunning(false) {}
 
-void SF::IClockSyncronizerClient::SynchronizePeriphery(const std::string & address, const std::string& port) {
+void SF::ClockSyncronizerClient::SynchronizePeriphery(const std::string & address, const std::string& port) {
 	mutexForClockOffsets.lock();
 	for (auto element : clockOffsets)
 		if (element.first.find(address) != std::string::npos) {
@@ -62,16 +62,16 @@ void SF::IClockSyncronizerClient::SynchronizePeriphery(const std::string & addre
 	
 	if (!isRunning) {
 		isRunning = true;
-		std::thread t(&IClockSyncronizerClient::Run, this);
+		std::thread t(&ClockSyncronizerClient::Run, this);
 		t.detach();
 	}
 }
 
-void SF::IClockSyncronizerClient::SynchronizePeriphery(const NetworkConfig::ConnectionData & config) {
+void SF::ClockSyncronizerClient::SynchronizePeriphery(const NetworkConfig::ConnectionData & config) {
 	SynchronizePeriphery(config.address, config.port);
 }
 
-bool SF::IClockSyncronizerClient::IsClockSynchronisationInProgress(const std::string& address) { //address: tcp://192.168.0.1:1234
+bool SF::ClockSyncronizerClient::IsClockSynchronisationInProgress(const std::string& address) { //address: tcp://192.168.0.1:1234
 	mutexForClockOffsets.lock();
 	bool out = false;
 	for (auto element : clockOffsets)
@@ -81,7 +81,7 @@ bool SF::IClockSyncronizerClient::IsClockSynchronisationInProgress(const std::st
 	return out;
 }
 
-DTime SF::IClockSyncronizerClient::GetOffset(const std::string& address) {
+DTime SF::ClockSyncronizerClient::GetOffset(const std::string& address) {
 	mutexForClockOffsets.lock();
 	DTime out(0);
 	for (auto element : clockOffsets)
@@ -91,7 +91,7 @@ DTime SF::IClockSyncronizerClient::GetOffset(const std::string& address) {
 	return out;
 }
 
-void SF::IClockSyncronizerClient::PrintStatus() {
+void SF::ClockSyncronizerClient::PrintStatus() {
 	mutexForClockOffsets.lock();
 	for (auto element : clockOffsets) {
 		std::cout << element.first << "(" << element.second->port << ")";
