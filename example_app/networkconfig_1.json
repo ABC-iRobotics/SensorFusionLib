@@ -1,0 +1,33 @@
+{
+	"Remote" : {
+
+		"remote1" : {
+			"IP" : "10.8.8.99",
+			"ClockServerPort" : "1234",
+			
+			"Peripheries" : {
+				"periphery1": {
+					"Port": "5555",
+					"_comment": "forwarded: [x[m],y[m],phi[rad]] as OUTPUT"
+				}
+			}
+		}
+
+	},	
+			
+	"LocalPeripheries" : {
+		"localperiphery1" : {
+			"type": "tcp",
+			"address": "5556",
+			"hwm" : 15,
+			"_comment": "Address: port or ipc_name, forwarded: [x[m],y[m],phi[rad]] as OUTPUT"
+		},
+		
+		"localperiphery2" : {
+			"type" : "ipc",
+			"address" : "IMU_ipc",
+			"_comment": "address to be used: ipc:///tmp/IMU_ipc; forwarded: [x[m],y[m],phi[rad]] as OUTPUT"
+		}
+	}
+
+}
