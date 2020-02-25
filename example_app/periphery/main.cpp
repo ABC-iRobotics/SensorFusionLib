@@ -6,8 +6,11 @@
 using namespace SF;
 
 int main() {
-	
+#ifdef UNIX
 	NetworkConfig n("networkconfig_1.json");
+#else
+	NetworkConfig n("networkconfig_1_noipc.json");
+#endif
 
 	auto clockServer = InitClockSynchronizerServer(n.GetClockSyncData("remote1"));
 	Periphery p1(n.GetPeripheryData("periphery1"));
