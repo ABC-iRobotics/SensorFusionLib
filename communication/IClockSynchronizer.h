@@ -35,11 +35,11 @@ namespace SF {
 		struct PublisherClockProperties {
 			DTime offset;
 			bool inprogress;
-			std::string address;
-			PublisherClockProperties(const std::string& address_);
+			std::string port;
+			PublisherClockProperties(std::string port);
 			void Set(DTime offset_);
 		};
-		std::map<unsigned char, std::shared_ptr<PublisherClockProperties>> clockOffsets;
+		std::map<std::string, std::shared_ptr<PublisherClockProperties>> clockOffsets; // address (192.168.0.1) without port -> offset properties
 		std::mutex mutexForClockOffsets;
 		bool isRunning;
 
@@ -52,11 +52,11 @@ namespace SF {
 	public:
 		IClockSyncronizerClient(); /*!< Constructor */
 
-		void SynchronizePeriphery(unsigned char ID, const std::string& address); /*!< Add Servers to be synchronized to */
+		void SynchronizePeriphery(const std::string& address, const std::string& port); /*!< Add Servers to be synchronized to */
 
-		bool IsClockSynchronisationInProgress(unsigned char ID); /*!< Check if synchronisation for a given device is in progress */
+		bool IsClockSynchronisationInProgress(const std::string& address); /*!< Check if synchronisation for a given device is in progress */
 
-		DTime GetOffset(unsigned char ID); /*!< Get the computed offset (0) if it is not computed*/
+		DTime GetOffset(const std::string& address); /*!< Get the computed offset (0) if it is not computed*/
 
 		void PrintStatus(); /*!< Print the actual status of the synchronizer client */
 	};

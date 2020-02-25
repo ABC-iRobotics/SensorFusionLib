@@ -36,7 +36,7 @@ namespace SF {
 			std::shared_ptr<zmq::socket_t> socket;
 		};
 		
-		MsgType _ProcessMsg(zmq::message_t& topic, zmq::message_t& msg); // returns if got DataMsg
+		MsgType _ProcessMsg(zmq::message_t& topic, zmq::message_t& msg, const std::string& address); // returns if got DataMsg
 
 		void _Run(DTime Ts) override;
 	};

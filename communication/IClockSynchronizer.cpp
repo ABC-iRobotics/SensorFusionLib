@@ -3,8 +3,8 @@
 #include<thread>
 using namespace SF;
 
-SF::IClockSyncronizerClient::PublisherClockProperties::PublisherClockProperties(const std::string & address_) :
-	offset(0), inprogress(true), address(address_) {}
+SF::IClockSyncronizerClient::PublisherClockProperties::PublisherClockProperties(std::string port_) :
+	offset(0), inprogress(true), port(port_) {}
 
 void SF::IClockSyncronizerClient::PublisherClockProperties::Set(DTime offset_) {
 	inprogress = false;
@@ -12,14 +12,19 @@ void SF::IClockSyncronizerClient::PublisherClockProperties::Set(DTime offset_) {
 }
 
 void SF::IClockSyncronizerClient::Run() {
-	while (true) {
+	bool found = true;
+	while (found) {
 		// look for new problem to syncronize
 		mutexForClockOffsets.lock();
 		std::string address;
-		bool found = false;
+		std::string port;
+		found = false;
+		//std::_Tree_iterator<std::map<std::string, std::shared_ptr<PublisherClockProperties>> element_;
+		//std::pair<std::string, std::shared_ptr<PublisherClockProperties>> element_;
 		for (auto element : clockOffsets)
 			if (element.second->inprogress) {
-				address = element.second->address;
+				address = element.first;
+				port = element.second->port;
 				found = true;
 				break;
 			}
@@ -27,43 +32,30 @@ void SF::IClockSyncronizerClient::Run() {
 		// if found
 		if (found) {
 			// synchronize
-			DTime offset = SynchronizeClock(address);
+			DTime offset = SynchronizeClock("tcp://" + address + ":" + port);
 			// set result
 			mutexForClockOffsets.lock();
-			for (auto element : clockOffsets)
-				if (element.second->address.compare(address) == 0) {
-					std::cout << "Set: " << (int)element.first << std::endl;
-					element.second->Set(offset);
-				}
-					
+			clockOffsets.at(address)->Set(offset);
 			mutexForClockOffsets.unlock();
 		}
-		else {
-			isRunning = false;
-			return;
-		}
 	}
+	isRunning = false;
 }
 
-SF::IClockSyncronizerClient::IClockSyncronizerClient() : clockOffsets(std::map<unsigned char, std::shared_ptr<PublisherClockProperties>>()),
+SF::IClockSyncronizerClient::IClockSyncronizerClient() : clockOffsets(std::map<std::string, std::shared_ptr<PublisherClockProperties>>()),
 isRunning(false) {}
 
-void SF::IClockSyncronizerClient::SynchronizePeriphery(unsigned char ID, const std::string & address) {
-	if (clockOffsets.find(ID) != clockOffsets.end())
-		return;
+void SF::IClockSyncronizerClient::SynchronizePeriphery(const std::string & address, const std::string& port) {
 	mutexForClockOffsets.lock();
-	// iterate over addresses called by ClockSyncThreads and set the offsets with mutexes
-	bool found = false;
 	for (auto element : clockOffsets)
-		if (element.second->address.compare(address) == 0) {
-			clockOffsets.insert(std::pair<unsigned char, std::shared_ptr<PublisherClockProperties>>(ID, element.second));
-			found = true;
-			break;
+		if (element.first.find(address) != std::string::npos) {
+			mutexForClockOffsets.unlock();
+			return;
 		}
-	if (!found)
-		clockOffsets.insert(std::pair<unsigned char, std::shared_ptr<PublisherClockProperties>>(ID,
-			std::make_shared<PublisherClockProperties>(address)));
+	clockOffsets.insert(std::pair<std::string, std::shared_ptr<PublisherClockProperties>>(address,
+		std::make_shared<PublisherClockProperties>(port)));
 	mutexForClockOffsets.unlock();
+	
 	if (!isRunning) {
 		isRunning = true;
 		std::thread t(&IClockSyncronizerClient::Run, this);
@@ -71,22 +63,22 @@ void SF::IClockSyncronizerClient::SynchronizePeriphery(unsigned char ID, const s
 	}
 }
 
-bool SF::IClockSyncronizerClient::IsClockSynchronisationInProgress(unsigned char ID) {
+bool SF::IClockSyncronizerClient::IsClockSynchronisationInProgress(const std::string& address) { //address: tcp://192.168.0.1:1234
 	mutexForClockOffsets.lock();
-	auto it = clockOffsets.find(ID);
 	bool out = false;
-	if (it != clockOffsets.end())
-		out = it->second->inprogress;
+	for (auto element : clockOffsets)
+		if (address.find(element.first) != std::string::npos)
+			out = element.second->inprogress;
 	mutexForClockOffsets.unlock();
 	return out;
 }
 
-DTime SF::IClockSyncronizerClient::GetOffset(unsigned char ID) {
+DTime SF::IClockSyncronizerClient::GetOffset(const std::string& address) {
 	mutexForClockOffsets.lock();
-	auto it = clockOffsets.find(ID);
 	DTime out(0);
-	if (it != clockOffsets.end())
-		out = it->second->offset;
+	for (auto element : clockOffsets)
+		if (address.find(element.first) != std::string::npos)
+			out = element.second->offset;
 	mutexForClockOffsets.unlock();
 	return out;
 }
@@ -94,7 +86,7 @@ DTime SF::IClockSyncronizerClient::GetOffset(unsigned char ID) {
 void SF::IClockSyncronizerClient::PrintStatus() {
 	mutexForClockOffsets.lock();
 	for (auto element : clockOffsets) {
-		std::cout << (int)element.first << "(" << element.second->address << ")";
+		std::cout << element.first << "(" << element.second->port << ")";
 		if (element.second->inprogress)
 			std::cout << "? ";
 		else

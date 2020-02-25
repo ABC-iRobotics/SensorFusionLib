@@ -53,7 +53,7 @@ void SF::ZMQReciever::Pause(bool pause_) {
 	pause = pause_;
 }
 
-MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg) {
+MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg, const std::string& address) {
 	char* t = static_cast<char*>(topic.data());
 	switch (t[0]) {
 	case 'd': {
@@ -64,8 +64,8 @@ MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & ms
 		OperationType source = static_cast<OperationType>(t[1]);
 		DataType type = static_cast<DataType>(t[3]);
 		if (VerifyDataMsgContent(msg.data(), (int)msg.size())) {
-			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(ID))
-				CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(ID)));
+			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
+				CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)));
 		}
 		else
 			perror("ZMQCommunication::_ProcessMsg corrupted datamsg buffer.");
@@ -135,7 +135,7 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 					peripheryPropertiesMutex.lock();
 					peripheryProperties[i].nRecieved++;
 					peripheryPropertiesMutex.unlock();
-					MsgType type = _ProcessMsg(t[0], t[1]);
+					MsgType type = _ProcessMsg(t[0], t[1], peripheryProperties[i].address);
 					gotSg |= type != MsgType::NOTHING;
 					gotDataMsgNow |= type == MsgType::DATAMSG;
 				}
