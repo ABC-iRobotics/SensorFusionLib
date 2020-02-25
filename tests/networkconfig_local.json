@@ -1,0 +1,18 @@
+{
+	"LocalPeripheries" : {
+		"sensor1" : {
+			"type": "tcp",
+			"address": "5555",
+			"hwm" : 15,
+			"_comment": "Address: port or ipc_name, forwarded: [x[m],y[m],phi[rad]] as OUTPUT"
+		},
+		
+		"sensor2" : {
+			"type" : "tcp",
+			"address" : "5556",
+			"hwm" : 15,
+			"_comment": "address to be used: ipc:///tmp/IMU_ipc; forwarded: [x[m],y[m],phi[rad]] as OUTPUT"
+		}
+	}
+
+}
