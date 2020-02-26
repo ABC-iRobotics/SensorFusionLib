@@ -21,7 +21,7 @@ namespace SF {
 
 		std::map<std::string, ConnectionData> peripheryData;
 
-		NetworkConfig(const std::string& filename);
+		void Add(const std::string& filename);
 
 		void Print() const;
 

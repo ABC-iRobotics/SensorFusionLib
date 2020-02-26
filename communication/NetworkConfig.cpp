@@ -26,12 +26,12 @@ std::string NetworkConfig::ConnectionData::SenderAddress() const {
 		return "ipc:///" + address;
 }
 
-NetworkConfig::NetworkConfig(const std::string & filename) {
+void NetworkConfig::Add(const std::string& filename) {
 	std::ifstream configFile;
 	configFile.open(filename, std::ios_base::in);
 
 	if (!configFile.is_open())
-		throw std::runtime_error(std::string("can't open json file: ") + filename);
+		throw std::runtime_error("FATAL ERROR: cannot open json file '" + filename + "' (in NetworkConfig::Add)");
 
 	nlohmann::json config;
 	configFile >> config;
@@ -48,7 +48,7 @@ NetworkConfig::NetworkConfig(const std::string & filename) {
 				if (periphery.value().find("hwm") != periphery.value().end())
 					peripheryData.at(periphery.key()).SetHWM(periphery.value().at("hwm"));
 			}
-			
+
 		}
 
 	if (config.find("LocalPeripheries") != config.end())
