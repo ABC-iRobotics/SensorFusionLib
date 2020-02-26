@@ -6,13 +6,12 @@ set (HEADERS
 	Periphery.h
 	Logger.h
 	CentralUnit.h
-	NetworkConfig.h
-	)
-set (HEADERS_INL
+	Reciever.h
 	ZMQClockSynchronizer.h
 	SPDLogging.h
 	ZMQCommunication.h
 	msgcontent2buf.h
+	NetworkConfig.h
 	)
 
 set (SOURCES
@@ -24,14 +23,11 @@ set (SOURCES
 	Periphery.cpp
 	Logger.cpp
 	CentralUnit.cpp
+	Reciever.cpp
 	NetworkConfig.cpp
 	)
 
-set(root ${CMAKE_CURRENT_SOURCE_DIR})
-
-source_group(h_inl FILES ${HEADERS_INL}  PREFIX "Resource Headers" TREE ${root})
-
-add_library (sf_communication STATIC ${SOURCES} ${HEADERS} ${HEADERS_INL})
+add_library (sf_communication STATIC ${SOURCES} ${HEADERS})
 
 
 # Add the dinamic library target to the project

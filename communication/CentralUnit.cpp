@@ -5,70 +5,81 @@
 
 using namespace SF;
 
-SF::CentralUnit::CentralUnit(Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
-	Application(std::make_shared<ZMQReciever>(peripheries), processor, NULL) {}
-
-SF::CentralUnit::CentralUnit(const std::string & logfilename, Processor::ProcessorPtr processor,
-	const std::vector<Reciever::PeripheryProperties>& peripheries) :
-	Application(std::make_shared<ZMQReciever>(peripheries), processor,
-		std::make_shared<SPDSender>(logfilename)) {}
-
-SF::CentralUnit::CentralUnit(const std::string & socketaddressforresults, int hwm,
-	Processor::ProcessorPtr processor, const std::vector<Reciever::PeripheryProperties>& peripheries) :
-	Application(std::make_shared<ZMQReciever>(peripheries), processor,
-		std::make_shared<ZMQSender>(socketaddressforresults, hwm)) {}
-
-SF::CentralUnit::CentralUnit(Sender::SenderPtr sender, Processor::ProcessorPtr processor,
-	const std::vector<Reciever::PeripheryProperties>& peripheries) :
-	Application(std::make_shared<ZMQReciever>(peripheries), processor, sender) {}
-
-void SF::CentralUnit::AddPeriphery(const Reciever::PeripheryProperties & prop) {
-	GetRecieverPtr()->AddPeriphery(prop);
+SF::CentralUnit::CentralUnit(AppLayer::AppLayerPtr processor_, const NetworkConfig& config) :
+	reciever(std::make_shared<ZMQReciever>()), sender(NULL), processor(processor_) {
+	reciever->AddNextLayer(processor);
+	std::dynamic_pointer_cast<ZMQReciever>(reciever)->AddPeripheries(config);
 }
 
-void SF::CentralUnit::AddPeripheries(const NetworkConfig & config) {
-	// Add clocks to synchronise
-	for (auto clock : config.clockSyncData)
-		GetPeripheryClockSynchronizerPtr()->SynchronizePeriphery(clock.second);
-	// Add peripheries
-	for (auto periphery : config.peripheryData)
-		AddPeriphery(Reciever::PeripheryProperties(OperationType::SENSOR, periphery.second.RecieverAddress(), true));
+SF::CentralUnit::CentralUnit(const std::string & logfilename, AppLayer::AppLayerPtr processor_,
+	const NetworkConfig& config) :
+	reciever(std::make_shared<ZMQReciever>()), sender(std::make_shared<SPDSender>(logfilename)), processor(processor_) {
+	reciever->AddNextLayer(processor);
+	processor->AddNextLayer(sender);
+	std::dynamic_pointer_cast<ZMQReciever>(reciever)->AddPeripheries(config);
+}
+
+SF::CentralUnit::CentralUnit(const std::string & socketaddressforresults, int hwm,
+	AppLayer::AppLayerPtr processor_, const NetworkConfig& config) :
+	reciever(std::make_shared<ZMQReciever>()), sender(std::make_shared<ZMQSender>(socketaddressforresults, hwm)) {
+	reciever->AddNextLayer(processor);
+	processor->AddNextLayer(sender);
+	std::dynamic_pointer_cast<ZMQReciever>(reciever)->AddPeripheries(config);
+}
+
+SF::CentralUnit::CentralUnit(Sender::SenderPtr sender_, AppLayer::AppLayerPtr processor_,
+	const NetworkConfig& config) :
+	reciever(std::make_shared<ZMQReciever>()), sender(sender_) {
+	reciever->AddNextLayer(processor_);
+	processor->AddNextLayer(sender);
+	std::dynamic_pointer_cast<ZMQReciever>(reciever)->AddPeripheries(config);
 }
 
 void SF::CentralUnit::Start(DTime Ts) {
-	GetRecieverPtr()->Start(Ts);
+	reciever->Start(Ts);
 }
 
 void SF::CentralUnit::Stop() {
-	GetRecieverPtr()->Stop();
+	reciever->Stop();
 }
 
 SF::CentralUnit::~CentralUnit() {
-	Stop();
+	reciever->Stop();
 }
 
-SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
-	Application(std::make_shared<SPDReciever>(inputlogfilename, realtime), //TODO!!!
-		processor, NULL) {}
+SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, AppLayer::AppLayerPtr processor_, const std::string & inputlogfilename) :
+	reciever(std::make_shared<SPDReciever>(inputlogfilename, realtime)), processor(processor_) {
+	reciever->AddNextLayer(processor_);
+	processor->AddNextLayer(sender);
+}
 
-SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, const std::string & outputlogfilename, Processor::ProcessorPtr processor,
+SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, const std::string & outputlogfilename, AppLayer::AppLayerPtr processor_,
 	const std::string & inputlogfilename) :
-	Application(std::make_shared<SPDReciever>(inputlogfilename, realtime),
-		processor, std::make_shared<SPDSender>(outputlogfilename)) {}
+	reciever(std::make_shared<SPDReciever>(inputlogfilename, realtime)), sender(std::make_shared<SPDSender>(outputlogfilename)), processor(processor_) {
+	reciever->AddNextLayer(processor);
+	processor->AddNextLayer(sender);
+}
 
 SF::CentralUnitEmulator::CentralUnitEmulator(bool realtime, const std::string & socketaddressforresults, int hwm,
-	Processor::ProcessorPtr processor, const std::string & inputlogfilename) :
-	Application(std::make_shared<SPDReciever>(inputlogfilename, realtime),
-		processor, std::make_shared<ZMQSender>(socketaddressforresults, hwm)) {}
+	AppLayer::AppLayerPtr processor_, const std::string & inputlogfilename) :
+	reciever(std::make_shared<SPDReciever>(inputlogfilename, realtime)), sender(std::make_shared<ZMQSender>(socketaddressforresults, hwm)),
+	processor(processor_) {
+	reciever->AddNextLayer(processor);
+	processor->AddNextLayer(sender);
+}
 
 void SF::CentralUnitEmulator::Start(DTime Ts) {
-	GetRecieverPtr()->Start(Ts);
+	reciever->Start(Ts);
 }
 
 void SF::CentralUnitEmulator::Stop() {
-	GetRecieverPtr()->Stop();
+	reciever->Stop();
 }
 
 SF::CentralUnitEmulator::~CentralUnitEmulator() {
-	//Stop();
+	Stop();
+}
+
+bool SF::CentralUnitEmulator::isRunning() {
+	return reciever->IsRunning();
 }

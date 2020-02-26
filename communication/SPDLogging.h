@@ -1,7 +1,7 @@
 #pragma once
 #include "spdlog/logger.h"
 #include<fstream>
-#include "Application.h"
+#include "Reciever.h"
 
 namespace SF {
 
@@ -12,9 +12,9 @@ namespace SF {
 	public:
 		SPDLogReader(std::string filename); /*!< Constructor */
 
-		MsgType readNextRow(); /*!< Read the next row, returns its type */
+		Reciever::MsgType readNextRow(); /*!< Read the next row, returns its type */
 
-		MsgType getLatestRowType() const;  /*!< Get the type of the latest row read */
+		Reciever::MsgType getLatestRowType() const;  /*!< Get the type of the latest row read */
 
 		Time getLatestTimeStamp() const; /*!< Get the timestamp of the latest row read */
 
@@ -28,7 +28,7 @@ namespace SF {
 		Time firstTime;
 		Time latestTime;
 		DataMsg latestMsg;
-		MsgType latestRowType;
+		Reciever::MsgType latestRowType;
 		std::string latestRow;
 		static const int BUFSIZE = 200;
 		char buf[BUFSIZE];
@@ -49,9 +49,9 @@ namespace SF {
 
 		SPDSender(const SPDSender&) = delete;
 
-		void SendDataMsg(const DataMsg& data) override;
+		void CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override;
 
-		void SendString(const std::string& str) override;
+		void CallbackGotString(const std::string& msg, const Time& currentTime = Now()) override;
 	};
 
 	/*! \brief Class to emulate the recieving (filtering) situation from a log file
@@ -69,8 +69,6 @@ namespace SF {
 	class SPDReciever : public Reciever {
 		SPDLogReader logread;
 		bool realtime;
-
-		void AddPeriphery(const PeripheryProperties& prop) override {};
 
 	public:
 		SPDReciever(const std::string& filename, bool realTime_); /*!< Constructor */

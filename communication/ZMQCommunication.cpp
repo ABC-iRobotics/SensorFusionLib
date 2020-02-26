@@ -48,6 +48,15 @@ void SF::ZMQReciever::AddPeriphery(const PeripheryProperties & prop) {
 	peripheryPropertiesMutex.unlock();
 }
 
+void SF::ZMQReciever::AddPeripheries(const NetworkConfig & config) {
+	// Add clocks to synchronise
+	for (auto clock : config.clockSyncData)
+		GetPeripheryClockSynchronizerPtr()->SynchronizePeriphery(clock.second);
+	// Add peripheries
+	for (auto periphery : config.peripheryData)
+		AddPeriphery(PeripheryProperties(OperationType::SENSOR, periphery.second.RecieverAddress(), true));
+}
+
 unsigned long long SF::ZMQReciever::GetNumOfRecievedMsgs(int n) {
 	peripheryPropertiesMutex.lock();
 	long long out = peripheryProperties[n].nRecieved;
@@ -59,7 +68,7 @@ void SF::ZMQReciever::Pause(bool pause_) {
 	pause = pause_;
 }
 
-MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg, const std::string& address) {
+SF::ZMQReciever::MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg, const std::string& address) {
 	char* t = static_cast<char*>(topic.data());
 	switch (t[0]) {
 	case 'd': {
@@ -71,7 +80,7 @@ MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & ms
 		DataType type = static_cast<DataType>(t[3]);
 		if (VerifyDataMsgContent(msg.data(), (int)msg.size())) {
 			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
-				CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)));
+				ForwardDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)));
 		}
 		else
 			throw std::runtime_error("FATAL ERROR: corrupted datamsg buffer got (in ZMQCommunication::_ProcessMsg)");
@@ -80,7 +89,7 @@ MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & ms
 	case 'i':
 		if (topic.size() != 1)
 			throw std::runtime_error("FATAL ERROR: corrupted string topic got (in ZMQCommunication::_ProcessMsg)");
-		CallbackGotString(std::string(static_cast<char*>(msg.data()), msg.size()));
+		ForwardString(std::string(static_cast<char*>(msg.data()), msg.size()));
 		return MsgType::TEXT;
 	default:
 		throw std::runtime_error("FATAL ERROR: corrupted topic got (in ZMQCommunication::_ProcessMsg)");
@@ -116,7 +125,7 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		// handle step
 		if (Now() > tNext) {
-			CallbackSamplingTimeOver();
+			ForwardSamplingTimeOver();
 			tNext += Ts;
 			gotDataMsg = false;
 			continue;
@@ -147,7 +156,7 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 			}
 		gotDataMsg |= gotDataMsgNow;
 		if (gotDataMsg && !gotSg && Now() > tLast + tWaitNextMsg) {
-			CallbackMsgQueueEmpty(); // if there were msg read
+			ForwardMsgQueueEmpty(); // if there were msg read
 			gotDataMsg = false;
 		}
 		if (gotDataMsgNow)
@@ -173,7 +182,7 @@ SF::ZMQSender::ZMQSender(const std::string & address, int hwm) : zmq_context(2) 
 	}
 }
 
-void SF::ZMQSender::SendDataMsg(const DataMsg & data) {
+void SF::ZMQSender::CallbackGotDataMsg(const DataMsg & data, const Time& currentTime) {
 	zmq::multipart_t msg;
 	unsigned char topicbuf[4];
 	topicbuf[0] = 'd';
@@ -194,7 +203,7 @@ void SF::ZMQSender::SendDataMsg(const DataMsg & data) {
 	delete buf;
 }
 
-void SF::ZMQSender::SendString(const std::string & data) {
+void SF::ZMQSender::CallbackGotString(const std::string & data, const Time& currentTime) {
 	zmq::multipart_t msg;
 	char i = 'i';
 	msg.addmem(&i, 1);

@@ -68,6 +68,10 @@ void NetworkConfig::Add(const std::string& filename) {
 		}
 }
 
+void SF::NetworkConfig::Add(const std::string & name, const ConnectionData & connection) {
+	peripheryData.insert(std::pair<std::string, ConnectionData>(name, connection));
+}
+
 void NetworkConfig::Print() const {
 	std::cout << "Network config:\n\n Clockservers:\n";
 	for (auto it : clockSyncData)

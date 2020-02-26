@@ -1,5 +1,5 @@
 #pragma once
-#include "Application.h"
+#include "Reciever.h"
 #include "NetworkConfig.h"
 
 namespace SF {
@@ -8,27 +8,23 @@ namespace SF {
 	*
 	*
 	*/
-	class CentralUnit : public Application {
+	class CentralUnit {
+		Reciever::RecieverPtr reciever;
+		Sender::SenderPtr sender;
+		AppLayer::AppLayerPtr processor;
+
 	public:
-		CentralUnit(Processor::ProcessorPtr processor,
-			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries process them */
+		CentralUnit(AppLayer::AppLayerPtr processor,
+			const NetworkConfig& config); /*!< Constructor to create an application with given processor to recieve data from peripheries process them */
 
-		CentralUnit(const std::string& logfilename, Processor::ProcessorPtr processor,
-			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries process them and save the output into a logfile */
+		CentralUnit(const std::string& logfilename, AppLayer::AppLayerPtr processor,
+			const NetworkConfig& config); /*!< Constructor to create an application with given processor to recieve data from peripheries process them and save the output into a logfile */
 
-		CentralUnit(const std::string& socketaddressforresults, int hwm, Processor::ProcessorPtr processor,
-			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries and publish its output via a ZMQ socket */
+		CentralUnit(const std::string& socketaddressforresults, int hwm, AppLayer::AppLayerPtr processor,
+			const NetworkConfig& config); /*!< Constructor to create an application with given processor to recieve data from peripheries and publish its output via a ZMQ socket */
 
-		CentralUnit(Sender::SenderPtr sender, Processor::ProcessorPtr processor,
-			const std::vector<Reciever::PeripheryProperties>& peripheries
-			= std::vector<Reciever::PeripheryProperties>()); /*!< Constructor to create an application with given processor to recieve data from peripheries and publish its output via a ZMQ socket */
-
-		void AddPeriphery(const Reciever::PeripheryProperties& prop); /*!< Add peripheries for networked recievers */
-
-		void AddPeripheries(const NetworkConfig& config);
+		CentralUnit(Sender::SenderPtr sender, AppLayer::AppLayerPtr processor,
+			const NetworkConfig& config); /*!< Constructor to create an application with given processor to recieve data from peripheries and publish its output via a ZMQ socket */
 
 		void Start(DTime Ts); /*!< Start recieving and processing thread with given sampling time */
 
@@ -42,15 +38,19 @@ namespace SF {
 	*
 	* 
 	*/
-	class CentralUnitEmulator : public Application {
+	class CentralUnitEmulator {
+		Reciever::RecieverPtr reciever;
+		Sender::SenderPtr sender;
+		AppLayer::AppLayerPtr processor;
+
 	public:
-		CentralUnitEmulator(bool realtime, Processor::ProcessorPtr processor,
+		CentralUnitEmulator(bool realtime, AppLayer::AppLayerPtr processor,
 			const std::string& inputlogfilename); /*!< Constructor to create an application with given processor to read data from logfile and process them */
 
-		CentralUnitEmulator(bool realtime, const std::string& outputlogfilename, Processor::ProcessorPtr processor,
+		CentralUnitEmulator(bool realtime, const std::string& outputlogfilename, AppLayer::AppLayerPtr processor,
 			const std::string& inputlogfilename); /*!< Constructor to create an application with given processor to read data from logfile and process them, the output is logged*/
 
-		CentralUnitEmulator(bool realtime, const std::string& socketaddressforresults, int hwm, Processor::ProcessorPtr processor,
+		CentralUnitEmulator(bool realtime, const std::string& socketaddressforresults, int hwm, AppLayer::AppLayerPtr processor,
 			const std::string& inputlogfilename); /*!< Constructor to create an application with given processor to read data from logfile and process them, the output is published on a socket */
 
 		void Start(DTime Ts); /*!< Start recieving and processing thread with given sampling time */
@@ -58,5 +58,7 @@ namespace SF {
 		void Stop();  /*!< Stop recieving and processing thread */
 
 		~CentralUnitEmulator(); /*!< Destructor */
+
+		bool isRunning();
 	};
 }

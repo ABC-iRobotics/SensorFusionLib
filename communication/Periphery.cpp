@@ -10,13 +10,13 @@ SF::Periphery::Periphery(const NetworkConfig::ConnectionData & config) :
 void SF::Periphery::SendValue(unsigned char sensorID, const Eigen::VectorXd & value, DataType type, Time t, OperationType source) {
 	DataMsg msg(sensorID, type, source, t);
 	msg.SetValueVector(value);
-	ptr->SendDataMsg(msg);
+	ptr->CallbackGotDataMsg(msg);
 }
 
 void SF::Periphery::SendVariance(unsigned char sensorID, const Eigen::MatrixXd & variance, DataType type, Time t, OperationType source) {
 	DataMsg msg(sensorID, type, source, t);
 	msg.SetVarianceMatrix(variance);
-	ptr->SendDataMsg(msg);
+	ptr->CallbackGotDataMsg(msg);
 }
 
 void SF::Periphery::SendValueAndVariance(unsigned char sensorID, const Eigen::VectorXd & value,
@@ -24,5 +24,5 @@ void SF::Periphery::SendValueAndVariance(unsigned char sensorID, const Eigen::Ve
 	DataMsg msg(sensorID, type, source, t);
 	msg.SetValueVector(value);
 	msg.SetVarianceMatrix(variance);
-	ptr->SendDataMsg(msg);
+	ptr->CallbackGotDataMsg(msg);
 }

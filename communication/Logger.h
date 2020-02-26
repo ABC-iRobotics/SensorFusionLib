@@ -1,6 +1,6 @@
 #pragma once
-#include "Application.h"
 #include "NetworkConfig.h"
+#include "Reciever.h"
 
 namespace SF {
 
@@ -8,13 +8,19 @@ namespace SF {
 	*
 	* The class initializes a zmq context and a subscriber socket, and save the recieved data via sdp logging
 	*/
-	class Logger : public Application {
-	public:
-		Logger(const std::string& filename,
-			const std::vector<Reciever::PeripheryProperties>& peripheries = std::vector<Reciever::PeripheryProperties>()); /*!< Constructor: initializes a zmq context and a publisher socket ("tcp://*:15555" or ipc:///tmp/feeds/0 ...) and spd log*/
+	class Logger {
+		Sender::SenderPtr sender;
+		Reciever::RecieverPtr reciever;
 
-		void AddPeriphery(const Reciever::PeripheryProperties& prop); /*!< Add peripheries for networked recievers */
+	public:
+		Logger(const std::string& filename); /*!< Constructor: initializes a zmq context and a publisher socket ("tcp://*:15555" or ipc:///tmp/feeds/0 ...) and spd log*/
 
 		void AddPeripheries(const NetworkConfig& config);
+
+		void Start(DTime Ts); /*!< Start recieving thread with given sampling time */
+
+		void Stop(); /*!< Stop recieving thread */
+
+		~Logger(); /*!< Destructor */
 	};
 }

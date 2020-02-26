@@ -23,6 +23,8 @@ namespace SF {
 
 		void Add(const std::string& filename);
 
+		void Add(const std::string& name, const ConnectionData& connection);
+
 		void Print() const;
 
 		ConnectionData GetPeripheryData(const std::string& name) const;

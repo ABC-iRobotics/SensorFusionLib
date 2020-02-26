@@ -65,16 +65,16 @@ Time readTime(char* buf) {
 	return std::chrono::system_clock::from_time_t(std::mktime(&temp)) + std::chrono::microseconds(char2long(buf + 20, 6));
 }
 
-SPDLogReader::SPDLogReader(std::string filename) : stream(filename), latestRowType(NOTHING) {
+SPDLogReader::SPDLogReader(std::string filename) : stream(filename), latestRowType(Reciever::NOTHING) {
 	if (!stream.is_open())
 		throw std::runtime_error(std::string("SPDLogReader::SPDLogReader File not found!"));
 	readNextRow();
 }
 
-MsgType SPDLogReader::readNextRow() {
+Reciever::MsgType SPDLogReader::readNextRow() {
 	if (stream.eof()) {
-		latestRowType = NOTHING;
-		return MsgType::NOTHING;
+		latestRowType = Reciever::NOTHING;
+		return Reciever::MsgType::NOTHING;
 	}
 
 	stream.getline(buf, BUFSIZE, ' '); // logging time
@@ -126,22 +126,22 @@ MsgType SPDLogReader::readNextRow() {
 			latestMsg.SetVarianceMatrix(m);
 		} // else: NOVAR...
 		stream.ignore(100000, '\n');
-		latestRowType = DATAMSG;
-		return MsgType::DATAMSG;
+		latestRowType = Reciever::DATAMSG;
+		return Reciever::MsgType::DATAMSG;
 	}
 	else {
 		stream.getline(buf, BUFSIZE, '\n');
 		latestRow = buf;
 		if (latestRow.size() == 0) {
-			latestRowType = NOTHING;
-			return MsgType::NOTHING;
+			latestRowType = Reciever::NOTHING;
+			return Reciever::MsgType::NOTHING;
 		}
-		latestRowType = TEXT;
-		return MsgType::TEXT;
+		latestRowType = Reciever::TEXT;
+		return Reciever::MsgType::TEXT;
 	}
 }
 
-MsgType SPDLogReader::getLatestRowType() const {
+Reciever::MsgType SPDLogReader::getLatestRowType() const {
 	return latestRowType;
 }
 
@@ -159,7 +159,7 @@ const DataMsg& SPDLogReader::getLatestDataMsgIf() const {
 
 static int i = 0;
 
-SPDSender::SPDSender(std::string filename) :
+SPDSender::SPDSender(std::string filename) : //Sender(logSamplingAndQueueEmpty),
 	my_logger(spdlog::basic_logger_mt<spdlog::async_factory>(std::to_string(i), filename)) {
 	i++;
 	my_logger->set_pattern("[%Y/%m/%d-%H:%M:%S-%f] [%^%L%$] %v");
@@ -169,7 +169,7 @@ SPDSender::~SPDSender() {
 	spdlog::drop(my_logger->name());
 }
 
-void SPDSender::SendDataMsg(const DataMsg & msg) {
+void SPDSender::CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime) {
 	buf.clear();
 	fmt::format_to(buf, "MSG [ ");
 	switch (msg.GetDataSourceType()) {
@@ -248,8 +248,8 @@ void SPDSender::SendDataMsg(const DataMsg & msg) {
 	buf.clear();
 }
 
-void SF::SPDSender::SendString(const std::string & string) {
-	my_logger->info(("STR " + string).c_str());
+void SF::SPDSender::CallbackGotString(const std::string& msg, const Time& currentTime) {
+	my_logger->info(("STR " + msg).c_str());
 }
 
 SF::SPDReciever::SPDReciever(const std::string & filename, bool realTime_) : logread(filename), realtime(realTime_) {}
@@ -262,7 +262,6 @@ void SF::SPDReciever::_Run(DTime Ts) {
 }
 
 void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
-	DTime tRead(tReadAMsgInUs);
 	Time tLast, tNext;
 	bool got, first = true;
 	while (true) {
@@ -282,15 +281,15 @@ void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 			if (MustStop() || logread.getLatestRowType() == NOTHING)
 				return;
 			// Sampling ended
-			if (logread.getLatestTimeStamp() > tNext && (tNext<tLast+tRead || !got)) {
-				CallbackSamplingTimeOver(tNext);
+			if (logread.getLatestTimeStamp() > tNext && (tNext<tLast+tWaitNextMsg || !got)) {
+				ForwardSamplingTimeOver(tNext);
 				tNext += Ts;
 				got = false;
 				continue;
 			}
 			// Read queue is empty
-			if (got && (logread.getLatestTimeStamp() > tLast + tRead)) {
-				CallbackMsgQueueEmpty(tLast + tRead);
+			if (got && (logread.getLatestTimeStamp() > tLast + tWaitNextMsg)) {
+				ForwardMsgQueueEmpty(tLast + tWaitNextMsg);
 				got = false;
 				continue;
 			}
@@ -299,11 +298,11 @@ void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 		// Process the current row
 		switch (logread.getLatestRowType()) {
 		case DATAMSG:
-			CallbackGotDataMsg(logread.getLatestDataMsgIf(), logread.getLatestTimeStamp());
+			ForwardDataMsg(logread.getLatestDataMsgIf(), logread.getLatestTimeStamp());
 			got = true;
 			break;
 		case TEXT:
-			CallbackGotString(logread.getLatestRowIf(), logread.getLatestTimeStamp());
+			ForwardString(logread.getLatestRowIf(), logread.getLatestTimeStamp());
 			break;
 		}
 		tLast = logread.getLatestTimeStamp();
@@ -311,7 +310,6 @@ void SF::SPDReciever::_RunSteppable(DTime Ts, DTime recieveTime) {
 }
 
 void SF::SPDReciever::_RunRT(DTime Ts) {
-	DTime tRead(tReadAMsgInUs);
 	bool got = false, first = true;
 	DTime offset = duration_cast(Now() - logread.getLatestTimeStamp());
 	std::function<Time()> Now2 = [offset]() { return Now() - offset; };
@@ -332,7 +330,7 @@ void SF::SPDReciever::_RunRT(DTime Ts) {
 			if ((deadline > tNext) || (logread.getLatestTimeStamp() > tNext && !got)) {
 				while (Now2() < tNext)
 					;
-				CallbackSamplingTimeOver(Now2());
+				ForwardSamplingTimeOver(Now2());
 				tNext += Ts;
 				got = false;
 				continue;
@@ -341,7 +339,7 @@ void SF::SPDReciever::_RunRT(DTime Ts) {
 			if (got && (logread.getLatestTimeStamp() > deadline)) {
 				while (Now2() < deadline)
 					;
-				CallbackMsgQueueEmpty(Now2());
+				ForwardMsgQueueEmpty(Now2());
 				got = false;
 				continue;
 			}
@@ -352,11 +350,11 @@ void SF::SPDReciever::_RunRT(DTime Ts) {
 		// Process the current row
 		switch (logread.getLatestRowType()) {
 		case DATAMSG:
-			CallbackGotDataMsg(logread.getLatestDataMsgIf(), Now2());
+			ForwardDataMsg(logread.getLatestDataMsgIf(), Now2());
 			got = true;
 			break;
 		case TEXT:
-			CallbackGotString(logread.getLatestRowIf(), Now2());
+			ForwardString(logread.getLatestRowIf(), Now2());
 			break;
 		}
 	}
