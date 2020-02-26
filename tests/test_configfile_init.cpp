@@ -11,8 +11,8 @@ using namespace SF;
 void localtest() {
 	std::string filename = "local_test_" + std::to_string(Now().time_since_epoch().count()) + ".log";
 	{
-		NetworkConfig n("networkconfig_local.json");
-
+		NetworkConfig n;
+		n.Add("networkconfig_local.json");
 		Logger l(filename);
 		l.AddPeripheries(n);
 		l.Start(DTime(2000));
