@@ -17,6 +17,7 @@ std::string NetworkConfig::ConnectionData::RecieverAddress() const {
 		return "tcp://" + address + ":" + port;
 	if (commType.compare("ipc") == 0)
 		return "ipc:///" + address;
+	throw std::runtime_error("FATAL ERROR: not iplemented communication protocol '" + commType + "' (in NetworkConfig::ConnectionData::RecieverAddress)");
 }
 
 std::string NetworkConfig::ConnectionData::SenderAddress() const {
@@ -24,6 +25,7 @@ std::string NetworkConfig::ConnectionData::SenderAddress() const {
 		return "tcp://*:" + port;
 	if (commType.compare("ipc") == 0)
 		return "ipc:///" + address;
+	throw std::runtime_error("FATAL ERROR: not iplemented communication protocol '" + commType + "' (in NetworkConfig::ConnectionData::SenderAddress)");
 }
 
 void NetworkConfig::Add(const std::string& filename) {
