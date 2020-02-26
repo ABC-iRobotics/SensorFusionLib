@@ -45,9 +45,9 @@ void SendAndRecieveDataMsgs(std::string senderaddress, std::string recvaddress, 
 		Time start = Now();
 		for (long long n = 0; n < N; n++)
 			if (sendstring)
-				a.SendString("abasdasdfasf");
+				a.CallbackGotString("abasdasdfasf");
 			else
-				a.SendDataMsg(d);
+				a.CallbackGotDataMsg(d);
 		while (r.GetNumOfRecievedMsgs(0) != N * (k + 1))
 			std::this_thread::sleep_for(std::chrono::microseconds(1));
 		DTime dt = duration_cast(Now() - start);
@@ -69,7 +69,7 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 		r.Pause(true);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		for (int i = 0; i < hwm*100; i++)
-			a.SendDataMsg(d);
+			a.CallbackGotDataMsg(d);
 		
 		long long recieved0 = r.GetNumOfRecievedMsgs(0);
 		r.Pause(false);
@@ -86,7 +86,7 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 bool error;
 static std::vector<DataMsg> msgs;
 static std::vector<std::string> strings;
-class Checker : public Processor {
+class Checker : public AppLayer {
 	int n = 0;
 public:
 	void CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
@@ -119,13 +119,13 @@ void orderDataMsg(std::string senderaddress, std::string recvaddress, int N) {
 	ZMQSender a(senderaddress, N);
 	auto checker = std::make_shared<Checker>();
 	ZMQReciever r;
-	r.SetProcessor(checker);
+	r.AddNextLayer(checker);
 	r.AddPeriphery(ZMQReciever::PeripheryProperties(recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	for (int i = 0; i < N; i++)
-		a.SendDataMsg(msgs[i]);
+		a.CallbackGotDataMsg(msgs[i]);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
@@ -144,13 +144,13 @@ void orderStrings(std::string senderaddress, std::string recvaddress, int N) {
 	ZMQSender a(senderaddress, N);
 	auto checker = std::make_shared<Checker>();
 	ZMQReciever r;
-	r.SetProcessor(checker);
+	r.AddNextLayer(checker);
 	r.AddPeriphery(ZMQReciever::PeripheryProperties(recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	for (int i = 0; i < N; i++)
-		a.SendString(strings[i]);
+		a.CallbackGotString(strings[i]);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 

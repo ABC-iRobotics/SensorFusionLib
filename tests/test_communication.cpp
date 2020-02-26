@@ -48,7 +48,7 @@ public:
 	T GetAverage() const { if (N > 0) return sum / N; else return T(0); }
 };
 
-class Tester : public Processor {
+class Tester : public AppLayer {
 	Statistics<DTime> between5msgs;
 	Statistics<DTime> afterfifthmsg;
 	Statistics<DTime> samplingTime;
@@ -123,10 +123,10 @@ public:
 		TEST_ASSERT(between5msgs.GetMax() < 5 * 2 * std::chrono::microseconds(100));
 		TEST_ASSERT(between5msgs.GetAverage() < 5 * std::chrono::microseconds(100));
 
-		TEST_ASSERT(afterfifthmsg.GetMax() < tWaitNextMsg * 1.3);
-		TEST_ASSERT(afterfifthmsg.GetMax() > tWaitNextMsg * 0.7);
-		TEST_ASSERT(afterfifthmsg.GetAverage() < tWaitNextMsg * 1.15);
-		TEST_ASSERT(afterfifthmsg.GetAverage() > tWaitNextMsg * 0.85);
+		TEST_ASSERT(afterfifthmsg.GetMax() < Reciever::tWaitNextMsg * 1.3);
+		TEST_ASSERT(afterfifthmsg.GetMax() > Reciever::tWaitNextMsg * 0.7);
+		TEST_ASSERT(afterfifthmsg.GetAverage() < Reciever::tWaitNextMsg * 1.15);
+		TEST_ASSERT(afterfifthmsg.GetAverage() > Reciever::tWaitNextMsg * 0.85);
 	}
 
 	void Evaluate(DTime Ts) const {
@@ -140,25 +140,36 @@ public:
 	}
 };
 
+class AppLayerM : public AppLayer {
+public:
+	void CallbackSamplingTimeOver(const Time& currentTime = Now()) override {
+		CallbackGotString("SamplingTimeOver", currentTime);
+	}
+
+	void CallbackMsgQueueEmpty(const Time& currentTime = Now()) override {
+		CallbackGotString("MsgQueueEmpty", currentTime);
+	}
+};
+
 void test_periphery_logging_via_CU() {
-	std::string filename("test_periphery.txt");
+	std::string filename("test_periphery_" + std::to_string(duration_cast(Now().time_since_epoch()).count()) + ".txt");
 	DTime Ts = DTime(1000 * 25);
 	{
-		CentralUnit l(filename, std::make_shared<Processor>());
-		
-		//Logger l(filename);
+		NetworkConfig n;
 		for (int i = 0; i < 5; i++)
-			l.AddPeriphery(Reciever::PeripheryProperties("tcp://localhost:234" + std::to_string(i), true));
+			n.Add(std::to_string(i), NetworkConfig::ConnectionData("tcp", "localhost", "234" + std::to_string(i)));
+
+		CentralUnit l(filename, std::make_shared<AppLayerM>(), n);
+		
 		l.Start(Ts);
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
 		std::shared_ptr<Periphery> p[5];
-		for (int i = 0; i < 5; i++) {
-			p[i] = std::make_shared<Periphery>("tcp://*:234" + std::to_string(i), 10);
-		}
+		for (int i = 0; i < 5; i++)
+			p[i] = std::make_shared<Periphery>(n.GetPeripheryData(std::to_string(i)));
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 		DTime Twait(10000);
 		Time tNext = Now() + Twait;
@@ -180,12 +191,12 @@ void test_periphery_logging_via_CU() {
 		};
 		SPDLogReader reader(filename);
 		std::vector<Row> rows = std::vector<Row>();
-		while (reader.readNextRow() != MsgType::NOTHING) {
+		while (reader.readNextRow() != Reciever::NOTHING) {
 			switch (reader.getLatestRowType()) {
-			case MsgType::DATAMSG:
+			case Reciever::DATAMSG:
 				t.CallbackGotDataMsg(DataMsg(), reader.getLatestTimeStamp());
 				break;
-			case MsgType::TEXT:
+			case Reciever::TEXT:
 				if (reader.getLatestRowIf().compare("MsgQueueEmpty") == 0)
 					t.CallbackMsgQueueEmpty(reader.getLatestTimeStamp());
 				if (reader.getLatestRowIf().compare("SamplingTimeOver") == 0)
@@ -204,20 +215,21 @@ void test_periphery_logging_via_CU() {
 
 
 void test_peripheries_logger_centralunitemulator() {
-	std::string filename("test_periphery2.txt");
+	std::string filename("test_periphery2_" + std::to_string(duration_cast(Now().time_since_epoch()).count()) + ".txt");
 	// simulate 5 sensors sending msgs to a logger
 	{
-		Logger l(filename);
-
+		NetworkConfig n;
 		for (int i = 0; i < 5; i++)
-			l.AddPeriphery(Reciever::PeripheryProperties("tcp://localhost:234" + std::to_string(i), true));
+			n.Add(std::to_string(i), NetworkConfig::ConnectionData("tcp", "localhost", "234" + std::to_string(i)));
+		Logger l(filename);
+		l.AddPeripheries(n);
 		l.Start(DTime(1000 * 25));
 
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
 		std::shared_ptr<Periphery> p[5];
 		for (int i = 0; i < 5; i++)
-			p[i] = std::make_shared<Periphery>("tcp://*:234" + std::to_string(i), 10);
+			p[i] = std::make_shared<Periphery>(n.GetPeripheryData(std::to_string(i)));
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
@@ -258,7 +270,7 @@ void test_peripheries_logger_centralunitemulator() {
 	tester1->Evaluate(Ts1);
 
 	tester2->printStatistics();
-	tester2->Evaluate(Ts2);
+	//tester2->Evaluate(Ts2);
 }
 
 int main (void) {

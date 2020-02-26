@@ -909,7 +909,7 @@ EXCLUDE                = "@CMAKE_SOURCE_DIR@/plotter/color.cc" \
                          "@CMAKE_SOURCE_DIR@/plotter/window.cc" \
                          "@CMAKE_SOURCE_DIR@/plotter/window.h" \
                          "@CMAKE_SOURCE_DIR@/communication/msgcontent_generated.h" \
-						 "@CMAKE_SOURCE_DIR@/communication/json.hpp" \
+						 "@CMAKE_SOURCE_DIR@/types/json.hpp" \
 						 "@CMAKE_SOURCE_DIR@/tests/" \
 						 "@CMAKE_SOURCE_DIR@/cmake/"
 

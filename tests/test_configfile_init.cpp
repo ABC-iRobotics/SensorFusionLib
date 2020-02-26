@@ -34,9 +34,9 @@ void localtest() {
 		}
 		{
 			SPDLogReader reader(filename);
-			while (reader.readNextRow() != MsgType::NOTHING) {
+			while (reader.readNextRow() != Reciever::NOTHING) {
 				switch (reader.getLatestRowType()) {
-				case MsgType::DATAMSG:
+				case Reciever::DATAMSG:
 					switch (reader.getLatestDataMsgIf().GetSourceID()) {
 					case 5:
 						gotfrom5++;
@@ -46,7 +46,7 @@ void localtest() {
 						break;
 					}
 					break;
-				case MsgType::TEXT:
+				case Reciever::TEXT:
 					// ?
 					break;
 				}

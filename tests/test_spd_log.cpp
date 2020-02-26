@@ -22,7 +22,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++)
-				logger.SendDataMsg(msg);
+				logger.CallbackGotDataMsg(msg);
 			auto elapsed = Now() - start;
 
 			double delapsed = (double)duration_cast(elapsed).count() / (double)Ndata;
@@ -43,7 +43,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++) {
-				if (reader.getLatestRowType() != DATAMSG)
+				if (reader.getLatestRowType() != Reciever::DATAMSG)
 					TEST_ASSERT(false);
 				msg = reader.getLatestDataMsgIf();
 				reader.readNextRow();
@@ -114,14 +114,14 @@ void test_read_write(int Ndata) {
 	{
 		SPDSender w(filename);
 		for (int i = 0; i < msgs.size(); i++)
-			w.SendDataMsg(*msgs[i]);
+			w.CallbackGotDataMsg(*msgs[i]);
 	}
 	// Read the log - checking the results...
 	bool ok = true;
 	{
 		SPDLogReader r(filename);
 		int i = 0;
-		while (r.getLatestRowType() == DATAMSG) {
+		while (r.getLatestRowType() == Reciever::DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
 			if (msg != *msgs[i])
 				ok = false;

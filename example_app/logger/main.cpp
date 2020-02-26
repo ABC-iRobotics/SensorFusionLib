@@ -10,9 +10,11 @@ using namespace SF;
 int main() {
 	try {
 #ifdef UNIX
-		NetworkConfig n("networkconfig_1.json");
+		NetworkConfig n;
+		n.Add("networkconfig_1.json");
 #else
-		NetworkConfig n("networkconfig_1_noipc.json");
+		NetworkConfig n;
+		n.Add("networkconfig_1_noipc.json");
 #endif
 		std::string filename = "log_output_" + std::to_string(Now().time_since_epoch().count()) + ".log";
 
