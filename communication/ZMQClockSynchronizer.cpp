@@ -24,7 +24,8 @@ public:
 			endianness = BIG_ENDIAN_;
 			return;
 		}
-		perror("Unkown endianness");
+		std::cout << " FATAL ERROR: Unkown endianness (in LittleEndianSerializer::LittleEndianSerializer)\n";
+		exit(EXIT_FAILURE);
 	}
 
 	/*! \brief To copy integer with LITTLE_ENDIAN convention */
@@ -49,8 +50,10 @@ SF::ZMQClockSynchronizerServer::ZMQClockSynchronizerServer(const std::string & a
 void SF::ZMQClockSynchronizerServer::SetAddress(const std::string & address_) {
 	if (!running)
 		address = address_;
-	else
-		perror("ZMQClockSynchronizerServer::SetAddress Address cannot be modified during run...");
+	else {
+		std::cout << "FATAL ERROR: address of ZMQClockSynchronizerServer cannot be modified during run (in ZMQClockSynchronizerServer::SetAddress).'\n";
+		exit(EXIT_FAILURE);
+	}
 }
 
 ClockSyncronizerClient* SF::GetPeripheryClockSynchronizerPtr() {
@@ -91,13 +94,21 @@ long long GetSystemClockTimeInUS() {
 }
 
 void SF::ZMQClockSynchronizerServer::Run() {
-	if (address.compare("") == 0)
-		perror("ZMQClockSynchronizerServer::Run(): Address is an empty string!");
+	if (address.compare("") == 0) {
+		std::cout << "FATAL ERROR: address of ZMQClockSynchronizerServer is an empty string (in ZMQClockSynchronizerServer::Run)\n";
+		exit(EXIT_FAILURE);
+	}
 	std::cout << "ZMQClockSynchronizerServer started\n";
 	//  Prepare our context and socket
 	zmq::context_t context = zmq::context_t(1);
 	zmq::socket_t socket = zmq::socket_t(context, ZMQ_REP);
-	socket.bind(address);
+	try {
+		socket.bind(address);
+	}
+	catch (zmq::error_t) {
+		std::cout << "FATAL ERROR: ZMQ unable to bind to '" << address << "' (in ZMQClockSynchronizerServer::Run)\n";
+		exit(EXIT_FAILURE);
+	}
 	zmq::message_t reply(8);
 	zmq::message_t request;
 	int rvctime = 2000; // milliseconds
@@ -122,7 +133,13 @@ std::chrono::nanoseconds SF::DetermineClockOffsetFromZMQServer(const std::string
 	zmq::context_t context = zmq::context_t(zmq_io_threads);	   //  Prepare socket
 	zmq::socket_t socket(context, ZMQ_REQ);
 	std::cout << "Connecting to server... (" << address << ")";
-	socket.connect(address);
+	try {
+		socket.connect(address);
+	}
+	catch (zmq::error_t) {
+		std::cout << "FATAL ERROR: ZMQ unable to connect to '" << address << "' (in DetermineClockOffsetFromZMQServer)\n";
+		exit(EXIT_FAILURE);
+	}
 	//  Do n_msgs requests, waiting each time for a response
 	long long sumoffset = 0;
 	std::vector<long long> offsets = std::vector<long long>();

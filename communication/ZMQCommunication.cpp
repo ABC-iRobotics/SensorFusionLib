@@ -26,7 +26,13 @@ SF::ZMQReciever::SocketHandler::SocketHandler(const PeripheryProperties& prop, z
 	socket->setsockopt(ZMQ_SUBSCRIBE, &topic[0], prop.nparam + 1);
 	if (prop.getstrings)
 		socket->setsockopt(ZMQ_SUBSCRIBE, "i", 1);
-	socket->connect(prop.address.c_str());
+	try {
+		socket->connect(prop.address.c_str());
+	}
+	catch (zmq::error_t) {
+		std::cout << "FATAL ERROR: ZMQ unable to connect to '" << prop.address << "'\n";
+		exit(EXIT_FAILURE);
+	}
 }
 
 SF::ZMQReciever::~ZMQReciever() {
@@ -57,8 +63,10 @@ MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & ms
 	char* t = static_cast<char*>(topic.data());
 	switch (t[0]) {
 	case 'd': {
-		if (topic.size() != 4)
-			perror("ZMQCommunication::_ProcessMsg corrupted datamsg topic - d.");
+		if (topic.size() != 4) {
+			std::cout << "FATAL ERROR: corrupted datamsg topic got (in ZMQCommunication::_ProcessMsg)\n";
+			exit(EXIT_FAILURE);
+		}
 		unsigned char ID = static_cast<unsigned char>(t[2]);
 		// Apply offset
 		OperationType source = static_cast<OperationType>(t[1]);
@@ -67,18 +75,22 @@ MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & ms
 			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
 				CallbackGotDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)));
 		}
-		else
-			perror("ZMQCommunication::_ProcessMsg corrupted datamsg buffer.");
+		else {
+			std::cout << "FATAL ERROR: corrupted datamsg buffer got (in ZMQCommunication::_ProcessMsg)\n";
+			exit(EXIT_FAILURE);
+		}
 		return MsgType::DATAMSG;
 	}
 	case 'i':
-		if (topic.size() != 1)
-			perror("ZMQCommunication::_ProcessMsg corrupted string topic");
+		if (topic.size() != 1) {
+			std::cout << "FATAL ERROR: corrupted string topic got (in ZMQCommunication::_ProcessMsg)\n";
+			exit(EXIT_FAILURE);
+		}
 		CallbackGotString(std::string(static_cast<char*>(msg.data()), msg.size()));
 		return MsgType::TEXT;
 	default:
-		perror("ZMQCommunication::_ProcessMsg corrupted topic.");
-		return MsgType::NOTHING;
+		std::cout << "FATAL ERROR: corrupted topic got (in ZMQCommunication::_ProcessMsg)\n";
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -98,8 +110,10 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 		peripheryPropertiesMutex.lock();
 		for (size_t i = socketProperties.size(); i < peripheryProperties.size(); i++) {
 			socketProperties.push_back(SocketHandler(peripheryProperties[i], context));
-			if (nItems == 100)
-				perror("Error");
+			if (nItems == 100) {
+				std::cout << "FATAL ERROR: too many sockets to be polled (>100) (in ZMQReciever::_Run) increase nItems_max!\n";
+				exit(EXIT_FAILURE);
+			}
 			else {
 				items[nItems] = { *(socketProperties[i].socket), 0, ZMQ_POLLIN, 0 };
 				nItems++;
@@ -158,7 +172,13 @@ SF::ZMQSender::~ZMQSender() {
 SF::ZMQSender::ZMQSender(const std::string & address, int hwm) : zmq_context(2) {
 	zmq_socket = zmq::socket_t(zmq_context, ZMQ_PUB);
 	zmq_socket.setsockopt(ZMQ_SNDHWM, &hwm, sizeof(hwm));
-	zmq_socket.bind(address);
+	try {
+		zmq_socket.bind(address);
+	}
+	catch (zmq::error_t) {
+		std::cout << "FATAL ERROR: ZMQ unable to bind to '" << address << "' (in ZMQSender::ZMQSender)\n";
+		exit(EXIT_FAILURE);
+	}
 }
 
 void SF::ZMQSender::SendDataMsg(const DataMsg & data) {
