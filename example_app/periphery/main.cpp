@@ -1,11 +1,10 @@
-#include "NetworkConfig.h"
 #include "Periphery.h"
 #include "ClockSynchronizer.h"
-#include <iostream>
 
 using namespace SF;
 
 int main() {
+	try {
 #ifdef UNIX
 	NetworkConfig n("networkconfig_1.json");
 #else
@@ -18,7 +17,10 @@ int main() {
 	while (true)
 		p1.SendValueAndVariance(8, Eigen::VectorXd::Ones(4) * 5, Eigen::MatrixXd::Identity(4, 4) * 7, OUTPUT);
 
-
 	return 0;
-	
+	}
+	catch (std::exception e) {
+		std::cout << e.what() << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
