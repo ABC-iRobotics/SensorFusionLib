@@ -29,9 +29,9 @@ SF::ZMQReciever::SocketHandler::SocketHandler(const PeripheryProperties& prop, z
 	try {
 		socket->connect(prop.address.c_str());
 	}
-	catch (zmq::error_t) {
+	catch (const zmq::error_t& t) {
 		socket->close();
-		throw std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + prop.address + "' (in ZMQReciever::SocketHandler::SocketHandler)");
+		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + prop.address + "' (in ZMQReciever::SocketHandler::SocketHandler)"));
 	}
 }
 
@@ -175,10 +175,10 @@ SF::ZMQSender::ZMQSender(const std::string & address, int hwm) : zmq_context(2) 
 	try {
 		zmq_socket.bind(address);
 	}
-	catch (zmq::error_t) {
+	catch (zmq::error_t t) {
 		zmq_socket.close();
 		zmq_context.close();
-		throw std::runtime_error(std::string("FATAL ERROR: ZMQ unable to bind to '" + address + "' (in ZMQSender::ZMQSender)"));
+		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to bind to '" + address + "' (in ZMQSender::ZMQSender) (" + t.what() + ")"));
 	}
 }
 
@@ -198,7 +198,7 @@ void SF::ZMQSender::CallbackGotDataMsg(const DataMsg & data, const Time& current
 		msg.send(zmq_socket, ZMQ_DONTWAIT);
 	}
 	catch (zmq::error_t &e) {
-		std::cout << e.what() << std::endl;
+		std::throw_with_nested(std::runtime_error("FATAL ERROR: sending ZMQ msg (MQSender::CallbackGotDataMsg)"));
 	}
 	delete buf;
 }
@@ -212,6 +212,6 @@ void SF::ZMQSender::CallbackGotString(const std::string & data, const Time& curr
 		msg.send(zmq_socket, ZMQ_DONTWAIT);
 	}
 	catch (zmq::error_t &e) {
-		std::cout << e.what() << std::endl;
+		std::throw_with_nested(std::runtime_error("FATAL ERROR: sending ZMQ msg (MQSender::CallbackGotString)"));
 	}
 }

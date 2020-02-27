@@ -6,6 +6,7 @@ set (HEADERS
 	defs.h
 	DataMsg.h
 	AppLayer.h
+	PrintNestedException.h
 	)
 
 set (SOURCES
@@ -13,6 +14,7 @@ set (SOURCES
 	defs.cpp
 	DataMsg.cpp
 	AppLayer.cpp
+	PrintNestedException.cpp
 	)
 
 # Add the dinamic library target to the project

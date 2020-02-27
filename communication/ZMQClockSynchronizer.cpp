@@ -100,8 +100,8 @@ void SF::ZMQClockSynchronizerServer::Run() {
 	try {
 		socket.bind(address);
 	}
-	catch (zmq::error_t) {
-		throw std::runtime_error("FATAL ERROR: ZMQ unable to bind to '" + address + "' (in ZMQClockSynchronizerServer::Run)");
+	catch (const zmq::error_t& t) {
+		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to bind to '" + address + "' (in ZMQClockSynchronizerServer::Run)"));
 	}
 	zmq::message_t reply(8);
 	zmq::message_t request;
@@ -109,7 +109,7 @@ void SF::ZMQClockSynchronizerServer::Run() {
 	zmq_setsockopt(socket, ZMQ_RCVTIMEO, &rvctime, sizeof(rvctime));
 	while (running) {
 		//  Wait for next request from client with timeouts 200ms
-		auto res = socket.recv(request);
+		auto res = socket.recv(request, zmq::recv_flags::dontwait);
 		if (res.has_value()) { // && res.value() != EAGAIN) {
 			long long time = GetSystemClockTimeInUS();
 			//  Send reply back to client
@@ -131,7 +131,7 @@ std::chrono::nanoseconds SF::DetermineClockOffsetFromZMQServer(const std::string
 		socket.connect(address);
 	}
 	catch (zmq::error_t) {
-		throw std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + address + "' (in DetermineClockOffsetFromZMQServer)");
+		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + address + "' (in DetermineClockOffsetFromZMQServer)"));
 	}
 	//  Do n_msgs requests, waiting each time for a response
 	long long sumoffset = 0;

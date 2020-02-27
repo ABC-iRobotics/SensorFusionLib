@@ -5,6 +5,7 @@ void tearDown() {}
 #include "Periphery.h"
 #include"Logger.h"
 #include"SPDLogging.h"
+#include"PrintNestedException.h"
 
 using namespace SF;
 
@@ -56,8 +57,8 @@ void localtest() {
 		if (remove(filename.c_str()) != 0)
 			perror("Error deleting file");
 	}
-	catch (std::exception e) {
-		std::cout << e.what() << std::endl;
+	catch (const std::exception& e) {
+		print_exception(e, 0);
 		exit(EXIT_FAILURE);
 	}
 	TEST_ASSERT(gotfrom5 > 0);
