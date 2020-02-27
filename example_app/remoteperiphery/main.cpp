@@ -1,5 +1,6 @@
 #include "Periphery.h"
 #include "ClockSynchronizer.h"
+#include "PrintNestedException.h"
 
 using namespace SF;
 
@@ -21,8 +22,8 @@ int main(int argc, char *argv[]) {
 
 		return 0;
 	}
-	catch (std::exception e) {
-		std::cout << e.what() << std::endl;
+	catch (const std::exception& e) {
+		print_exception(e);
 		exit(EXIT_FAILURE);
 	}
 }

@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include "NetworkConfig.h"
+#include "PrintNestedException.h"
 #include <iostream>
 
 using namespace SF;
@@ -22,8 +23,8 @@ int main(int argc, char *argv[]) {
 		while (true)
 			;
 	}
-	catch (std::exception e) {
-		std::cout << e.what() << std::endl;
+	catch (const std::exception& e) {
+		print_exception(e);
 		exit(EXIT_FAILURE);
 	}
 }
