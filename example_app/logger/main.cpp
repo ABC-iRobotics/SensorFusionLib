@@ -5,14 +5,14 @@
 using namespace SF;
 
 int main(int argc, char *argv[]) {
-	if (argc != 1) {
+	if (argc != 2) {
 		printf("Expected command line input: network_config_json_filename\n");
 		return 0;
 	}
 
 	try {
 		NetworkConfig n;
-		n.Add(argv[0]);
+		n.Add(argv[1]);
 
 		std::string filename = "log_output_" + std::to_string(Now().time_since_epoch().count()) + ".log";
 		Logger l(filename);
