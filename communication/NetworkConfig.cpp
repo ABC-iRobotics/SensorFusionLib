@@ -36,19 +36,30 @@ void NetworkConfig::Add(const std::string& filename) {
 		throw std::runtime_error("FATAL ERROR: cannot open json file '" + filename + "' (in NetworkConfig::Add)");
 
 	nlohmann::json config;
-	configFile >> config;
-
+	try {
+		configFile >> config;
+	}
+	catch (nlohmann::detail::parse_error e) {
+		throw std::runtime_error("FATAL ERROR: parsing config file '" + filename + "' (in NetworkConfig::Add)");
+	}
 	if (config.find("Remote") != config.end())
 		for (auto remote : config.at("Remote").items()) {
 			auto remote_ = remote.value();
+			if (remote_.find("IP") != remote_.end())
+				throw std::runtime_error("FATAL ERROR: IP did not found for '" + remote.key() + "' in '" + filename + "' (in NetworkConfig::Add)");
 			std::string IP = remote_.at("IP");
 			if (remote_.find("ClockServerPort") != remote_.end())
 				clockSyncData.insert(std::pair<std::string, ConnectionData>(remote.key(), ConnectionData("tcp", IP, remote_.at("ClockServerPort"))));
-			auto peripheries = remote_.at("Peripheries");
-			for (auto periphery : peripheries.items()) {
-				peripheryData.insert(std::pair<std::string, ConnectionData>(periphery.key(), ConnectionData("tcp", IP, periphery.value().at("Port"))));
-				if (periphery.value().find("hwm") != periphery.value().end())
-					peripheryData.at(periphery.key()).SetHWM(periphery.value().at("hwm"));
+			if (remote_.find("Peripheries") != remote_.end()) {
+				auto peripheries = remote_.at("Peripheries");
+				for (auto periphery : peripheries.items()) {
+					auto periphery_ = periphery.value();
+					if (periphery_.find("Port") != periphery_.end())
+						throw std::runtime_error("FATAL ERROR: Port did not found for '" + periphery.key() + "' in '" + filename + "' (in NetworkConfig::Add)");
+					peripheryData.insert(std::pair<std::string, ConnectionData>(periphery.key(), ConnectionData("tcp", IP, periphery_.at("Port"))));
+					if (periphery_.find("hwm") != periphery_.end())
+						peripheryData.at(periphery.key()).SetHWM(periphery_.at("hwm"));
+				}
 			}
 
 		}
