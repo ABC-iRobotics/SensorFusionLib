@@ -95,9 +95,13 @@ void NetworkConfig::Print() const {
 }
 
 NetworkConfig::ConnectionData NetworkConfig::GetPeripheryData(const std::string & name) const {
+	if (peripheryData.find(name) == peripheryData.end())
+		throw std::runtime_error("FATAL ERROR: Periphery '" + name + "' did not found in the NetworkConfig (in NetworkConfig::GetPeripheryData)");
 	return peripheryData.at(name);
 }
 
 NetworkConfig::ConnectionData NetworkConfig::GetClockSyncData(const std::string & name) const {
+	if (clockSyncData.find(name) == clockSyncData.end())
+		throw std::runtime_error("FATAL ERROR: ClockSyncData for remote '" + name + "' did not found in the NetworkConfig (in NetworkConfig::GetClockSyncData)");
 	return clockSyncData.at(name);
 }
