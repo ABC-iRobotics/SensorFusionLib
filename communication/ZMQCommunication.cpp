@@ -29,9 +29,12 @@ SF::ZMQReciever::SocketHandler::SocketHandler(const PeripheryProperties& prop, z
 	try {
 		socket->connect(prop.address.c_str());
 	}
-	catch (const zmq::error_t& t) {
+	catch (zmq::error_t& t) {
 		socket->close();
-		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + prop.address + "' (in ZMQReciever::SocketHandler::SocketHandler)"));
+		std::cout << "ZMQ ERROR: connecting to address '" << prop.address << "' (" <<   t.what() << ")" << std::endl;
+		//std::throw_with_nested(std::runtime_error("sg"));
+		//throw std::runtime_error("-");// std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + prop.address + "' (in ZMQReciever::SocketHandler::SocketHandler)");
+		exit(EXIT_FAILURE); // I cannot rethrow i dont know why...
 	}
 }
 
