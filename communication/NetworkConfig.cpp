@@ -39,7 +39,7 @@ void NetworkConfig::Add(const std::string& filename) {
 	try {
 		configFile >> config;
 	}
-	catch (nlohmann::detail::parse_error e) {
+	catch (...) {
 		std::throw_with_nested(std::runtime_error("FATAL ERROR: parsing config file '" + filename + "' (in NetworkConfig::Add)"));
 	}
 	if (config.find("Remote") != config.end())

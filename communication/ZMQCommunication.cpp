@@ -178,7 +178,7 @@ SF::ZMQSender::ZMQSender(const std::string & address, int hwm) : zmq_context(2) 
 	try {
 		zmq_socket.bind(address);
 	}
-	catch (zmq::error_t t) {
+	catch (const zmq::error_t& t) {
 		zmq_socket.close();
 		zmq_context.close();
 		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to bind to '" + address + "' (in ZMQSender::ZMQSender) (" + t.what() + ")"));
@@ -200,7 +200,7 @@ void SF::ZMQSender::CallbackGotDataMsg(const DataMsg & data, const Time& current
 	try {
 		msg.send(zmq_socket, ZMQ_DONTWAIT);
 	}
-	catch (zmq::error_t &e) {
+	catch (...) {
 		std::throw_with_nested(std::runtime_error("FATAL ERROR: sending ZMQ msg (MQSender::CallbackGotDataMsg)"));
 	}
 	delete buf;
@@ -214,7 +214,7 @@ void SF::ZMQSender::CallbackGotString(const std::string & data, const Time& curr
 	try {
 		msg.send(zmq_socket, ZMQ_DONTWAIT);
 	}
-	catch (zmq::error_t &e) {
+	catch (...) {
 		std::throw_with_nested(std::runtime_error("FATAL ERROR: sending ZMQ msg (MQSender::CallbackGotString)"));
 	}
 }

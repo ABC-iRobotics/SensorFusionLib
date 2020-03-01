@@ -100,7 +100,7 @@ void SF::ZMQClockSynchronizerServer::Run() {
 	try {
 		socket.bind(address);
 	}
-	catch (const zmq::error_t& t) {
+	catch (...) {
 		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to bind to '" + address + "' (in ZMQClockSynchronizerServer::Run)"));
 	}
 	zmq::message_t reply(8);
@@ -130,7 +130,7 @@ std::chrono::nanoseconds SF::DetermineClockOffsetFromZMQServer(const std::string
 	try {
 		socket.connect(address);
 	}
-	catch (zmq::error_t) {
+	catch (...) {
 		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + address + "' (in DetermineClockOffsetFromZMQServer)"));
 	}
 	//  Do n_msgs requests, waiting each time for a response
