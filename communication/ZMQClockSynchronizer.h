@@ -47,6 +47,6 @@ namespace SF {
 	* for its functionalities
 	*/
 	class ZMQClockSyncronizerClient : public ClockSyncronizerClient {
-		DTime SynchronizeClock(const std::string& clockSyncServerAddress) const override;
+		PublisherClockProperties::Offset SynchronizeClock(const std::string& clockSyncServerAddress) const override;
 	};
 }

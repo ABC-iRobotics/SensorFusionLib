@@ -35,20 +35,29 @@ namespace SF {
 	* 
 	*/
 	class ClockSyncronizerClient {
-		
+	public:
 		struct PublisherClockProperties {
-			DTime offset;
+			struct Offset {
+				Time time0;
+				DTime offset0;
+				double m;
+				Offset(Time time, DTime offset, double m_) : time0(time), offset0(offset), m(m_) {}
+				DTime Value(Time time = Now()) {
+					return duration_cast(offset0 + (time - time0) * m);
+				}
+			} offset;
 			bool inprogress;
 			std::string port;
 			PublisherClockProperties(std::string port);
-			void Set(DTime offset_);
+			void Set(PublisherClockProperties::Offset offset_);
 		};
+	private:
 		std::map<std::string, std::shared_ptr<PublisherClockProperties>> clockOffsets; // address (192.168.0.1) without port -> offset properties
 		std::mutex mutexForClockOffsets;
 		bool isRunning;
 
 	protected:
-		virtual DTime SynchronizeClock(const std::string& clockSyncServerAddress) const = 0; /*!< How to connect to a server - implemented by subclass */
+		virtual PublisherClockProperties::Offset SynchronizeClock(const std::string& clockSyncServerAddress) const = 0; /*!< How to connect to a server - implemented by subclass */
 
 	private:
 		void Run(); /*!< core of the separated synchronizer thread */
@@ -62,7 +71,7 @@ namespace SF {
 
 		bool IsClockSynchronisationInProgress(const std::string& address); /*!< Check if synchronisation for a given device is in progress */
 
-		DTime GetOffset(const std::string& address); /*!< Get the computed offset (0) if it is not computed*/
+		DTime GetOffset(const std::string& address, Time time = Now()); /*!< Get the computed offset (0) if it is not computed*/
 
 		void PrintStatus(); /*!< Print the actual status of the synchronizer client */
 	};

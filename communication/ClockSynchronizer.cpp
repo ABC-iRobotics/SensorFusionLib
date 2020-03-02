@@ -4,9 +4,9 @@
 using namespace SF;
 
 SF::ClockSyncronizerClient::PublisherClockProperties::PublisherClockProperties(std::string port_) :
-	offset(0), inprogress(true), port(port_) {}
+	offset(Now(),DTime(0),0), inprogress(true), port(port_) {}
 
-void SF::ClockSyncronizerClient::PublisherClockProperties::Set(DTime offset_) {
+void SF::ClockSyncronizerClient::PublisherClockProperties::Set(PublisherClockProperties::Offset offset_) {
 	inprogress = false;
 	offset = offset_;
 }
@@ -36,10 +36,10 @@ void SF::ClockSyncronizerClient::Run() {
 		// if found
 		if (found) {
 			// synchronize
-			DTime offset = SynchronizeClock("tcp://" + address + ":" + port);
+			auto offset_ = SynchronizeClock("tcp://" + address + ":" + port);
 			// set result
 			mutexForClockOffsets.lock();
-			clockOffsets.at(address)->Set(offset);
+			clockOffsets.at(address)->Set(offset_);
 			mutexForClockOffsets.unlock();
 		}
 	}
@@ -81,12 +81,12 @@ bool SF::ClockSyncronizerClient::IsClockSynchronisationInProgress(const std::str
 	return out;
 }
 
-DTime SF::ClockSyncronizerClient::GetOffset(const std::string& address) {
+DTime SF::ClockSyncronizerClient::GetOffset(const std::string& address, Time time) {
 	mutexForClockOffsets.lock();
 	DTime out(0);
 	for (auto element : clockOffsets)
 		if (address.find(element.first) != std::string::npos)
-			out = element.second->offset;
+			out = element.second->offset.Value(time);
 	mutexForClockOffsets.unlock();
 	return out;
 }
@@ -98,7 +98,8 @@ void SF::ClockSyncronizerClient::PrintStatus() {
 		if (element.second->inprogress)
 			std::cout << "? ";
 		else
-			std::cout << element.second->offset.count() << "us ";
+			std::cout << element.second->offset.offset0.count() << " us (at " <<
+			duration_cast(element.second->offset.time0.time_since_epoch()).count() << " us) m = " << element.second->offset.m;
 	}
 	std::cout << std::endl;
 	mutexForClockOffsets.unlock();
