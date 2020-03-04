@@ -22,6 +22,6 @@ endforeach()
 
 find_package(SensorFusion 0.0.1)
 
-add_subdirectory (localperiphery)
-add_subdirectory (remoteperiphery)
+add_subdirectory (periphery)
+add_subdirectory (periphery_w_clocksync)
 add_subdirectory (logger)
