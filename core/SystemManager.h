@@ -100,9 +100,9 @@ namespace SF {
 		*/
 		enum MeasurementStatus { OBSOLETHE, UPTODATE, CONSTANT }; /*!<   */
 
-	/*! \brief The class handles the common properties of basesystems and sensors
-	*
-	*/
+		/*! \brief The class handles the common properties of basesystems and sensors
+		*
+		*/
 		class SystemData {
 			MeasurementStatus measStatus;/*!< Status of the set measurement value */
 			StatisticValue noise;		/*!< The known value & uncertaintie of the noise  */
@@ -173,11 +173,10 @@ namespace SF {
 			bool isBaseSystem() const override; /*!< To check if it is for a basesystem or a sensor. */
 		};
 
-
 		/*! \brief Constructor: a BaseSystemData class and its initial state, covariance matrix  must be given as inputs
-	*
-	*  The function performs System::Selftest on the system
-	*/
+		*
+		*  The function performs System::Selftest on the system
+		*/
 		SystemManager(const BaseSystemData& data, const StatisticValue& state_);
 
 		/*! \brief Destructor.
@@ -208,7 +207,7 @@ namespace SF {
 
 		const SystemData* SystemByID(unsigned int ID) const;  /*!< Get const pointer for a SystemData by ID */
 
-	/*! \brief Get the current number of states, outputs, noises or disturbances of the system
+		/*! \brief Get the current number of states, outputs, noises or disturbances of the system
 		*
 		* By using forcedOutput=true input, it assumes UPTODATE measurements
 		*/
@@ -216,22 +215,22 @@ namespace SF {
 
 		/*! \brief Get the if the nonlinear part of STATE_UPDATE / OUTPUT_UPDATE depends on the elements of
 		* states, outputs, noises or disturbances of the system according to the measurement statuses of the systems
-			*
-			* By using forcedOutput=true input, it assumes UPTODATE measurements
-			*/
+		*
+		* By using forcedOutput=true input, it assumes UPTODATE measurements
+		*/
 		Eigen::VectorXi dep(TimeUpdateType outType, VariableType inType, bool forcedOutput = false) const;
 
 		/*! \brief Get the A,B, C,D matrices of the system according to the measurement statuses of the systems
-			*
-			* By using forcedOutput=true input, it assumes UPTODATE measurements
-			*/
+		*
+		* By using forcedOutput=true input, it assumes UPTODATE measurements
+		*/
 		void getMatrices(TimeUpdateType out_, double Ts, Eigen::MatrixXd& A,
 			Eigen::MatrixXd& B, bool forcedOutput = false) const;
 
 		/*! \brief Get STATE, DISTURBANCE, measured OUTPUT, NOISE vectors of the system according to the measurement statuses of the systems
-			*
-			* By using forcedOutput=true input, it assumes UPTODATE measurements
-			*/
+		*
+		* By using forcedOutput=true input, it assumes UPTODATE measurements
+		*/
 		StatisticValue operator()(DataType type, bool forcedOutput = false) const;
 
 		std::ostream & print(std::ostream & stream) const;  /*!<  Print the current status of the system. */
@@ -244,19 +243,19 @@ namespace SF {
 			const Eigen::VectorXd& state, const Eigen::VectorXd& in, bool forcedOutput = false) const;
 
 		/*! \brief Evaluate the STATE_UPDATE/OUTPUT_UPDATE with given Ts, state vector&variances and disturbance/noise vectors&variances according to the measurement statuses of the systems
-			*
-			* Returns the computed vector&variance, and it cross-variance matrices with the state (S_out_x) and the disturbance/noise (S_out_in)
-			*
-			* By using forcedOutput=true input, it assumes UPTODATE measurements
-			*/
+		*
+		* Returns the computed vector&variance, and it cross-variance matrices with the state (S_out_x) and the disturbance/noise (S_out_in)
+		*
+		* By using forcedOutput=true input, it assumes UPTODATE measurements
+		*/
 		StatisticValue Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 			Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
 	protected:
 		/*! \brief Simple class to fasten up the partitioning of state/output/disturbance/noise vectors and covariance matrixes for systems, sensors according to the measurement statuses of the systems
-			*
-			* By using forcedOutput=true input, it assumes UPTODATE measurements
-			*/
+		*
+		* By using forcedOutput=true input, it assumes UPTODATE measurements
+		*/
 		struct Partitioner {
 			std::vector<size_t> nx;  /*!< Number of states of the systems */
 			std::vector<size_t> nw;  /*!< Number of disturbances of the systems */
@@ -284,9 +283,9 @@ namespace SF {
 		Partitioner getPartitioner(bool forcedOutput = false) const;
 
 		/*! \brief Get index for a (user defined) systemID. It returns -1 for the basesystem!
-			*
-			*
-			*/
+		*
+		*
+		*/
 		int _GetIndex(unsigned int ID) const;
 
 		BaseSystemData & BaseSystem();   /*!< Returns a BaseSystemData ref for an index */
