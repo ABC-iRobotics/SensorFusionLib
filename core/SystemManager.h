@@ -199,10 +199,6 @@ namespace SF {
 
 		typedef std::function<void(const DataMsg& data)> Callback; /*!< Callback that can be set to handle results of time update & filtering update */
 
-		void SetCallback(Callback callback_); /*!< Set callback that is called during time update & filtering update */
-
-		void ClearCallback(); /*!< Remove callback that is called during time update & filtering update */
-
 		size_t nSensors() const; /*!< Get number of sensor installed */
 
 		const SystemData* SystemByID(unsigned int ID) const;  /*!< Get const pointer for a SystemData by ID */
@@ -304,19 +300,14 @@ namespace SF {
 
 		void resetMeasurement();   /*!< Set 'UPTODATE' meas. statuses to 'OBSOLETHE' */
 
-		void PredictionDone(const StatisticValue& state, const StatisticValue& output) const;   /*!< Call it with predicition results to forward them to the set callback */
+		void PredictionDone(const StatisticValue& state, const StatisticValue& output);   /*!< Call it with predicition results to forward them to the set callback */
 
-		void FilteringDone(const StatisticValue& state) const; /*!< Call it with filtering results to forward them to the set callback */
-
-		void Call(const DataMsg& data) const; /*!< Call the callback if it is set */
+		void FilteringDone(const StatisticValue& state); /*!< Call it with filtering results to forward them to the set callback */
 
 	private:
 		BaseSystemData baseSystem; /*!< Stores the data related to the basesystem */
 		std::vector<SensorData> sensorList;  /*!< Stores the data related to the sensors */
 		StatisticValue state;  /*!< Stores the state of the system */
-		//TimeMicroSec time;  /*!< Time, initialized to zero, incremented by Step(Ts) via StepClock(Ts) */
-		bool hasCallback;  /*!< If callback was set */
-		Callback callback;  /*!< The callback if it was set */
 	};
 
 }

@@ -404,24 +404,8 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 	return StatisticValue(y, Sy);
 }
 
-void SystemManager::Call(const DataMsg & data) const {
-	if (hasCallback)
-		callback(data);
-}
-
-void SystemManager::SetCallback(Callback callback_) {
-	hasCallback = true;
-	callback = callback_;
-}
-
-void SystemManager::ClearCallback() {
-	hasCallback = false;
-}
-
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
-	sensorList(std::vector<SensorData>()), state(state_), baseSystem(data),
-	hasCallback(false) {
-}
+	sensorList(std::vector<SensorData>()), state(state_), baseSystem(data) {}
 
 SystemManager::~SystemManager() {
 }
@@ -502,37 +486,37 @@ void SystemManager::resetMeasurement() {
 		sensorList[i].resetMeasurement();
 }
 
-void SystemManager::PredictionDone(const StatisticValue& state, const StatisticValue& output) const {
+void SystemManager::PredictionDone(const StatisticValue& state, const StatisticValue& output) {
 	auto p = getPartitioner();
-	Call(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE,
+	ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE,
 		p.PartStatisticValue(STATE, state, -1)));
-	Call(DataMsg(baseSystem.getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, baseSystem(DISTURBANCE)));
+	ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, baseSystem(DISTURBANCE)));
 	if (baseSystem.available()) {
-		Call(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE, 
+		ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE,
 			p.PartStatisticValue(OUTPUT, output, -1)));
-		Call(DataMsg(baseSystem.getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, baseSystem(NOISE)));
+		ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, baseSystem(NOISE)));
 	}
 	for (int i = 0; i < nSensors(); i++) {
-		Call(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE, 
+		ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE,
 			p.PartStatisticValue(STATE, state, i)));
-		Call(DataMsg(sensorList[i].getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, sensorList[i](DISTURBANCE)));
+		ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, sensorList[i](DISTURBANCE)));
 		if (sensorList[i].available()) {
-			Call(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE,
+			ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE,
 				p.PartStatisticValue(OUTPUT, output, i)));
-			Call(DataMsg(sensorList[i].getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, sensorList[i](NOISE)));
+			ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, sensorList[i](NOISE)));
 		}
 	}
 }
 
-void SystemManager::FilteringDone(const StatisticValue& state) const {
+void SystemManager::FilteringDone(const StatisticValue& state) {
 	auto p = getPartitioner();
 	DataMsg data(baseSystem.getPtr()->getID(), STATE, FILTER_MEAS_UPDATE,
 		p.PartStatisticValue(STATE, state, -1));
-	Call(data);
+	ForwardDataMsg(data);
 	for (int i = 0; i < nSensors(); i++) {
 		DataMsg data(sensorList[i].getPtr()->getID(), STATE, FILTER_MEAS_UPDATE,
 			p.PartStatisticValue(STATE, state, i));
-		Call(data);
+		ForwardDataMsg(data);
 	}
 }
 
