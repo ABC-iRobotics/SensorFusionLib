@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 		l.Start(DTime(2000));
 
 		while (true)
-			;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	catch (const std::exception& e) {
 		print_exception(e);

@@ -11,7 +11,7 @@ endif()
 # SF tests
 set(tests
 	test_spd_log
-	test_clocksync_local
+	#test_clocksync_local
 	test_zmqsub_zmqpub
 	test_communication
 	test_configfile_init
@@ -34,7 +34,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/networkconfig_local.json
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(test_spd_log sf_communication)
-target_link_libraries(test_clocksync_local sf_communication)
+#target_link_libraries(test_clocksync_local sf_communication)
 target_link_libraries(test_zmqsub_zmqpub sf_communication)
 target_link_libraries(test_communication sf_communication)
 target_link_libraries(test_configfile_init sf_communication)

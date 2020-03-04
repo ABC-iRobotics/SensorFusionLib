@@ -53,11 +53,6 @@ void SF::ZMQClockSynchronizerServer::SetAddress(const std::string & address_) {
 		throw std::runtime_error("FATAL ERROR: address of ZMQClockSynchronizerServer cannot be modified during run (in ZMQClockSynchronizerServer::SetAddress).");
 }
 
-ClockSyncronizerClient* SF::GetPeripheryClockSynchronizerPtr() {
-	static ZMQClockSyncronizerClient zmqClockSyncronizerClient;
-	return &zmqClockSyncronizerClient;
-}
-
 ClockSynchronizerServer::ClockSynchronizerServerPtr SF::InitClockSynchronizerServer(const std::string& address) {
 	auto out = std::make_shared<ZMQClockSynchronizerServer>(address);
 	out->StartServer();
@@ -84,6 +79,8 @@ bool SF::ZMQClockSynchronizerServer::IsRunning() const {
 
 SF::ZMQClockSynchronizerServer::~ZMQClockSynchronizerServer() {
 	StopServer();
+
+	std::cout << "ZMQClockSynchronizerServer stopped\n";
 }
 
 long long GetSystemClockTimeInUS() {
@@ -119,154 +116,76 @@ void SF::ZMQClockSynchronizerServer::Run() {
 			request.rebuild();
 		}
 	}
-	std::cout << "ZMQClockSynchronizerServer stopped\n";
 }
 
-std::chrono::nanoseconds SF::DetermineClockOffsetFromZMQServer(const std::string& address,
-	long long n_msgs, int zmq_io_threads) {
-	zmq::context_t context = zmq::context_t(zmq_io_threads);	   //  Prepare socket
-	zmq::socket_t socket(context, ZMQ_REQ);
-	std::cout << "Connecting to server... (" << address << ")";
-	try {
-		socket.connect(address);
-	}
-	catch (...) {
-		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + address + "' (in DetermineClockOffsetFromZMQServer)"));
-	}
-	//  Do n_msgs requests, waiting each time for a response
-	long long sumoffset = 0;
-	std::vector<long long> offsets = std::vector<long long>();
-	bool firstrun = true;
-	zmq::message_t request(8), reply;
-	long long sendtime, recvtime, time, offset_;
-	int rvctime = 2000; // milliseconds
-	zmq_setsockopt(socket, ZMQ_RCVTIMEO, &rvctime, sizeof(rvctime));
-	// try to synchronize clocks
-	for (int request_nbr = 0; request_nbr < n_msgs + 1; request_nbr++) {
-		littleEndianSerializer.memcpy(request.data(), "SendTime", 8);
-		sendtime = GetSystemClockTimeInUS();
-		auto res1 = socket.send(request, zmq::send_flags::none);
-		if (res1.has_value()) {
-			//  Get the reply.
-			while (!socket.recv(reply).has_value()) {
-				std::cout << "ClockSynchronisation: connection lost (timout>2sec). Trying again...\nConnecting to server...";
-				request_nbr = 0;
-				firstrun = true;
-				sumoffset = 0;
-			}
-			if (!firstrun) {
-				recvtime = GetSystemClockTimeInUS();
-				littleEndianSerializer.memcpy(&time, reply.data(), 8);
-				offset_ = (recvtime + sendtime) / 2 - time;	// offset = subsTime - sensortime -> substime = sensorTime + offset
-				sumoffset += offset_;
-				if (request_nbr < 5)
-					offsets.push_back(offset_);
-			}
-			else {
-				firstrun = false;
-				std::cout << " first msg: ok.\n";
-			}
-			
-			request.rebuild(8);
-			reply.rebuild(0);
+Offset::OffsetMeasResult ZMQClockSyncronizerClient::DetermineOffset(const std::string& address, long long n) {
+	if (sockets.find(address) == sockets.end()) {
+		std::shared_ptr<zmq::socket_t> socket = std::make_shared<zmq::socket_t>(context, ZMQ_REQ);
+		socket->setsockopt(ZMQ_LINGER, 0); // send the msg or not, but waiting for connection is a waste of time....
+		socket->setsockopt(ZMQ_RCVTIMEO, 1000);
+		socket->setsockopt(ZMQ_SNDTIMEO, 500);
+		try {
+			std::cout << "Connecting to server... (" << address << ")";
+			socket->connect(address);
 		}
-		else {
-			std::cout << "ClockSynchronisation: connection lost (timout>2sec). Trying again...\nConnecting to server...";
-			request_nbr = 0;
-			firstrun = true;
-			sumoffset = 0;
+		catch (...) {
+			std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '"
+				+ address + "' (in DetermineClockOffsetFromZMQServer)"));
 		}
+		sockets.insert(std::pair<std::string, std::shared_ptr<zmq::socket_t>>(address, socket));
 	}
-	std::cout << "Offset determined: " + std::to_string((sumoffset * 1000) / n_msgs) + " ns\n";
-	return std::chrono::nanoseconds((sumoffset * 1000) / n_msgs);
-}
+	zmq::socket_t& socket = *sockets.find(address)->second;
 
-struct ComputeOffset {
-	Time tStart;
-	long n;
-	long long sumTUS;
-	long long sumOffsetUS;
-	long long sumTTUS;
-	long long sumTOffsetUS;
-	ComputeOffset() : n(0), tStart(Now()), sumTUS(0), sumOffsetUS(0), sumTTUS(0), sumTOffsetUS(0) {}
-	void Add(Time t_, DTime offset_) {
-		long long t = duration_cast(t_ - tStart).count();
-		long long offset = offset_.count();
-		sumTUS += t;
-		sumOffsetUS += offset;
-		sumTOffsetUS += t * offset;
-		sumTTUS += t * t;
-		n++;
-	}
-	void Reset() {
-		n = 0;
-		sumTUS = 0;
-		sumOffsetUS = 0;
-		sumTTUS = 0;
-		sumTOffsetUS = 0;
-	}
-	ZMQClockSyncronizerClient::PublisherClockProperties::Offset Value() {
-		return ZMQClockSyncronizerClient::PublisherClockProperties::Offset(tStart + DTime(sumTUS / n),
-			DTime(sumOffsetUS / n), double(sumTOffsetUS - sumTUS * sumOffsetUS / n) / double(sumTTUS - sumTUS * sumTUS / n));
-	}
-};
+	zmq::pollitem_t item = { socket, 0, ZMQ_POLLIN, 0 };
 
-ZMQClockSyncronizerClient::PublisherClockProperties::Offset SF::ZMQClockSyncronizerClient::SynchronizeClock(const std::string & clockSyncServerAddress) const {
-	zmq::context_t context = zmq::context_t(1);	   //  Prepare socket
-	zmq::socket_t socket(context, ZMQ_REQ);
-	std::cout << "Connecting to server... (" << clockSyncServerAddress << ")";
-	try {
-		socket.connect(clockSyncServerAddress);
-	}
-	catch (...) {
-		std::throw_with_nested(std::runtime_error("FATAL ERROR: ZMQ unable to connect to '" + clockSyncServerAddress + "' (in DetermineClockOffsetFromZMQServer)"));
-	}
 	//  Do n_msgs requests, waiting each time for a response
-	long long n_msgs = 10000;
 	bool firstrun = true;
 	zmq::message_t request(8), reply;
 	Time sendtime, recvtime, time;
+	Offset::OffsetMeasResult out;
+	DTime out_dt;
 	long long temp;
-	DTime offset_;
-	ComputeOffset computer;
-	int rvctime = 2000; // milliseconds
-	zmq_setsockopt(socket, ZMQ_RCVTIMEO, &rvctime, sizeof(rvctime));
+
 	// try to synchronize clocks
-	for (int request_nbr = 0; request_nbr < n_msgs + 1; request_nbr++) {
+	for (int request_nbr = 0; request_nbr < n + 1; request_nbr++) {
 		littleEndianSerializer.memcpy(request.data(), "SendTime", 8);
 		Time sendtime = Now();
-		auto res1 = socket.send(request, zmq::send_flags::none);
-		if (res1.has_value()) {
-			//  Get the reply.
-			while (!socket.recv(reply).has_value()) {
-				std::cout << "ClockSynchronisation: connection lost (timout>2sec). Trying again...\nConnecting to server...";
-				request_nbr = 0;
-				firstrun = true;
-				computer.Reset();
-			}
-			if (!firstrun) {
-				Time recvtime = Now();
-				littleEndianSerializer.memcpy(&temp, reply.data(), 8);
-				time = InitFromDurationSinceEpochInMicroSec(temp);
-				Time time_ = sendtime + (recvtime - sendtime) / 2;
-				offset_ = duration_cast(time_ - time);	// offset = subsTime - sensortime -> substime = sensorTime + offset
-				computer.Add(time_, offset_);
-			}
-			else {
-				firstrun = false;
-				std::cout << " first msg: ok.\n";
-			}
-			request.rebuild(8);
-			reply.rebuild(0);
+		try {
+			if (!socket.send(request, zmq::send_flags::none).has_value())
+				throw ClockSyncConnectionError(address);
 		}
-		else {
-			std::cout << "ClockSynchronisation: connection lost (timout>2sec). Trying again...\nConnecting to server...";
-			request_nbr = 0;
-			firstrun = true;
-			computer.Reset();
+		catch (...) {
+			socket.recv(reply);
+			throw ClockSyncConnectionError(address);
 		}
+
+		zmq::poll(&item, 1, 2000);
+		
+		if (!(item.revents & ZMQ_POLLIN))
+			throw ClockSyncConnectionError(address);
+
+		//  Get the reply.
+		if (!socket.recv(reply).has_value())
+			throw ClockSyncConnectionError(address);
+		Time recvtime = Now();
+		littleEndianSerializer.memcpy(&temp, reply.data(), 8);
+		time = InitFromDurationSinceEpochInMicroSec(temp);
+		Time time_ = sendtime + (recvtime - sendtime) / 2;
+		DTime dt = duration_cast(recvtime - sendtime);
+		DTime offset_ = duration_cast(time_ - time);	// offset = subsTime - sensortime -> substime = sensorTime + offset
+		if (firstrun || dt < out_dt) {
+			firstrun = false;
+			out_dt = dt;
+			out = Offset::OffsetMeasResult(time_, offset_);
+		}
+		request.rebuild(8);
+		reply.rebuild(0);
 	}
-	auto offsetobj = computer.Value();
-	std::cout << "Done, now: " << offsetobj.Value().count() << " us (m = " << offsetobj.m << ")\n";
-	return computer.Value();
+	//std::cout << "Done; now: " << out.offset.count() << "\n";
+	return out;
+}
+
+ClockSyncronizerClient* SF::GetPeripheryClockSynchronizerPtr() {
+	static ZMQClockSyncronizerClient zmqClockSyncronizerClient;
+	return &zmqClockSyncronizerClient;
 }

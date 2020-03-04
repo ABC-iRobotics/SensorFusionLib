@@ -1,6 +1,7 @@
 #pragma once
 #include <thread>
 #include "ClockSynchronizer.h"
+#include "zmq.hpp"
 
 namespace SF {
 
@@ -29,10 +30,6 @@ namespace SF {
 		void Run();
 	};
 
-	
-	std::chrono::nanoseconds DetermineClockOffsetFromZMQServer(const std::string& address, long long n_msgs = 10000, int zmq_io_threads = 1);
-		/*!< To connect to a ZMQClockSyncronizerServer and compute the offset */
-
 	/*! \brief ZMQ based implementation of ClockSyncronizerClient
 	*
 	* It implements the private method of connecting to a server and computing th offset
@@ -47,6 +44,13 @@ namespace SF {
 	* for its functionalities
 	*/
 	class ZMQClockSyncronizerClient : public ClockSyncronizerClient {
-		PublisherClockProperties::Offset SynchronizeClock(const std::string& clockSyncServerAddress) const override;
+		zmq::context_t context;
+
+		std::map<std::string, std::shared_ptr<zmq::socket_t>> sockets;
+
+		Offset::OffsetMeasResult DetermineOffset(const std::string& address, long long n) override;
+
+	public:
+		ZMQClockSyncronizerClient() : context(1), sockets(std::map<std::string, std::shared_ptr<zmq::socket_t>>()) {}
 	};
 }

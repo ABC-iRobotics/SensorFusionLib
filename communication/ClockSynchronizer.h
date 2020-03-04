@@ -5,6 +5,8 @@
 #include<mutex>
 #include<memory>
 
+#include<iostream>
+
 namespace SF {
 
 	/*! \brief Abstract class to run a server that replies timestamps to synchronize clocks
@@ -30,40 +32,75 @@ namespace SF {
 	ClockSynchronizerServer::ClockSynchronizerServerPtr InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config);
 			/*!< Initializes and start a ClockSyncronizerServer with the given address on ZMQ impl. */
 
+
+	class Offset {
+	public:
+		struct OffsetMeasResult {
+			Time t;
+			DTime offset;
+			OffsetMeasResult(Time t_, DTime offset_);
+			OffsetMeasResult() {};
+		};
+
+		Offset() {}
+
+		Offset(OffsetMeasResult res1, OffsetMeasResult res2);
+
+		DTime GetOffset(Time t);
+
+		void Add(OffsetMeasResult value);
+
+		bool IsInitialized() const;
+	
+	private:
+		std::vector<OffsetMeasResult> values;
+		Time t0;
+		DTime offset0;
+		double m;
+		bool messy;
+
+		void Update();
+	};
+
+	class ClockSyncConnectionError : public std::exception {
+	public:
+		ClockSyncConnectionError(std::string address);
+	};
+
 	/*! \brief Abstract class to run a ClockSynchronizer client that connects to Servers with given addresses
 	*
-	* 
+	*
 	*/
 	class ClockSyncronizerClient {
-	public:
-		struct PublisherClockProperties {
-			struct Offset {
-				Time time0;
-				DTime offset0;
-				double m;
-				Offset(Time time, DTime offset, double m_) : time0(time), offset0(offset), m(m_) {}
-				DTime Value(Time time = Now()) {
-					return duration_cast(offset0 + (time - time0) * m);
-				}
-			} offset;
-			bool inprogress;
+		class ClockServerProperties {
+			Offset offset;
 			std::string port;
-			PublisherClockProperties(std::string port);
-			void Set(PublisherClockProperties::Offset offset_);
+			std::mutex guard;
+		public:
+			ClockServerProperties(const std::string& port_);
+
+			bool IsInitialized();
+
+			DTime GetOffset(Time t = Now());
+
+			std::string GetPort() const;
+
+			void UpdateOffset(Offset::OffsetMeasResult meas);
 		};
-	private:
-		std::map<std::string, std::shared_ptr<PublisherClockProperties>> clockOffsets; // address (192.168.0.1) without port -> offset properties
-		std::mutex mutexForClockOffsets;
-		bool isRunning;
 
 	protected:
-		virtual PublisherClockProperties::Offset SynchronizeClock(const std::string& clockSyncServerAddress) const = 0; /*!< How to connect to a server - implemented by subclass */
+		virtual Offset::OffsetMeasResult DetermineOffset(const std::string& address, long long n) = 0;
 
 	private:
-		void Run(); /*!< core of the separated synchronizer thread */
+		std::map<std::string, std::shared_ptr<ClockServerProperties>> clockOffsets; // address (192.168.0.1) without port -> offset properties
+		bool toStop;
+		std::thread t;
+		std::mutex mutexForClockOffsets;
+
+		void mainThread();
 
 	public:
-		ClockSyncronizerClient(); /*!< Constructor */
+		ClockSyncronizerClient();
 
 		void SynchronizePeriphery(const std::string& address, const std::string& port); /*!< Add Servers to be synchronized to */
 
@@ -74,8 +111,10 @@ namespace SF {
 		DTime GetOffset(const std::string& address, Time time = Now()); /*!< Get the computed offset (0) if it is not computed*/
 
 		void PrintStatus(); /*!< Print the actual status of the synchronizer client */
+
+		~ClockSyncronizerClient();
 	};
 
-	ClockSyncronizerClient* GetPeripheryClockSynchronizerPtr();
-		/*!< Get the pointer of the statically inicialized implemented instance */
+	ClockSyncronizerClient* GetPeripheryClockSynchronizerPtr(); /*!< Get the pointer of the statically inicialized implemented instance */
+
 }
