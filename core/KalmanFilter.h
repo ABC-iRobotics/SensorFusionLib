@@ -17,7 +17,7 @@ namespace SF {
 	* This subclass calls the Time Update and the implements the Kalman-filtering within the Step() function as
 	*
 	* - 0. \f$ \hat{\mathbf x}_{k-1} \f$ and its covariance matrix \f$\hat{\Sigma}_{k-1} \f$ are initial guess or comes from the previous filtering.
-	* - 1. (During the elapsed \f$ dT \f$ time the recieved sensor measurements was registered (SetProperty())
+	* - 1. (During the elapsed \f$ dT \f$ time the recieved sensor measurements was registered (CallbackGotDataMsg())
 	*    Time-update: step the time with \f$ dT \f$
 	*
 	* State update:

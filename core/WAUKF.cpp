@@ -310,11 +310,11 @@ void WAUKF::Step(DTime dT) { // update, collect measurement, correction via Kalm
 	resetMeasurement();
 }
 
-void WAUKF::SetProperty(const DataMsg& data) {
+void WAUKF::CallbackGotDataMsg(const DataMsg& data, const Time& t) {
 	auto data_ = data;
 	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VALUE))
 		data_.ClearValue();
 	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VARIANCE))
 		data_.ClearVariance();
-	SystemManager::SetProperty(data_);
+	SystemManager::CallbackGotDataMsg(data_, t);
 }

@@ -130,7 +130,7 @@ bool SystemManager::isAvailable(int index) const {
 	return Sensor(index).available();
 }
 
-void SystemManager::SetProperty(const DataMsg & data) {
+void SystemManager::CallbackGotDataMsg(const DataMsg & data, const Time& t) {
 	SystemData* ptr = this->SystemByID(data.GetSourceID());
 	if (data.HasValue())
 		ptr->setValue(data.GetValue(), data.GetDataType());

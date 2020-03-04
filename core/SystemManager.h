@@ -2,6 +2,7 @@
 
 #include "Sensor.h"
 #include "DataMsg.h"
+#include "Filter.h"
 
 namespace SF {
 
@@ -84,14 +85,14 @@ namespace SF {
 	*
 	* - Call:
 	*
-	* -- SetProperty() with data incoming from sensors
+	* -- CallbackGotDataMsg() with data incoming from sensors
 	*
 	* -- Step(Ts) for filtering
 	* - Get the results or register a Callback via SetCallback()
 	 */
 	using namespace SF;
 
-	class SystemManager {
+	class SystemManager : public Filter {
 	public:
 		/*! \brief If constant value is guessed as the \f$ \mathbf y_i \f$ output of a system, its status is CONSTANT, othervise OBSOLETHE / UPTODATE.
 		*
@@ -192,16 +193,10 @@ namespace SF {
 		*/
 		void AddSensor(const SensorData& sensorData, const StatisticValue& sensorState);
 
-		/*! \brief Virtual function for filtering function including time update & measurement update
-			*
-			* It must call SystemManager::StepClock, SystemManager::PredictionDone, SystemManager::FilteringDone protected functions
-			*/
-		virtual void Step(DTime dT) = 0;
-
 		/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
-			*
-			*/
-		virtual void SetProperty(const DataMsg& data);
+		*
+		*/
+		virtual void CallbackGotDataMsg(const DataMsg& data, const Time& t = Now()) override;
 
 		typedef std::function<void(const DataMsg& data)> Callback; /*!< Callback that can be set to handle results of time update & filtering update */
 
