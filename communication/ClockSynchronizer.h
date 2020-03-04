@@ -2,9 +2,10 @@
 #include"defs.h"
 #include"NetworkConfig.h"
 #include<map>
+#include<vector>
 #include<mutex>
 #include<memory>
-
+#include<thread>
 #include<iostream>
 
 namespace SF {
@@ -63,8 +64,12 @@ namespace SF {
 	};
 
 	class ClockSyncConnectionError : public std::exception {
+	private:
+		std::string msg;
 	public:
 		ClockSyncConnectionError(std::string address);
+
+		virtual const char* what() const throw() override;
 	};
 
 	/*! \brief Abstract class to run a ClockSynchronizer client that connects to Servers with given addresses

@@ -1,6 +1,6 @@
 #include "ClockSynchronizer.h"
 #include<iostream>
-#include<thread>
+#include<exception>
 using namespace SF;
 
 
@@ -69,7 +69,11 @@ bool SF::Offset::IsInitialized() const {
 	return values.size() >= 2;
 }
 
-SF::ClockSyncConnectionError::ClockSyncConnectionError(std::string address) : std::exception(("Timeout connecting to the server '" + address + "'!").c_str()) {}
+SF::ClockSyncConnectionError::ClockSyncConnectionError(std::string address) : msg("Timeout connecting to the server '" + address + "'!") {}
+
+const char* ClockSyncConnectionError::what() const throw() {
+	return msg.c_str();
+}
 
 SF::ClockSyncronizerClient::ClockServerProperties::ClockServerProperties(const std::string & port_) : port(port_), offset() {}
 
