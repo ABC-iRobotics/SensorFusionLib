@@ -124,6 +124,7 @@ Offset::OffsetMeasResult ZMQClockSyncronizerClient::DetermineOffset(const std::s
 		socket->setsockopt(ZMQ_LINGER, 0); // send the msg or not, but waiting for connection is a waste of time....
 		socket->setsockopt(ZMQ_RCVTIMEO, 1000);
 		socket->setsockopt(ZMQ_SNDTIMEO, 500);
+		socket->setsockopt(ZMQ_REQ_RELAXED, 1);
 		try {
 			std::cout << "Connecting to server... (" << address << ")";
 			socket->connect(address);
