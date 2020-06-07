@@ -12,6 +12,8 @@ set (HEADERS
 	msgcontent2buf.h
 	NetworkConfig.h
 	Forwarder.h
+	ZMQReciever.h
+	comm_defs.h
 	Logger.h
 	)
 
@@ -26,6 +28,7 @@ set (SOURCES
 	Reciever.cpp
 	NetworkConfig.cpp
 	Forwarder.cpp
+	ZMQReciever.cpp
 	Logger.cpp
 	)
 
