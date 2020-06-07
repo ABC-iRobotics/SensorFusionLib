@@ -8,8 +8,11 @@ set (HEADERS
 	msgcontent2buf.h
 	NetworkConfig.h
 	Forwarder.h
+	SteppableSimulator.h
+	RealTimeSimulator.h
 	ZMQReciever.h
 	comm_defs.h
+	Filter.h
 	Logger.h
 	SPDLogReader.h
 	)
@@ -21,7 +24,10 @@ set (SOURCES
 	Periphery.cpp
 	NetworkConfig.cpp
 	Forwarder.cpp
+	SteppableSimulator.cpp
+	RealTimeSimulator.cpp
 	ZMQReciever.cpp
+	Filter.cpp
 	Logger.cpp
 	SPDLogReader.cpp
 	)
