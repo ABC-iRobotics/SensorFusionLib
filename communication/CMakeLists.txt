@@ -5,8 +5,6 @@ set (HEADERS
 	ClockSynchronizer.h
 	Periphery.h
 	ZMQClockSynchronizer.h
-	SPDLogging.h
-	ZMQCommunication.h
 	msgcontent2buf.h
 	NetworkConfig.h
 	Forwarder.h
@@ -19,8 +17,6 @@ set (HEADERS
 set (SOURCES
 	ZMQClockSynchronizer.cpp
 	ClockSynchronizer.cpp
-	SPDLogging.cpp
-	ZMQCommunication.cpp
 	msgcontent2buf.cpp
 	Periphery.cpp
 	NetworkConfig.cpp
