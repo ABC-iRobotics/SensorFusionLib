@@ -15,6 +15,7 @@ set (HEADERS
 	ZMQReciever.h
 	comm_defs.h
 	Logger.h
+	SPDLogReader.h
 	)
 
 set (SOURCES
@@ -30,6 +31,7 @@ set (SOURCES
 	Forwarder.cpp
 	ZMQReciever.cpp
 	Logger.cpp
+	SPDLogReader.cpp
 	)
 
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS})
