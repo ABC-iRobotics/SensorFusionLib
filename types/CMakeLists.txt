@@ -6,6 +6,7 @@ set (HEADERS
 	defs.h
 	DataMsg.h
 	PrintNestedException.h
+	FilterCore.h
 	)
 
 set (SOURCES
