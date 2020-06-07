@@ -5,7 +5,6 @@ set (HEADERS
 	StatisticValue.h
 	defs.h
 	DataMsg.h
-	AppLayer.h
 	PrintNestedException.h
 	)
 
@@ -13,7 +12,6 @@ set (SOURCES
 	StatisticValue.cpp
 	defs.cpp
 	DataMsg.cpp
-	AppLayer.cpp
 	PrintNestedException.cpp
 	)
 

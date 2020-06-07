@@ -9,7 +9,6 @@ set (HEADERS
 	PartialCholevski.h
 	KalmanFilter.h
 	WAUKF.h
-	Filter.h
 	pinv.h )
 	
 set (SOURCES
@@ -20,7 +19,6 @@ set (SOURCES
 	PartialCholevski.cpp
 	KalmanFilter.cpp
 	WAUKF.cpp
-	Filter.cpp
 	pinv.cpp )
 
 # Add the dinamic library target to the project
