@@ -1,26 +1,31 @@
 #pragma once
-#include "NetworkConfig.h"
-#include "Reciever.h"
+#include "Forwarder.h"
+#include "ZMQReciever.h"
 
 namespace SF {
+	
+	class Logger : private Forwarder, public ZMQReciever {
 
-	/*! \brief Class to recieve DataMsgs from zmq publishers and writes them into an spdlog file
-	*
-	* The class initializes a zmq context and a subscriber socket, and save the recieved data via sdp logging
-	*/
-	class Logger {
-		Sender::SenderPtr sender;
-		Reciever::RecieverPtr reciever;
+		using Forwarder::ForwardDataMsg;
+
+		using Forwarder::ForwardString;
+
+		using Forwarder::SetZMQOutput;
 
 	public:
-		Logger(const std::string& filename); /*!< Constructor: initializes a zmq context and a publisher socket ("tcp://*:15555" or ipc:///tmp/feeds/0 ...) and spd log*/
+		Logger(const char* filename);
 
-		void AddPeripheries(const NetworkConfig& config);
 
-		void Start(DTime Ts); /*!< Start recieving thread with given sampling time */
+	protected:
+		/*!< Must called in each sampling time - input: time */
+		void SamplingTimeOver(const Time& currentTime) override {}
 
-		void Stop(); /*!< Stop recieving thread */
+		/*!< Must called if new DataMsg recieved */
+		void SaveDataMsg(const DataMsg& msg, const Time& currentTime) override;
 
-		~Logger(); /*!< Destructor */
+		/*!< Must called if the DataMsgs in the queue were read */
+		void MsgQueueEmpty(const Time& currentTime) override {}
+
+		void SaveString(const std::string& msg, const Time& currentTime) override;
 	};
 }

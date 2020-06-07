@@ -1,14 +1,15 @@
 #pragma once
-#include "Reciever.h"
+#include "Forwarder.h"
 #include "NetworkConfig.h"
 namespace SF {
 
-	/*! \brief Class to send datamsgs from sensors, basesystem, etc
+	/*! \brief Class to send datamsgs from sensors, basesystem, etc.
 	*
-	* The class is NOT thread safe! The same thread must initialize the class and call its functions.
+	* The class is NOT thread safe! The same thread must initialize the class and call its methods.
 	*/
-	class Periphery {
-		Sender::SenderPtr ptr;
+	class Periphery : public Forwarder {
+		using Forwarder::SetZMQOutput;
+
 	public:
 		Periphery(const std::string& address, int hwm = 10); /*!< Constructor, address e.g..: "tcp://*:5678" */
 

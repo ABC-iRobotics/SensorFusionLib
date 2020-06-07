@@ -4,7 +4,6 @@
 set (HEADERS
 	ClockSynchronizer.h
 	Periphery.h
-	Logger.h
 	CentralUnit.h
 	Reciever.h
 	ZMQClockSynchronizer.h
@@ -12,6 +11,8 @@ set (HEADERS
 	ZMQCommunication.h
 	msgcontent2buf.h
 	NetworkConfig.h
+	Forwarder.h
+	Logger.h
 	)
 
 set (SOURCES
@@ -21,10 +22,11 @@ set (SOURCES
 	ZMQCommunication.cpp
 	msgcontent2buf.cpp
 	Periphery.cpp
-	Logger.cpp
 	CentralUnit.cpp
 	Reciever.cpp
 	NetworkConfig.cpp
+	Forwarder.cpp
+	Logger.cpp
 	)
 
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS})
