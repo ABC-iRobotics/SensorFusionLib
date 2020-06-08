@@ -71,8 +71,10 @@ namespace SF {
 	* Gao, Shesheng, Gaoge Hu, and Yongmin Zhong. "Windowing and random weighting‐based adaptive unscented Kalman filter." International Journal of Adaptive Control and Signal Processing 29.2 (2015): 201-223.
 	*/
 	class WAUKF : public SystemManager {
+		Time lastStepTime;
+
 	public:
-		WAUKF(const BaseSystemData& data, const StatisticValue& state_); /*!< Constructor. */
+		WAUKF(const BaseSystemData& data, const StatisticValue& state_, const Time& t0); /*!< Constructor. */
 
 		void SetDisturbanceValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
 		/*!< Add a window to estimate \f$ \mathbf w_i\f$ disturbance value for a given System (= BaseSystem or Sensor) with given window size.*/
@@ -93,13 +95,17 @@ namespace SF {
 	* Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
 	*/
 	// TODO: perform further tests on the adaptive methods
-		void Step(DTime dT) override;
+		void Step(const DTime& dT);
+
+		void SamplingTimeOver(const Time& currentTime) override; /*!< Is called in each sampling time - input: time */
+
+		void MsgQueueEmpty(const Time& currentTime) override; /*!< Is called if the DataMsgs in the queue were read */
 
 		/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
 		*
 		* Omitted if the value is estimated by the adaptive method.
 		*/
-		void CallbackGotDataMsg(const DataMsg& data, const Time&) override;
+		void SaveDataMsg(const DataMsg& data, const Time&) override;
 
 	private:
 		typedef std::map<unsigned int, MAWindow<Eigen::VectorXd>> mapOfVectorWindows;

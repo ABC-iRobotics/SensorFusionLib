@@ -20,6 +20,8 @@ namespace SF {
 
 		virtual void MsgQueueEmpty(const Time& currentTime) = 0; /*!< Is called if the DataMsgs in the queue were read */
 
-		// TODO: getters
+		virtual DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) = 0;
+
+		virtual DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) = 0;
 	};
 }

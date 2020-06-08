@@ -41,15 +41,22 @@ namespace SF {
 	using namespace SF;
 
 	class KalmanFilter : public SystemManager {
+		Time lastStepTime;
+
 	public:
-		KalmanFilter(BaseSystemData data, StatisticValue state_); /*!< Constructor. */
+		KalmanFilter(BaseSystemData data, StatisticValue state_, const Time& t0 = Now()); /*!< Constructor. */
+
 		~KalmanFilter();
 
 		/*! \brief Time update with the given dT and Kalman-filter based on the available sensors
-	*
-	* Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
-	*/
-		void Step(DTime dT) override;
+		*
+		* Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
+		*/
+		void Step(const DTime& dT);
+
+		void SamplingTimeOver(const Time& currentTime) override; /*!< Is called in each sampling time - input: time */
+
+		void MsgQueueEmpty(const Time& currentTime) override; /*!< Is called if the DataMsgs in the queue were read */
 
 		typedef std::shared_ptr<KalmanFilter> KalmanFilterPtr; /*!< Shared pointer type for the KalmanFilter class */
 	};

@@ -16,10 +16,7 @@ namespace SF {
 
 	protected:
 		/*!< Must called in each sampling time - input: time */
-		void SamplingTimeOver(const Time& currentTime) override {
-			filterCore->SamplingTimeOver(currentTime);
-			// TODO Forward state and output
-		}
+		void SamplingTimeOver(const Time& currentTime) override;
 
 		/*!< Must called if new DataMsg recieved */
 		void SaveDataMsg(const DataMsg& msg, const Time& currentTime) override;

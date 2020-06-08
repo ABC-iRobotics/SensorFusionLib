@@ -2,8 +2,8 @@
 
 using namespace SF;
 
-KalmanFilter::KalmanFilter(BaseSystemData data, StatisticValue state_) :
-	SystemManager(data, state_) {}
+KalmanFilter::KalmanFilter(BaseSystemData data, StatisticValue state_, const Time& currentTime) :
+	SystemManager(data, state_), lastStepTime(currentTime){}
 
 
 KalmanFilter::~KalmanFilter()
@@ -12,7 +12,7 @@ KalmanFilter::~KalmanFilter()
 
 using namespace SF;
 
-void KalmanFilter::Step(DTime dT) { // update, collect measurement, correction via Kalman-filtering
+void KalmanFilter::Step(const DTime& dT) { // update, collect measurement, correction via Kalman-filtering
 	double dT_sec = duration_cast_to_sec(dT);
 	Eigen::MatrixXd sg1, sg2;
 	StatisticValue x_pred = Eval(STATE_UPDATE, dT_sec, (*this)(STATE), (*this)(DISTURBANCE), sg1, sg2);
@@ -33,4 +33,12 @@ void KalmanFilter::Step(DTime dT) { // update, collect measurement, correction v
 
 	State() = newstate;
 	resetMeasurement();
+}
+
+void SF::KalmanFilter::SamplingTimeOver(const Time & currentTime) {
+	Step(duration_cast(currentTime - lastStepTime));
+}
+
+void SF::KalmanFilter::MsgQueueEmpty(const Time & currentTime) {
+	Step(duration_cast(currentTime - lastStepTime));
 }

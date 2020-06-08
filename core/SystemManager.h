@@ -2,7 +2,7 @@
 
 #include "Sensor.h"
 #include "DataMsg.h"
-#include "Filter.h"
+#include "FilterCore.h"
 
 namespace SF {
 
@@ -92,7 +92,7 @@ namespace SF {
 	 */
 	using namespace SF;
 
-	class SystemManager : public Filter {
+	class SystemManager : public FilterCore {
 	public:
 		/*! \brief If constant value is guessed as the \f$ \mathbf y_i \f$ output of a system, its status is CONSTANT, othervise OBSOLETHE / UPTODATE.
 		*
@@ -195,7 +195,7 @@ namespace SF {
 		/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
 		*
 		*/
-		virtual void CallbackGotDataMsg(const DataMsg& data, const Time& t = Now()) override;
+		virtual void SaveDataMsg(const DataMsg& data, const Time& t = Now()) override;
 
 		typedef std::function<void(const DataMsg& data)> Callback; /*!< Callback that can be set to handle results of time update & filtering update */
 
@@ -246,6 +246,13 @@ namespace SF {
 		*/
 		StatisticValue Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 			Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
+
+		DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) override;
+
+		DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) override;
+
+	private:
+		StatisticValue state_predicted, output_predicted, state_filtered;// , output_filtered;
 
 	protected:
 		/*! \brief Simple class to fasten up the partitioning of state/output/disturbance/noise vectors and covariance matrixes for systems, sensors according to the measurement statuses of the systems

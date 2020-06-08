@@ -66,7 +66,8 @@ void WAUKF::SetNoiseVarianceWindowing(System::SystemPtr ptr, unsigned int window
 			SystemByID(ptr->getID())->getVariance(NOISE))));
 }
 
-WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_) : SystemManager(data, state_),
+WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_, const Time& t0) : SystemManager(data, state_),
+	lastStepTime(t0),
 	noiseValueWindows(mapOfVectorWindows()), disturbanceValueWindows(mapOfVectorWindows()),
 	noiseVarianceWindows(mapOfMatrixWindows()), disturbanceVarianceWindows(mapOfMatrixWindows()) {}
 
@@ -188,7 +189,7 @@ Eigen::MatrixXd DiagAndLimit(const Eigen::MatrixXd& in, double limit) {
 
 // TODO: further tests on the adaptive methods
 
-void WAUKF::Step(DTime dT) { // update, collect measurement, correction via Kalman-filtering
+void WAUKF::Step(const DTime& dT) { // update, collect measurement, correction via Kalman-filtering
 									 // Prediction
 	double dT_sec = duration_cast_to_sec(dT);
 	Eigen::MatrixXd sg1, sg2;
@@ -310,11 +311,19 @@ void WAUKF::Step(DTime dT) { // update, collect measurement, correction via Kalm
 	resetMeasurement();
 }
 
-void WAUKF::CallbackGotDataMsg(const DataMsg& data, const Time& t) {
+void WAUKF::SaveDataMsg(const DataMsg& data, const Time& t) {
 	auto data_ = data;
 	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VALUE))
 		data_.ClearValue();
 	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VARIANCE))
 		data_.ClearVariance();
-	SystemManager::CallbackGotDataMsg(data_, t);
+	SystemManager::SaveDataMsg(data_, t);
+}
+
+void SF::WAUKF::SamplingTimeOver(const Time & currentTime) {
+	Step(duration_cast(currentTime - lastStepTime));
+}
+
+void SF::WAUKF::MsgQueueEmpty(const Time & currentTime) {
+	Step(duration_cast(currentTime - lastStepTime));
 }

@@ -130,7 +130,7 @@ bool SystemManager::isAvailable(int index) const {
 	return Sensor(index).available();
 }
 
-void SystemManager::CallbackGotDataMsg(const DataMsg & data, const Time& t) {
+void SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
 	SystemData* ptr = this->SystemByID(data.GetSourceID());
 	if (data.HasValue())
 		ptr->setValue(data.GetValue(), data.GetDataType());
@@ -404,6 +404,76 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 	return StatisticValue(y, Sy);
 }
 
+DataMsg SF::SystemManager::GetDataByID(int systemID, DataType dataType, OperationType opType) {
+	if (((dataType == NOISE || dataType == DISTURBANCE) && opType == FILTER_TIME_UPDATE)
+		|| (dataType == OUTPUT && opType == SENSOR)) {
+		auto systemDataPtr = SystemByID(systemID);
+		if (dataType == OUTPUT && !systemDataPtr->available())
+			throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
+		return DataMsg(systemID, dataType, opType,
+			StatisticValue(systemDataPtr->getValue(dataType), systemDataPtr->getVariance(dataType)));
+	}
+
+	if (opType == FILTER_TIME_UPDATE) {
+		if (dataType == STATE)
+			return DataMsg(systemID, dataType, opType,
+				getPartitioner().PartStatisticValue(dataType, state_predicted, _GetIndex(systemID)));
+		if (dataType == OUTPUT) {
+			int index = _GetIndex(systemID);
+			if (!isAvailable(index))
+				throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
+			return DataMsg(systemID, dataType, opType,
+				getPartitioner().PartStatisticValue(dataType, output_predicted, index));
+		}
+	}
+
+	if (opType == FILTER_MEAS_UPDATE) {
+		if (dataType == STATE)
+			return DataMsg(systemID, dataType, opType,
+				getPartitioner().PartStatisticValue(dataType, state_filtered, _GetIndex(systemID)));
+		//if (dataType == OUTPUT)
+		//	return getPartitioner().PartStatisticValue(dataType, output_filtered, _GetIndex(systemID));
+	}
+
+	throw std::runtime_error(std::string("SystemManager::GetDataByID Not implemented case."));
+}
+
+DataMsg SF::SystemManager::GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) {
+	SystemData * systemDataPtr;
+	if (systemIndex == -1)
+		systemDataPtr = &baseSystem;
+	else
+		systemDataPtr = &sensorList[systemIndex];
+	if (((dataType == NOISE || dataType == DISTURBANCE) && opType == FILTER_TIME_UPDATE)
+		|| (dataType == OUTPUT && opType == SENSOR)) {
+		if (dataType == OUTPUT && !isAvailable(systemIndex))
+			throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
+		return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
+			StatisticValue(systemDataPtr->getValue(dataType), systemDataPtr->getVariance(dataType)));
+	}
+	if (opType == FILTER_TIME_UPDATE) {
+		if (dataType == STATE)
+			return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
+				getPartitioner().PartStatisticValue(dataType, state_predicted, systemIndex));
+		if (dataType == OUTPUT) {
+			if (!isAvailable(systemIndex))
+				throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
+			return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
+				getPartitioner().PartStatisticValue(dataType, output_predicted, systemIndex));
+		}
+	}
+
+	if (opType == FILTER_MEAS_UPDATE) {
+		if (dataType == STATE)
+			return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
+				getPartitioner().PartStatisticValue(dataType, state_filtered, systemIndex));
+		//if (dataType == OUTPUT)
+		//	return getPartitioner().PartStatisticValue(dataType, output_filtered, _GetIndex(systemID));
+	}
+
+	throw std::runtime_error(std::string("SystemManager::GetDataByIndex Not implemented case."));
+}
+
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
 	sensorList(std::vector<SensorData>()), state(state_), baseSystem(data) {}
 
@@ -487,37 +557,12 @@ void SystemManager::resetMeasurement() {
 }
 
 void SystemManager::PredictionDone(const StatisticValue& state, const StatisticValue& output) {
-	auto p = getPartitioner();
-	ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), STATE, FILTER_TIME_UPDATE,
-		p.PartStatisticValue(STATE, state, -1)));
-	ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, baseSystem(DISTURBANCE)));
-	if (baseSystem.available()) {
-		ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE,
-			p.PartStatisticValue(OUTPUT, output, -1)));
-		ForwardDataMsg(DataMsg(baseSystem.getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, baseSystem(NOISE)));
-	}
-	for (int i = 0; i < nSensors(); i++) {
-		ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), STATE, FILTER_TIME_UPDATE,
-			p.PartStatisticValue(STATE, state, i)));
-		ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), DISTURBANCE, FILTER_TIME_UPDATE, sensorList[i](DISTURBANCE)));
-		if (sensorList[i].available()) {
-			ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), OUTPUT, FILTER_TIME_UPDATE,
-				p.PartStatisticValue(OUTPUT, output, i)));
-			ForwardDataMsg(DataMsg(sensorList[i].getPtr()->getID(), NOISE, FILTER_TIME_UPDATE, sensorList[i](NOISE)));
-		}
-	}
+	state_predicted = state;
+	output_predicted = output;
 }
 
 void SystemManager::FilteringDone(const StatisticValue& state) {
-	auto p = getPartitioner();
-	DataMsg data(baseSystem.getPtr()->getID(), STATE, FILTER_MEAS_UPDATE,
-		p.PartStatisticValue(STATE, state, -1));
-	ForwardDataMsg(data);
-	for (int i = 0; i < nSensors(); i++) {
-		DataMsg data(sensorList[i].getPtr()->getID(), STATE, FILTER_MEAS_UPDATE,
-			p.PartStatisticValue(STATE, state, i));
-		ForwardDataMsg(data);
-	}
+	state_filtered = state;
 }
 
 SystemManager::BaseSystemData::BaseSystemData(BaseSystem::BaseSystemPtr ptr_,
