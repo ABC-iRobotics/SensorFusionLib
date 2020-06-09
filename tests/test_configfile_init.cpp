@@ -3,9 +3,9 @@ void setUp() {}
 void tearDown() {}
 
 #include "Periphery.h"
-#include"Logger.h"
-#include"SPDLogging.h"
-#include"PrintNestedException.h"
+#include "Logger.h"
+#include "SPDLogReader.h"
+#include "PrintNestedException.h"
 
 using namespace SF;
 
@@ -17,7 +17,7 @@ void localtest() {
 		{
 			NetworkConfig n;
 			n.Add("networkconfig_local.json");
-			Logger l(filename);
+			Logger l(filename.c_str());
 			l.AddPeripheries(n);
 			l.Start(DTime(2000));
 
@@ -35,9 +35,9 @@ void localtest() {
 		}
 		{
 			SPDLogReader reader(filename);
-			while (reader.readNextRow() != Reciever::NOTHING) {
+			while (reader.readNextRow() != NOTHING) {
 				switch (reader.getLatestRowType()) {
-				case Reciever::DATAMSG:
+				case DATAMSG:
 					switch (reader.getLatestDataMsgIf().GetSourceID()) {
 					case 5:
 						gotfrom5++;
@@ -47,7 +47,7 @@ void localtest() {
 						break;
 					}
 					break;
-				case Reciever::TEXT:
+				case TEXT:
 					// ?
 					break;
 				}

@@ -2,7 +2,8 @@
 void setUp() {}
 void tearDown() {}
 
-#include "SPDLogging.h"
+#include "Forwarder.h"
+#include "SPDLogReader.h"
 #include <iostream>
 
 using namespace SF;
@@ -18,11 +19,12 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 	std::string filename = "test_log_" + std::to_string(Now().time_since_epoch().count()) + ".txt";
 	{
 		std::vector<double> results = std::vector<double>();
-		SPDSender logger(filename.c_str());
+		Forwarder logger;
+		logger.SetLogger(filename.c_str());
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++)
-				logger.CallbackGotDataMsg(msg);
+				logger.ForwardDataMsg(msg,Now());
 			auto elapsed = Now() - start;
 
 			double delapsed = (double)duration_cast(elapsed).count() / (double)Ndata;
@@ -43,7 +45,7 @@ void test_speed(int Ndata, int Ncases, int TsUSassert, int TsUSwarning) {
 		for (int n = 0; n < Ncases; n++) {
 			auto start = Now();
 			for (long int i = 0; i < Ndata; i++) {
-				if (reader.getLatestRowType() != Reciever::DATAMSG)
+				if (reader.getLatestRowType() != DATAMSG)
 					TEST_ASSERT(false);
 				msg = reader.getLatestDataMsgIf();
 				reader.readNextRow();
@@ -112,16 +114,17 @@ void test_read_write(int Ndata) {
 	std::string filename = "read_write_test_" + std::to_string(Now().time_since_epoch().count()) + ".txt";
 	// Send them into a new logger
 	{
-		SPDSender w(filename);
+		Forwarder w;
+		w.SetLogger(filename.c_str());
 		for (int i = 0; i < msgs.size(); i++)
-			w.CallbackGotDataMsg(*msgs[i]);
+			w.ForwardDataMsg(*msgs[i],Now());
 	}
 	// Read the log - checking the results...
 	bool ok = true;
 	{
 		SPDLogReader r(filename);
 		int i = 0;
-		while (r.getLatestRowType() == Reciever::DATAMSG) {
+		while (r.getLatestRowType() == DATAMSG) {
 			auto msg = r.getLatestDataMsgIf();
 			if (msg != *msgs[i])
 				ok = false;

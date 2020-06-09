@@ -4,9 +4,8 @@ void tearDown() {}
 
 #include <thread>
 #include <iostream>
-
-#include"ZMQCommunication.h"
 #include"msgcontent2buf.h"
+#include "FilterCore.h"
 
 using namespace SF;
 
@@ -30,14 +29,33 @@ void DataMsgContentSerialization(long N) {
 		delete buf;
 	}
 }
+#include "Forwarder.h"
+#include "ZMQReciever.h"
+
+class ZMQRecievingTest : public ZMQReciever {
+	void SamplingTimeOver(const Time& currentTime) override {
+
+	}
+
+	void SaveDataMsg(const DataMsg& msg, const Time& currentTime) override {
+
+	}
+
+	void MsgQueueEmpty(const Time& currentTime) override {}
+
+	void SaveString(const std::string& msg, const Time& currentTime) override {}
+
+};
+
 
 void SendAndRecieveDataMsgs(std::string senderaddress, std::string recvaddress, int N, int K, bool sendstring = false) {
 	DataMsg d(1, STATE, SENSOR, Now());
 	d.SetValueVector(Eigen::VectorXd::Ones(10));
 	d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
-	ZMQSender a(senderaddress, N);
-	ZMQReciever r;
-	r.AddPeriphery(ZMQReciever::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
+	Forwarder a;
+	a.SetZMQOutput(senderaddress.c_str(), N);
+	ZMQRecievingTest r;
+	r.AddPeriphery(ZMQRecievingTest::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
 		recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -45,9 +63,9 @@ void SendAndRecieveDataMsgs(std::string senderaddress, std::string recvaddress, 
 		Time start = Now();
 		for (long long n = 0; n < N; n++)
 			if (sendstring)
-				a.CallbackGotString("abasdasdfasf");
+				a.ForwardString("abasdasdfasf", Now());
 			else
-				a.CallbackGotDataMsg(d);
+				a.ForwardDataMsg(d, Now());
 		while (r.GetNumOfRecievedMsgs(0) != N * (k + 1))
 			std::this_thread::sleep_for(std::chrono::microseconds(1));
 		DTime dt = duration_cast(Now() - start);
@@ -59,9 +77,10 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 	DataMsg d(1, STATE, SENSOR, Now());
 	d.SetValueVector(Eigen::VectorXd::Ones(10));
 	d.SetVarianceMatrix(Eigen::MatrixXd::Identity(10, 10));
-	ZMQSender a(senderaddress, hwm);
-	ZMQReciever r;
-	r.AddPeriphery(ZMQReciever::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
+	Forwarder a;
+	a.SetZMQOutput(senderaddress.c_str(), N);
+	ZMQRecievingTest r;
+	r.AddPeriphery(ZMQRecievingTest::PeripheryProperties(OperationType::SENSOR, 1, DataType::STATE,
 		recvaddress, true));
 	r.Start(DTime(1000));
 	long long recieved = 0;
@@ -69,7 +88,7 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 		r.Pause(true);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		for (int i = 0; i < hwm*100; i++)
-			a.CallbackGotDataMsg(d);
+			a.ForwardDataMsg(d,Now());
 		
 		long long recieved0 = r.GetNumOfRecievedMsgs(0);
 		r.Pause(false);
@@ -86,10 +105,10 @@ void hwmtest(std::string senderaddress, std::string recvaddress, int N, int hwm)
 bool error;
 static std::vector<DataMsg> msgs;
 static std::vector<std::string> strings;
-class Checker : public AppLayer {
+class Checker : public FilterCore {
 	int n = 0;
 public:
-	void CallbackGotDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
+	void SaveDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
 		if (msg != msgs[n]) {
 			printf("Error:\n");
 			msg.print();
@@ -99,11 +118,20 @@ public:
 		n++;
 	}
 
-	void CallbackGotString(const std::string& msg, const Time& currentTime = Now()) override {
-		error |= (msg.compare(strings[n]) != 0);
-		n++;
+	void SamplingTimeOver(const Time& currentTime) {}
+
+	void MsgQueueEmpty(const Time& currentTime) {}
+
+	DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) override {
+		return DataMsg();
+	}
+
+	DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) override {
+		return DataMsg();
 	}
 };
+
+#include "Filter.h"
 
 void orderDataMsg(std::string senderaddress, std::string recvaddress, int N) {
 	error = false;
@@ -116,16 +144,16 @@ void orderDataMsg(std::string senderaddress, std::string recvaddress, int N) {
 			d.SetVarianceMatrix(Eigen::MatrixXd::Ones(i%6,i%6)*i);
 		msgs.push_back(d);
 	}
-	ZMQSender a(senderaddress, N);
+	Forwarder a;
+	a.SetZMQOutput(senderaddress.c_str(), N);
 	auto checker = std::make_shared<Checker>();
-	ZMQReciever r;
-	r.AddNextLayer(checker);
-	r.AddPeriphery(ZMQReciever::PeripheryProperties(recvaddress, true));
+	Filter r(checker);
+	r.AddPeriphery(Filter::PeripheryProperties(recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	for (int i = 0; i < N; i++)
-		a.CallbackGotDataMsg(msgs[i]);
+		a.ForwardDataMsg(msgs[i],Now());
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
@@ -141,16 +169,16 @@ void orderStrings(std::string senderaddress, std::string recvaddress, int N) {
 	strings = std::vector<std::string>();
 	for (int i = 0; i < N; i++)
 		strings.push_back(std::string("asdassv0") + std::to_string(i) + "_" + std::to_string(duration_cast(Now().time_since_epoch()).count()));
-	ZMQSender a(senderaddress, N);
+	Forwarder a;
+	a.SetZMQOutput(senderaddress.c_str(), N);
 	auto checker = std::make_shared<Checker>();
-	ZMQReciever r;
-	r.AddNextLayer(checker);
-	r.AddPeriphery(ZMQReciever::PeripheryProperties(recvaddress, true));
+	Filter r(checker);
+	r.AddPeriphery(Filter::PeripheryProperties(recvaddress, true));
 	r.Start(DTime(1000));
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	for (int i = 0; i < N; i++)
-		a.CallbackGotString(strings[i]);
+		a.ForwardString(strings[i],Now());
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
