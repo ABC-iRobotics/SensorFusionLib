@@ -5,8 +5,11 @@
 
 namespace SF {
 
-	/* Log and zmqoutput can be set via Forwarder::SetLogger, Forwarder::SetZMQOutput
+	/*! \brief Class for testing filtering methods not real-time on logged data for debug
 	*
+	* The filtering is done via a FilterCore instance set in the constructor
+	*
+	* The results are forwarded via inherited methods of class Forwarder (see Forwarder::SetLogger, Forwarder::SetZMQOutput)
 	*/
 	class SteppableSimulator : public Forwarder {
 		SPDLogReader logread; // Reads a log
@@ -26,16 +29,16 @@ namespace SF {
 		using Forwarder::ForwardString;
 
 	public:
-		SteppableSimulator(const std::string& filename, FilterCore::FilterCorePtr filterCore_);
+		SteppableSimulator(const std::string& logfilename, FilterCore::FilterCorePtr filterCore_); //!< Constructor
 
-		void Start(DTime Ts);
+		void Start(DTime Ts); //!< Start recieving thread that will call filtercore and forwarding methods
 
-		void Stop(bool waitin = true);
+		void Stop(bool waitin = true); //!< Stop reading thread, called filtercore and forwarding methods
 
-		bool MustStop() const;
+		bool MustStop() const; //!< To check if stop was called
 
-		bool IsRunning() const;
+		bool IsRunning() const; //!< To check if reading thread is running
 
-		~SteppableSimulator();
+		~SteppableSimulator(); //!<  Destructor
 	};
 }

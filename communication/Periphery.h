@@ -13,7 +13,7 @@ namespace SF {
 	public:
 		Periphery(const std::string& address, int hwm = 10); /*!< Constructor, address e.g..: "tcp://*:5678" */
 
-		Periphery(const NetworkConfig::ConnectionData& config);
+		Periphery(const NetworkConfig::ConnectionData& config); //!< Constructor
 
 		void SendValue(unsigned char sensorID, const Eigen::VectorXd& value,
 			DataType type, Time t = Now(), OperationType source = OperationType::SENSOR); /*!< Publish a DataMsg with a given values */

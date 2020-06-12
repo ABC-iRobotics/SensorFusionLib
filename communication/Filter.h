@@ -4,6 +4,15 @@
 #include "ZMQReciever.h"
 
 namespace SF {
+
+	/*! \brief Class for realtime filtering
+	*
+	* The data is collected from zmq by inheriting the methods of class ZMQReciever
+	*
+	* The filtering is done via a FilterCore instance set in the constructor
+	*
+	* The results are forwarded via inherited methods of class Forwarder
+	*/
 	class Filter : public Forwarder, public ZMQReciever {
 		using Forwarder::ForwardDataMsg;
 

@@ -90,8 +90,6 @@ namespace SF {
 	* -- Step(Ts) for filtering
 	* - Get the results or register a Callback via SetCallback()
 	 */
-	using namespace SF;
-
 	class SystemManager : public FilterCore {
 	public:
 		/*! \brief If constant value is guessed as the \f$ \mathbf y_i \f$ output of a system, its status is CONSTANT, othervise OBSOLETHE / UPTODATE.

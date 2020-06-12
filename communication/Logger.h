@@ -4,6 +4,12 @@
 
 namespace SF {
 	
+	/*! \brief Class for recieveing msgs-s from ZMQ and save them into a log
+	*
+	* The data is collected from zmq by inheriting the methods of class ZMQReciever
+	*
+	* The results are saved via inherited methods of class Forwarder
+	*/
 	class Logger : private Forwarder, public ZMQReciever {
 
 		using Forwarder::ForwardDataMsg;

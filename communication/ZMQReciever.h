@@ -8,6 +8,8 @@
 
 namespace SF {
 
+	/*! \brief Class to recieve msgs from peripheries and call the defined virtual functions with them
+	*/
 	class ZMQReciever {
 		bool toStop;
 
@@ -44,11 +46,11 @@ namespace SF {
 		ZMQReciever(std::vector<PeripheryProperties> periferies
 			= std::vector<PeripheryProperties>()); /*!< Constructor */
 
-		~ZMQReciever();
+		~ZMQReciever(); //!< Destructor
 
 		void AddPeriphery(const PeripheryProperties& prop); /*!< Add peripheries for networked recievers */
 
-		void AddPeripheries(const NetworkConfig& config);
+		void AddPeripheries(const NetworkConfig& config); /*!< Add peripheries for networked recievers */
 
 		unsigned long long GetNumOfRecievedMsgs(int n); /*!< Get number of recieved msgs of the n-th periphery*/
 
@@ -69,7 +71,7 @@ namespace SF {
 
 		virtual void MsgQueueEmpty(const Time& currentTime) = 0; /*!< Must called if the DataMsgs in the queue were read */
 
-		virtual void SaveString(const std::string& msg, const Time& currentTime) = 0;
+		virtual void SaveString(const std::string& msg, const Time& currentTime) = 0; /*!< Must called if string is recieved */
 
 	private:
 		bool pause;

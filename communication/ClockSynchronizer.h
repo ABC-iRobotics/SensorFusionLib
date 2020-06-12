@@ -33,25 +33,30 @@ namespace SF {
 	ClockSynchronizerServer::ClockSynchronizerServerPtr InitClockSynchronizerServer(const NetworkConfig::ConnectionData& config);
 			/*!< Initializes and start a ClockSyncronizerServer with the given address on ZMQ impl. */
 
-
+	/*! \brief Class to store the result of offset measurement
+	*
+	*
+	*/
 	class Offset {
 	public:
+		/*! \brief Struct of numeric results
+		*/
 		struct OffsetMeasResult {
-			Time t;
-			DTime offset;
-			OffsetMeasResult(Time t_, DTime offset_);
-			OffsetMeasResult() {};
+			Time t; //!< Time of measurement
+			DTime offset;  //!< Measured offset
+			OffsetMeasResult(Time t_, DTime offset_); //!< Constructor
+			OffsetMeasResult() {}; //!< Empty constructor
 		};
 
-		Offset() {}
+		Offset() {} //!< Empty constructor
 
-		Offset(OffsetMeasResult res1, OffsetMeasResult res2);
+		Offset(OffsetMeasResult res1, OffsetMeasResult res2); //!< Constructor
 
-		DTime GetOffset(Time t);
+		DTime GetOffset(Time t);  //!< Get computed offset
 
-		void Add(OffsetMeasResult value);
+		void Add(OffsetMeasResult value); //!< Add measurement
 
-		bool IsInitialized() const;
+		bool IsInitialized() const; //!< To check if class is initialized
 	
 	private:
 		std::vector<OffsetMeasResult> values;
@@ -63,13 +68,17 @@ namespace SF {
 		void Update();
 	};
 
+	/*! \brief std::exception for communicating clock sync problems
+	*
+	*
+	*/
 	class ClockSyncConnectionError : public std::exception {
 	private:
 		std::string msg;
 	public:
-		ClockSyncConnectionError(std::string address);
+		ClockSyncConnectionError(std::string address); //!< Constructor
 
-		virtual const char* what() const throw() override;
+		virtual const char* what() const throw() override; //!< Desription of the error
 	};
 
 	/*! \brief Abstract class to run a ClockSynchronizer client that connects to Servers with given addresses
@@ -82,7 +91,7 @@ namespace SF {
 			std::string port;
 			std::mutex guard;
 		public:
-			ClockServerProperties(const std::string& port_);
+			ClockServerProperties(const std::string& port_); //<! Constructor
 
 			bool IsInitialized();
 
@@ -94,7 +103,7 @@ namespace SF {
 		};
 
 	protected:
-		virtual Offset::OffsetMeasResult DetermineOffset(const std::string& address, long long n) = 0;
+		virtual Offset::OffsetMeasResult DetermineOffset(const std::string& address, long long n) = 0; //!< virtual method of a measurement
 
 	private:
 		std::map<std::string, std::shared_ptr<ClockServerProperties>> clockOffsets; // address (192.168.0.1) without port -> offset properties
@@ -107,9 +116,9 @@ namespace SF {
 	public:
 		ClockSyncronizerClient();
 
-		void SynchronizePeriphery(const std::string& address, const std::string& port); /*!< Add Servers to be synchronized to */
+		void SynchronizePeriphery(const std::string& address, const std::string& port); /*!< Add a server to be synchronized to */
 
-		void SynchronizePeriphery(const NetworkConfig::ConnectionData& config);
+		void SynchronizePeriphery(const NetworkConfig::ConnectionData& config); //!< Add a server to be synchronized to 
 
 		bool IsClockSynchronisationInProgress(const std::string& address); /*!< Check if synchronisation for a given device is in progress */
 
@@ -117,7 +126,7 @@ namespace SF {
 
 		void PrintStatus(); /*!< Print the actual status of the synchronizer client */
 
-		~ClockSyncronizerClient();
+		~ClockSyncronizerClient(); //!< Destructor
 	};
 
 	ClockSyncronizerClient* GetPeripheryClockSynchronizerPtr(); /*!< Get the pointer of the statically inicialized implemented instance */

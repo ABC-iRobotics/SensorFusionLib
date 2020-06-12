@@ -38,8 +38,6 @@ namespace SF {
 	*
 	* where \f$ \mathbf K = \overline{\Sigma}_{xy,k}\left(\overline{\Sigma}_{yy,k} + \Sigma_{yy,meas,k} \right)^{-1} \f$
 	*/
-	using namespace SF;
-
 	class KalmanFilter : public SystemManager {
 		Time lastStepTime;
 
