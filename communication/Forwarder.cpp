@@ -22,7 +22,7 @@ SF::Forwarder::~Forwarder() {
 	}
 }
 
-void SF::Forwarder::SetLogger(const char * filename) {
+void SF::Forwarder::SetLogger(const std::string& filename) {
 	if (!spd_logger) {
 		static int i = 0;
 		spd_logger = spdlog::basic_logger_mt<spdlog::async_factory>(std::to_string(i), filename);

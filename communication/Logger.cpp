@@ -2,7 +2,7 @@
 
 using namespace SF;
 
-SF::Logger::Logger(const char * filename) : Forwarder(), ZMQReciever() {
+SF::Logger::Logger(const std::string& filename) : Forwarder(), ZMQReciever() {
 	SetLogger(filename);
 }
 

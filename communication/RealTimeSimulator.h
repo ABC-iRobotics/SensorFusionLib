@@ -26,7 +26,7 @@ namespace SF {
 		void _run(DTime Ts);
 
 	public:
-		RealTimeSimulator(const char* filename, FilterCore::FilterCorePtr filterCorePtr);
+		RealTimeSimulator(const std::string& filename, FilterCore::FilterCorePtr filterCorePtr);
 
 		void Start(DTime Ts);
 

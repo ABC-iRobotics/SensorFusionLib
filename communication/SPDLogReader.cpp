@@ -65,7 +65,7 @@ Time readTime(char* buf) {
 	return std::chrono::system_clock::from_time_t(std::mktime(&temp)) + std::chrono::microseconds(char2long(buf + 20, 6));
 }
 
-SPDLogReader::SPDLogReader(std::string filename) : stream(filename), latestRowType(NOTHING) {
+SPDLogReader::SPDLogReader(const std::string& filename) : stream(filename), latestRowType(NOTHING) {
 	if (!stream.is_open())
 		throw std::runtime_error(std::string("SPDLogReader::SPDLogReader File not found!"));
 	readNextRow();

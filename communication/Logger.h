@@ -13,7 +13,7 @@ namespace SF {
 		using Forwarder::SetZMQOutput;
 
 	public:
-		Logger(const char* filename);
+		Logger(const std::string& filename);
 
 
 	protected:

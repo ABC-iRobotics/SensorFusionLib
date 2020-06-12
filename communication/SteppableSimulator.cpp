@@ -52,7 +52,7 @@ void SF::SteppableSimulator::_run(DTime Ts) {
 	}
 }
 
-SF::SteppableSimulator::SteppableSimulator(const char * filename, FilterCore::FilterCorePtr filterCore_)
+SF::SteppableSimulator::SteppableSimulator(const std::string& filename, FilterCore::FilterCorePtr filterCore_)
 	: Forwarder(), logread(filename), isRunning(false), filterCore(filterCore_) {}
 
 void SF::SteppableSimulator::Start(DTime Ts) {

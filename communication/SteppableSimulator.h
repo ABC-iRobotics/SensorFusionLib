@@ -26,7 +26,7 @@ namespace SF {
 		using Forwarder::ForwardString;
 
 	public:
-		SteppableSimulator(const char* filename, FilterCore::FilterCorePtr filterCore_);
+		SteppableSimulator(const std::string& filename, FilterCore::FilterCorePtr filterCore_);
 
 		void Start(DTime Ts);
 

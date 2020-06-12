@@ -32,6 +32,16 @@ set (SOURCES
 	SPDLogReader.cpp
 	)
 
+source_group("Background headers" FILES
+	msgcontent2buf.h
+	comm_defs.h
+	SPDLogReader.h
+	ZMQClockSynchronizer.h
+	ClockSynchronizer.h
+	NetworkConfig.h
+	ZMQReciever.h
+	)
+
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS})
 
 

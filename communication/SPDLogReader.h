@@ -11,7 +11,7 @@ namespace SF {
 	*/
 	class SPDLogReader {
 	public:
-		SPDLogReader(std::string filename); /*!< Constructor */
+		SPDLogReader(const std::string& filename); /*!< Constructor */
 
 		MsgType readNextRow(); /*!< Read the next row, returns its type */
 

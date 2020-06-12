@@ -55,7 +55,7 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 	}
 }
 
-SF::RealTimeSimulator::RealTimeSimulator(const char * filename, FilterCore::FilterCorePtr filterCorePtr)
+SF::RealTimeSimulator::RealTimeSimulator(const std::string& filename, FilterCore::FilterCorePtr filterCorePtr)
 	: Forwarder(), logread(filename), isRunning(false), filterCore(filterCorePtr) {}
 
 void SF::RealTimeSimulator::Start(DTime Ts) {

@@ -24,7 +24,7 @@ namespace SF {
 
 		~Forwarder();
 
-		void SetLogger(const char* filename);
+		void SetLogger(const std::string& filename);
 
 		void SetZMQOutput(const std::string & address, int hwm);
 
