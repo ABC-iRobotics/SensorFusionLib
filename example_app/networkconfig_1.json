@@ -25,7 +25,7 @@
 		
 		"localperiphery2" : {
 			"type" : "ipc",
-			"address" : "IMU_ipc",
+			"address" : "tmp/ipc2",
 			"_comment": "address to be used: ipc:///tmp/IMU_ipc; forwarded: [x[m],y[m],phi[rad]] as OUTPUT"
 		}
 	}

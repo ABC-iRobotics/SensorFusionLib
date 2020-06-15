@@ -20,6 +20,14 @@ foreach(CompilerFlag ${CompilerFlags})
   set(EXTERNAL_FLAG_SETTER "${EXTERNAL_FLAG_SETTER} -D${CompilerFlag}=\"${${CompilerFlag}}\"" ) #produces a list like -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
 endforeach()
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Bin) #Or the program puts the application into different folders...
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/networkconfig_1.json
+	DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/ReadMe.txt
+	DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
 find_package(SensorFusion 0.0.1)
 
 add_subdirectory (periphery)

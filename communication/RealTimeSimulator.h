@@ -3,6 +3,8 @@
 #include "FilterCore.h"
 #include "SPDLogReader.h"
 
+#include <thread>
+
 namespace SF {
 
 	/*! \brief Class for testing filtering methods real-time on logged data
