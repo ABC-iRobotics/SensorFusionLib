@@ -15,6 +15,8 @@ set (HEADERS
 	Filter.h
 	Logger.h
 	SPDLogReader.h
+	msg_old2buf.h
+	msg_old_generated.h
 	)
 
 set (SOURCES
@@ -30,6 +32,7 @@ set (SOURCES
 	Filter.cpp
 	Logger.cpp
 	SPDLogReader.cpp
+	msg_old2buf.cpp
 	)
 
 source_group("Background headers" FILES
@@ -40,6 +43,8 @@ source_group("Background headers" FILES
 	ClockSynchronizer.h
 	NetworkConfig.h
 	ZMQReciever.h
+	msg_old2buf.h
+	msg_old_generated.h
 	)
 
 add_library (sf_communication STATIC ${SOURCES} ${HEADERS})

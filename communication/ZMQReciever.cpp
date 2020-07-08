@@ -53,9 +53,12 @@ SF::ZMQReciever::SocketHandler::SocketHandler(const PeripheryProperties& prop, z
 	topic[1] = to_underlying<OperationType>(prop.source);
 	topic[2] = prop.ID;
 	topic[3] = to_underlying<DataType>(prop.type);
-	socket->setsockopt(ZMQ_SUBSCRIBE, &topic[0], prop.nparam + 1);
 	if (prop.getstrings)
-		socket->setsockopt(ZMQ_SUBSCRIBE, "i", 1);
+		socket->setsockopt(ZMQ_SUBSCRIBE, "", 0);
+	else
+		socket->setsockopt(ZMQ_SUBSCRIBE, &topic[0], prop.nparam + 1);
+	//if (prop.getstrings)
+	//	socket->setsockopt(ZMQ_SUBSCRIBE, "i", 1);
 	try {
 		socket->connect(prop.address.c_str());
 	}
@@ -99,6 +102,25 @@ unsigned long long SF::ZMQReciever::GetNumOfRecievedMsgs(int n) {
 
 void SF::ZMQReciever::Pause(bool pause_) {
 	pause = pause_;
+}
+
+#include "msg_old2buf.h"
+SF::MsgType SF::ZMQReciever::_ProcessMsg_old(zmq::message_t & msg, const std::string& address) {
+	// If it is in the old msg format - for backward compatibility, clock offsetting is not applied
+	DataMsg dataMsg;
+	bool isDataMsg = ExtractBufIf(msg.data(), msg.size(), dataMsg);
+	if (isDataMsg) {
+		//if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
+		SaveDataMsg(dataMsg, Now());
+		// Warning msg
+		static bool warning_thrown = false;
+		if (!warning_thrown) {
+			printf("WARNING: old msg format is found, it will be obsolete\n");
+			warning_thrown = true;
+		}
+		return MsgType::DATAMSG;
+	}
+	throw std::runtime_error("FATAL ERROR: unknown msg format (in ZMQReciever::_ProcessMsg)");
 }
 
 SF::MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg, const std::string& address) {
@@ -182,7 +204,18 @@ void SF::ZMQReciever::_Run(DTime Ts) {
 					peripheryPropertiesMutex.lock();
 					peripheryProperties[i].nRecieved++;
 					peripheryPropertiesMutex.unlock();
-					MsgType type = _ProcessMsg(t[0], t[1], peripheryProperties[i].address);
+					MsgType type;
+					switch (t.size())
+					{
+					case 1:
+						type = _ProcessMsg_old(t[0], peripheryProperties[i].address);
+						break;
+					case 2:
+						type = _ProcessMsg(t[0], t[1], peripheryProperties[i].address);
+						break;
+					default:
+						throw std::runtime_error("not handled frame size of the zmq msg");
+					}
 					gotSg |= type != MsgType::NOTHING;
 					gotDataMsgNow |= type == MsgType::DATAMSG;
 				}
