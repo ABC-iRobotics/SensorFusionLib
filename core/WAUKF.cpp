@@ -66,8 +66,7 @@ void WAUKF::SetNoiseVarianceWindowing(System::SystemPtr ptr, unsigned int window
 			SystemByID(ptr->getID())->getVariance(NOISE))));
 }
 
-WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_, const Time& t0) : SystemManager(data, state_),
-	lastStepTime(t0),
+WAUKF::WAUKF(const BaseSystemData & data, const StatisticValue & state_) : SystemManager(data, state_),
 	noiseValueWindows(mapOfVectorWindows()), disturbanceValueWindows(mapOfVectorWindows()),
 	noiseVarianceWindows(mapOfMatrixWindows()), disturbanceVarianceWindows(mapOfMatrixWindows()) {}
 
@@ -321,9 +320,17 @@ void WAUKF::SaveDataMsg(const DataMsg& data, const Time& t) {
 }
 
 void SF::WAUKF::SamplingTimeOver(const Time & currentTime) {
+	if (firstStep) {
+		firstStep = false;
+		lastStepTime = currentTime;
+	}
 	Step(duration_cast(currentTime - lastStepTime));
 }
 
 void SF::WAUKF::MsgQueueEmpty(const Time & currentTime) {
+	if (firstStep) {
+		firstStep = false;
+		lastStepTime = currentTime;
+	}
 	Step(duration_cast(currentTime - lastStepTime));
 }

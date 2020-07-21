@@ -40,9 +40,10 @@ namespace SF {
 	*/
 	class KalmanFilter : public SystemManager {
 		Time lastStepTime;
+		bool firstStep = true;
 
 	public:
-		KalmanFilter(BaseSystemData data, StatisticValue state_, const Time& t0 = Now()); /*!< Constructor. */
+		KalmanFilter(BaseSystemData data, StatisticValue state_); /*!< Constructor. */
 
 		~KalmanFilter();
 

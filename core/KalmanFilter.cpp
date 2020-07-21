@@ -2,8 +2,8 @@
 
 using namespace SF;
 
-KalmanFilter::KalmanFilter(BaseSystemData data, StatisticValue state_, const Time& currentTime) :
-	SystemManager(data, state_), lastStepTime(currentTime){}
+KalmanFilter::KalmanFilter(BaseSystemData data, StatisticValue state_) :
+	SystemManager(data, state_) {}
 
 
 KalmanFilter::~KalmanFilter()
@@ -36,9 +36,17 @@ void KalmanFilter::Step(const DTime& dT) { // update, collect measurement, corre
 }
 
 void SF::KalmanFilter::SamplingTimeOver(const Time & currentTime) {
+	if (firstStep) {
+		firstStep = false;
+		lastStepTime = currentTime;
+	}
 	Step(duration_cast(currentTime - lastStepTime));
 }
 
 void SF::KalmanFilter::MsgQueueEmpty(const Time & currentTime) {
+	if (firstStep) {
+		firstStep = false;
+		lastStepTime = currentTime;
+	}
 	Step(duration_cast(currentTime - lastStepTime));
 }

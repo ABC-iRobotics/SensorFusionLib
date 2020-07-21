@@ -72,9 +72,10 @@ namespace SF {
 	*/
 	class WAUKF : public SystemManager {
 		Time lastStepTime;
+		bool firstStep = true;
 
 	public:
-		WAUKF(const BaseSystemData& data, const StatisticValue& state_, const Time& t0); /*!< Constructor. */
+		WAUKF(const BaseSystemData& data, const StatisticValue& state_); /*!< Constructor. */
 
 		void SetDisturbanceValueWindowing(System::SystemPtr ptr, unsigned int windowSize);
 		/*!< Add a window to estimate \f$ \mathbf w_i\f$ disturbance value for a given System (= BaseSystem or Sensor) with given window size.*/
