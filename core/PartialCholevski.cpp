@@ -5,7 +5,7 @@ using namespace SF;
 
 typedef Eigen::LLT<Eigen::MatrixXd>::RealScalar Real;
 
-Eigen::MatrixXd PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {
+Eigen::MatrixXd SF::PartialChol(Eigen::MatrixXd a, Eigen::VectorXi v) {
 	const Eigen::Index n = a.rows();
 	double eps = a.trace()*1e-10;
 	const Eigen::Index nOut = v.sum();
