@@ -137,10 +137,11 @@ SF::MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t 
 		if (VerifyDataMsgContent(msg.data(), (int)msg.size())) {
 			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
 				SaveDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)),Now());
+			return MsgType::DATAMSG;
 		}
 		else
-			throw std::runtime_error("FATAL ERROR: corrupted datamsg buffer got (in ZMQReciever::_ProcessMsg)");
-		return MsgType::DATAMSG;
+			printf("FLATC VERIFICATION ERROR (in ZMQReciever::_ProcessMsg, address: %s)\n", address);
+		return SF::MsgType::NOTHING;
 	}
 	case 'i':
 		if (topic.size() != 1)
