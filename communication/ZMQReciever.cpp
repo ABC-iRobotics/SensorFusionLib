@@ -120,7 +120,8 @@ SF::MsgType SF::ZMQReciever::_ProcessMsg_old(zmq::message_t & msg, const std::st
 		}
 		return MsgType::DATAMSG;
 	}
-	throw std::runtime_error("FATAL ERROR: unknown msg format (in ZMQReciever::_ProcessMsg)");
+	printf("FLATC VERIFICATION ERROR (in ZMQReciever::_ProcessMsg_old, address: %s)\n", address);
+	return SF::MsgType::NOTHING;
 }
 
 SF::MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t & msg, const std::string& address) {

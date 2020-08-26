@@ -109,8 +109,8 @@ struct Msg FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<float> *variance_matrix() const {
     return GetPointer<const flatbuffers::Vector<float> *>(VT_VARIANCE_MATRIX);
   }
-  int64_t timestamp_in_us() const {
-    return GetField<int64_t>(VT_TIMESTAMP_IN_US, 0);
+  uint64_t timestamp_in_us() const {
+    return GetField<uint64_t>(VT_TIMESTAMP_IN_US, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -121,7 +121,7 @@ struct Msg FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(value_vector()) &&
            VerifyOffset(verifier, VT_VARIANCE_MATRIX) &&
            verifier.VerifyVector(variance_matrix()) &&
-           VerifyField<int64_t>(verifier, VT_TIMESTAMP_IN_US) &&
+           VerifyField<uint64_t>(verifier, VT_TIMESTAMP_IN_US) &&
            verifier.EndTable();
   }
 };
@@ -144,8 +144,8 @@ struct MsgBuilder {
   void add_variance_matrix(flatbuffers::Offset<flatbuffers::Vector<float>> variance_matrix) {
     fbb_.AddOffset(Msg::VT_VARIANCE_MATRIX, variance_matrix);
   }
-  void add_timestamp_in_us(int64_t timestamp_in_us) {
-    fbb_.AddElement<int64_t>(Msg::VT_TIMESTAMP_IN_US, timestamp_in_us, 0);
+  void add_timestamp_in_us(uint64_t timestamp_in_us) {
+    fbb_.AddElement<uint64_t>(Msg::VT_TIMESTAMP_IN_US, timestamp_in_us, 0);
   }
   explicit MsgBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -166,7 +166,7 @@ inline flatbuffers::Offset<Msg> CreateMsg(
     int32_t sensorID = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> value_vector = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> variance_matrix = 0,
-    int64_t timestamp_in_us = 0) {
+    uint64_t timestamp_in_us = 0) {
   MsgBuilder builder_(_fbb);
   builder_.add_timestamp_in_us(timestamp_in_us);
   builder_.add_variance_matrix(variance_matrix);
@@ -184,7 +184,7 @@ inline flatbuffers::Offset<Msg> CreateMsgDirect(
     int32_t sensorID = 0,
     const std::vector<float> *value_vector = nullptr,
     const std::vector<float> *variance_matrix = nullptr,
-    int64_t timestamp_in_us = 0) {
+    uint64_t timestamp_in_us = 0) {
   auto value_vector__ = value_vector ? _fbb.CreateVector<float>(*value_vector) : 0;
   auto variance_matrix__ = variance_matrix ? _fbb.CreateVector<float>(*variance_matrix) : 0;
   return DataMsgNameSpace::CreateMsg(

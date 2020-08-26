@@ -11,7 +11,7 @@ table Msg {
 	sensorID : int;
 	value_vector : [float];    // - optional, as [ v1 v2 ... vn ]
 	variance_matrix : [float]; // - optional, as [ m11, m12, ..., m1n, m22, m23 ... m2n, m33 ... m3n, m41 ... ... ... mnn ] ( = n*(n+1)/2 values)
-	timestamp_in_us : int64;
+	timestamp_in_us : uint64;
 }
 
 root_type Msg;
