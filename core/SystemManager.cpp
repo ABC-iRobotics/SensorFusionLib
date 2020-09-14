@@ -131,11 +131,16 @@ bool SystemManager::isAvailable(int index) const {
 }
 
 void SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
-	SystemData* ptr = this->SystemByID(data.GetSourceID());
-	if (data.HasValue())
-		ptr->setValue(data.GetValue(), data.GetDataType());
-	if (data.HasVariance())
-		ptr->setVariance(data.GetVariance(), data.GetDataType());
+	try {
+		SystemData* ptr = this->SystemByID(data.GetSourceID());
+		if (data.HasValue())
+			ptr->setValue(data.GetValue(), data.GetDataType());
+		if (data.HasVariance())
+			ptr->setVariance(data.GetVariance(), data.GetDataType());
+	}
+	catch (std::runtime_error&) {
+		//printf("Unknown ID %d.\n", data.GetSourceID());
+	}
 }
 
 int SystemManager::_GetIndex(unsigned int ID) const {
@@ -179,7 +184,7 @@ Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, 
 	DataType type = System::getInputValueType(outType, inType);
 	Eigen::Index n = num(type, forcedOutput);
 	// Get nonlinear dependencies
-	Eigen::VectorXi dep = Eigen::VectorXi(n);
+	Eigen::VectorXi dep_ = Eigen::VectorXi(n);
 	// Sum dependencies from basesystem properties
 	Eigen::VectorXi baseSystemDep = baseSystem.dep(outType, inType, forcedOutput);
 	for (size_t i = 0; i < nSensors(); i++) {
@@ -189,14 +194,14 @@ Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, 
 	}
 	// Concatenate dep vectors
 	Eigen::Index j = baseSystemDep.size();
-	dep.segment(0, j) = baseSystemDep;
+	dep_.segment(0, j) = baseSystemDep;
 	for (size_t i = 0; i < nSensors(); i++) {
 		Eigen::VectorXi temp = sensorList[i].depSensor(outType, inType, forcedOutput);
 		Eigen::Index d = temp.size();
-		dep.segment(j, d) = temp;
+		dep_.segment(j, d) = temp;
 		j += d;
 	}
-	return dep;
+	return dep_;
 }
 
 const SystemManager::SensorData& SystemManager::Sensor(size_t index) const { return sensorList[index]; }
@@ -475,7 +480,10 @@ DataMsg SF::SystemManager::GetDataByIndex(int systemIndex, DataType dataType, Op
 }
 
 SystemManager::SystemManager(const BaseSystemData& data, const StatisticValue& state_) :
-	sensorList(std::vector<SensorData>()), state(state_), baseSystem(data) {}
+	sensorList(std::vector<SensorData>()), state(state_), baseSystem(data) {
+	if (data.num(STATE) != state_.Length())
+		throw std::runtime_error("Wrong state size!");
+}
 
 SystemManager::~SystemManager() {
 }
