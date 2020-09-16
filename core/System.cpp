@@ -66,6 +66,14 @@ std::vector<std::string> System::getNames(DataType type) const {
 std::string System::getName() const {
 	return "System";
 }
+const Eigen::VectorXi & SF::System::getIfStateIsRad() const {
+	static Eigen::VectorXi out = Eigen::VectorXi::Zero(getNumOfStates());
+	return out;
+}
+const Eigen::VectorXi & SF::System::getIfOutputIsRad() const {
+	static Eigen::VectorXi out = Eigen::VectorXi::Zero(getNumOfOutputs());
+	return out;
+}
 DataType System::getInputValueType(TimeUpdateType outType, VariableType inType) {
 	if (inType == VAR_STATE)
 		return DataType::STATE;

@@ -42,6 +42,10 @@ namespace SF {
 
 		virtual std::string getName() const; /*!< Get name of the system */
 
+		virtual const Eigen::VectorXi& getIfStateIsRad() const;
+
+		virtual const Eigen::VectorXi& getIfOutputIsRad() const;
+
 	protected:
 		System(unsigned int ID); /*!< Constructor */
 
