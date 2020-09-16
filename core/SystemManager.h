@@ -214,6 +214,12 @@ namespace SF {
 		*/
 		Eigen::VectorXi dep(TimeUpdateType outType, VariableType inType, bool forcedOutput = false) const;
 
+		/*! \brief Get the if the elements of the current output are radian or not
+		*
+		* By using forcedOutput=true input, it assumes UPTODATE measurements
+		*/
+		Eigen::VectorXi isOutputRad(bool forcedOutput = false) const;
+
 		/*! \brief Get the A,B, C,D matrices of the system according to the measurement statuses of the systems
 		*
 		* By using forcedOutput=true input, it assumes UPTODATE measurements

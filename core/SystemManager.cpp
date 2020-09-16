@@ -204,6 +204,29 @@ Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, 
 	return dep_;
 }
 
+/*! \brief Get the if the elements of the current output are radian or not
+*
+* By using forcedOutput=true input, it assumes UPTODATE measurements
+*/
+
+Eigen::VectorXi SF::SystemManager::isOutputRad(bool forcedOutput) const {
+	Eigen::VectorXi out = Eigen::VectorXi(num(DataType::OUTPUT, forcedOutput));
+	auto basesystemout = baseSystem.getPtr()->getIfOutputIsRad();
+	Eigen::Index j = 0;
+	if (baseSystem.available() || forcedOutput) {
+		basesystemout.size();
+		out.segment(0, j) = basesystemout;
+	}
+	for (size_t i = 0; i < nSensors(); i++)
+		if (sensorList[i].available() || forcedOutput) {
+			Eigen::VectorXi temp = sensorList[i].getPtr()->getIfOutputIsRad();
+			Eigen::Index d = temp.size();
+			out.segment(j, d) = temp;
+			j += d;
+		}
+	return out;
+}
+
 const SystemManager::SensorData& SystemManager::Sensor(size_t index) const { return sensorList[index]; }
 
 SystemManager::SensorData & SystemManager::Sensor(size_t index) { return sensorList[index]; }
