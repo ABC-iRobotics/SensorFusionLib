@@ -93,6 +93,13 @@ void DataMsg::SetValueVector(const Eigen::VectorXd & v) {
 	value = v;
 }
 
+void DataMsg::SetValue(const StatisticValue& v) {
+	hasValue = true;
+	value = v.vector;
+	hasVariance = true;
+	variance = v.variance;
+}
+
 bool SF::DataMsg::operator!=(const DataMsg& data) const {
 	return !(operator==(data));
 }

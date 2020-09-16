@@ -57,6 +57,8 @@ namespace SF {
 
 		void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
 
+		void SetValue(const StatisticValue& v);
+
 		typedef std::shared_ptr<DataMsg> DataMsgPtr; /*!< std::shared_ptr for class DataMsg */
 
 		typedef std::vector<DataMsgPtr> DataMsgPtrList; /*!< std::vector for instances of std::shared_ptr<DataMsg> */
