@@ -21,24 +21,26 @@ void KalmanFilter::Step(const DTime& dT) { // update, collect measurement, corre
 	StatisticValue y_pred = Eval(OUTPUT_UPDATE, dT_sec, x_pred, (*this)(NOISE), Syxpred, sg2);
 
 	PredictionDone(x_pred, y_pred);
+	StatisticValue newstate = x_pred;
+	if (y_pred.Length() > 0) {
+		Eigen::MatrixXd Syy = y_pred.variance + y_meas.variance;
 
-	Eigen::MatrixXd Syy = y_pred.variance + y_meas.variance;
+		Eigen::MatrixXd K = Syxpred.transpose() * Syy.inverse();
+		Eigen::MatrixXd Sxnew = (x_pred.variance - K * Syxpred);
+		Eigen::VectorXd ydiff = y_meas.vector - y_pred.vector;
 
-	Eigen::MatrixXd K = Syxpred.transpose() * Syy.inverse();
-	Eigen::MatrixXd Sxnew = x_pred.variance - K * Syxpred;
-	Eigen::VectorXd ydiff = y_meas.vector - y_pred.vector;
-	auto isyrad = isOutputRad(false);
-	for (int i=0;i<isyrad.size();i++)
-		if (isyrad(i)==1) {
-			ydiff(i) = fmod(ydiff(i), 2. * EIGEN_PI);
-			if (ydiff(i) < -EIGEN_PI)
-				ydiff(i) += EIGEN_PI * 2.;
-			if (ydiff(i) > EIGEN_PI)
-				ydiff(i) -= EIGEN_PI * 2.;
-		}
-	StatisticValue newstate = StatisticValue(x_pred.vector + K * ydiff,
-		(Sxnew + Sxnew.transpose()) / 2.);
-
+		auto isyrad = isOutputRad(false);
+		for (int i=0;i<isyrad.size();i++)
+			if (isyrad(i)==1) {
+				ydiff(i) = fmod(ydiff(i), 2. * EIGEN_PI);
+				if (ydiff(i) < -EIGEN_PI)
+					ydiff(i) += EIGEN_PI * 2.;
+				if (ydiff(i) > EIGEN_PI)
+					ydiff(i) -= EIGEN_PI * 2.;
+			}
+		newstate = StatisticValue(x_pred.vector + K * ydiff,
+			(Sxnew + Sxnew.transpose()) / 2.);
+	}
 	FilteringDone(newstate);
 
 	State() = newstate;
