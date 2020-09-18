@@ -46,17 +46,15 @@ void KalmanFilter::Step(const DTime& dT) { // update, collect measurement, corre
 }
 
 void SF::KalmanFilter::SamplingTimeOver(const Time & currentTime) {
-	if (firstStep) {
+	if (firstStep)
 		firstStep = false;
-		lastStepTime = currentTime;
-	}
 	Step(duration_cast(currentTime - lastStepTime));
+	lastStepTime = currentTime;
 }
 
 void SF::KalmanFilter::MsgQueueEmpty(const Time & currentTime) {
-	if (firstStep) {
+	if (firstStep)
 		firstStep = false;
-		lastStepTime = currentTime;
-	}
 	Step(duration_cast(currentTime - lastStepTime));
+	lastStepTime = currentTime;
 }
