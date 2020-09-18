@@ -34,6 +34,7 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 				while (Now2() < deadline)
 					;
 				filterCore->MsgQueueEmpty(Now2());
+				tNext = t + Ts;
 				got = false;
 				continue;
 			}
