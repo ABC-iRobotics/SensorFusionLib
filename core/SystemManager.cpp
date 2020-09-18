@@ -138,8 +138,8 @@ void SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
 		if (data.HasVariance())
 			ptr->setVariance(data.GetVariance(), data.GetDataType());
 	}
-	catch (std::runtime_error&) {
-		//printf("Unknown ID %d.\n", data.GetSourceID());
+	catch (const std::runtime_error&) {
+		printf("Warning: unknown sensor ID (%d).\n", data.GetSourceID());
 	}
 }
 
