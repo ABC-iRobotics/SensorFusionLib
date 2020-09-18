@@ -320,15 +320,19 @@ void WAUKF::SaveDataMsg(const DataMsg& data, const Time& t) {
 }
 
 void SF::WAUKF::SamplingTimeOver(const Time & currentTime) {
-	if (firstStep)
+	if (firstStep) {
 		firstStep = false;
+		lastStepTime = currentTime;
+	}
 	Step(duration_cast(currentTime - lastStepTime));
 	lastStepTime = currentTime;
 }
 
 void SF::WAUKF::MsgQueueEmpty(const Time & currentTime) {
-	if (firstStep)
+	if (firstStep) {
 		firstStep = false;
+		lastStepTime = currentTime;
+	}
 	Step(duration_cast(currentTime - lastStepTime));
 	lastStepTime = currentTime;
 }
