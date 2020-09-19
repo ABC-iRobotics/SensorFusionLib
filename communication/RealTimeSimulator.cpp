@@ -23,8 +23,12 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 			if ((deadline > tNext) || (logread.getLatestTimeStamp() > tNext && !got)) {
 				while (Now2() < tNext)
 					;
-				filterCore->SamplingTimeOver(Now2());
-				// TODO: send results to the forwarder
+				auto t = Now2();
+				filterCore->SamplingTimeOver(t);
+				// forward filtered state
+				for (int i = 0; i < filterCore->nSensors() + 1; i++)
+					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), t);
+				// set variables
 				tNext += Ts;
 				got = false;
 				continue;
@@ -33,7 +37,12 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 			if (got && (logread.getLatestTimeStamp() > deadline)) {
 				while (Now2() < deadline)
 					;
-				filterCore->MsgQueueEmpty(Now2());
+				auto t = Now2();
+				filterCore->MsgQueueEmpty(t);
+				// forward filtered state
+				for (int i = 0; i < filterCore->nSensors() + 1; i++)
+					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), t);
+				// set variables
 				tNext = t + Ts;
 				got = false;
 				continue;

@@ -60,6 +60,10 @@ class Tester : public FilterCore {
 	Time lastSamplingTime;
 	Time lastTime;
 public:
+	size_t nSensors() const {
+		return 0;
+	}
+
 	void SamplingTimeOver(const Time& currentTime) override {
 		//printf(" SamplingTimeOver %lld\n", duration_cast(currentTime.time_since_epoch()).count());
 		auto DT = duration_cast(currentTime - lastSamplingTime);

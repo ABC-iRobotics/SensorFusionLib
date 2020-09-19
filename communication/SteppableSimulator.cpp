@@ -24,7 +24,10 @@ void SF::SteppableSimulator::_run(DTime Ts) {
 			// Sampling ended
 			if (logread.getLatestTimeStamp() > tNext && (tNext < tLast + tWaitNextMsg || !got)) {
 				filterCore->SamplingTimeOver(tNext);
-				// TODO: Send state and output via 
+				// forward filtered state
+				for (int i = 0; i < filterCore->nSensors() + 1; i++)
+					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), tNext);
+				// set variables
 				tNext += Ts;
 				got = false;
 				continue;
@@ -32,6 +35,11 @@ void SF::SteppableSimulator::_run(DTime Ts) {
 			// Read queue is empty
 			if (got && (logread.getLatestTimeStamp() > tLast + tWaitNextMsg)) {
 				filterCore->MsgQueueEmpty(tLast + tWaitNextMsg);
+				// forward filtered state
+				for (int i = 0; i < filterCore->nSensors()+1; i++)
+					ForwardDataMsg(filterCore->GetDataByIndex(i-1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), tNext);
+				// set variables
+				tNext += Ts;
 				got = false;
 				continue;
 			}

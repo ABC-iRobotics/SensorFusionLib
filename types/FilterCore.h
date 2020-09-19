@@ -23,5 +23,6 @@ namespace SF {
 		virtual DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) = 0; //!< To get predicted/filtered state/output/.. values
 
 		virtual DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) = 0; //!< To get predicted/filtered state/output/.. values
+		virtual size_t nSensors() const = 0;
 	};
 }

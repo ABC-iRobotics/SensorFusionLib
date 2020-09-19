@@ -197,7 +197,7 @@ namespace SF {
 
 		typedef std::function<void(const DataMsg& data)> Callback; /*!< Callback that can be set to handle results of time update & filtering update */
 
-		size_t nSensors() const; /*!< Get number of sensor installed */
+		size_t nSensors() const override; /*!< Get number of sensor installed */
 
 		const SystemData* SystemByID(unsigned int ID) const;  /*!< Get const pointer for a SystemData by ID */
 

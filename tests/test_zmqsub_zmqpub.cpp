@@ -108,6 +108,10 @@ static std::vector<std::string> strings;
 class Checker : public FilterCore {
 	int n = 0;
 public:
+	size_t nSensors() const {
+		return 0;
+	}
+
 	void SaveDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
 		if (msg != msgs[n]) {
 			printf("Error:\n");
