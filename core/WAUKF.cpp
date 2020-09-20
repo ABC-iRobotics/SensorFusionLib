@@ -310,13 +310,13 @@ void WAUKF::Step(const DTime& dT) { // update, collect measurement, correction v
 	resetMeasurement();
 }
 
-void WAUKF::SaveDataMsg(const DataMsg& data, const Time& t) {
+bool WAUKF::SaveDataMsg(const DataMsg& data, const Time& t) {
 	auto data_ = data;
 	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VALUE))
 		data_.ClearValue();
 	if (_isEstimated(data.GetSourceID(), data.GetDataType(), VARIANCE))
 		data_.ClearVariance();
-	SystemManager::SaveDataMsg(data_, t);
+	return SystemManager::SaveDataMsg(data_, t);
 }
 
 void SF::WAUKF::SamplingTimeOver(const Time & currentTime) {

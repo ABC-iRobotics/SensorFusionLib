@@ -106,7 +106,7 @@ namespace SF {
 		*
 		* Omitted if the value is estimated by the adaptive method.
 		*/
-		void SaveDataMsg(const DataMsg& data, const Time&) override;
+		bool SaveDataMsg(const DataMsg& data, const Time&) override;
 
 	private:
 		typedef std::map<unsigned int, MAWindow<Eigen::VectorXd>> mapOfVectorWindows;

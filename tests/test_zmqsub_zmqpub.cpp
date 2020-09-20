@@ -112,7 +112,7 @@ public:
 		return 0;
 	}
 
-	void SaveDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
+	bool SaveDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
 		if (msg != msgs[n]) {
 			printf("Error:\n");
 			msg.print();
@@ -120,6 +120,7 @@ public:
 		}
 		error |= (msg != msgs[n]);
 		n++;
+		return true;
 	}
 
 	void SamplingTimeOver(const Time& currentTime) {}

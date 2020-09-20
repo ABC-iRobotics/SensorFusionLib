@@ -74,7 +74,7 @@ public:
 		lastSamplingTime = currentTime;
 	}
 
-	void SaveDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
+	bool SaveDataMsg(const DataMsg& msg, const Time& currentTime = Now()) override {
 		//printf(" DATAMSG %lld\n", duration_cast(currentTime.time_since_epoch()).count());
 		if (last) {
 			errors++;
@@ -88,6 +88,7 @@ public:
 			last = true;
 		}
 		lastTime = currentTime;
+		return true;
 	}
 
 	void MsgQueueEmpty(const Time& currentTime = Now()) override {

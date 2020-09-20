@@ -48,9 +48,8 @@ void SF::SteppableSimulator::_run(DTime Ts) {
 		// Process the current row
 		switch (logread.getLatestRowType()) {
 		case DATAMSG:
-			filterCore->SaveDataMsg(logread.getLatestDataMsgIf(), logread.getLatestTimeStamp()); // Send to the filter
+			got |= filterCore->SaveDataMsg(logread.getLatestDataMsgIf(), logread.getLatestTimeStamp()); // Send to the filter
 			ForwardDataMsg(logread.getLatestDataMsgIf(), logread.getLatestTimeStamp()); // Send to the logger / zmq output
-			got = true;
 			break;
 		case TEXT:
 			ForwardString(logread.getLatestRowIf(), logread.getLatestTimeStamp());

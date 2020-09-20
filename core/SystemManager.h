@@ -193,7 +193,7 @@ namespace SF {
 		/*! \brief The function to inject data (meas. results, noise, disturbance value and/or variances)
 		*
 		*/
-		virtual void SaveDataMsg(const DataMsg& data, const Time& t = Now()) override;
+		virtual bool SaveDataMsg(const DataMsg& data, const Time& t = Now()) override;
 
 		typedef std::function<void(const DataMsg& data)> Callback; /*!< Callback that can be set to handle results of time update & filtering update */
 

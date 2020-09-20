@@ -54,9 +54,8 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 		// Process the current row
 		switch (logread.getLatestRowType()) {
 		case DATAMSG:
-			filterCore->SaveDataMsg(logread.getLatestDataMsgIf(), Now2());
+			got |= filterCore->SaveDataMsg(logread.getLatestDataMsgIf(), Now2());
 			ForwardDataMsg(logread.getLatestDataMsgIf(), Now2());
-			got = true;
 			break;
 		case TEXT:
 			ForwardString(logread.getLatestRowIf(), Now2());

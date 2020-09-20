@@ -130,7 +130,7 @@ bool SystemManager::isAvailable(int index) const {
 	return Sensor(index).available();
 }
 
-void SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
+bool SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
 	try {
 		SystemData* ptr = this->SystemByID(data.GetSourceID());
 		if (data.HasValue())
@@ -140,7 +140,9 @@ void SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
 	}
 	catch (const std::runtime_error&) {
 		printf("Warning: unknown sensor ID (%d).\n", data.GetSourceID());
+		return false;
 	}
+	return true;
 }
 
 int SystemManager::_GetIndex(unsigned int ID) const {
