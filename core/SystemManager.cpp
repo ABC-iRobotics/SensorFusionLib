@@ -213,10 +213,10 @@ Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, 
 
 Eigen::VectorXi SF::SystemManager::isOutputRad(bool forcedOutput) const {
 	Eigen::VectorXi out = Eigen::VectorXi((int)num(DataType::OUTPUT, forcedOutput));
-	auto basesystemout = baseSystem.getPtr()->getIfOutputIsRad();
 	Eigen::Index j = 0;
 	if (baseSystem.available() || forcedOutput) {
-		basesystemout.size();
+		auto basesystemout = baseSystem.getPtr()->getIfOutputIsRad();
+		j = basesystemout.size();
 		out.segment(0, j) = basesystemout;
 	}
 	for (size_t i = 0; i < nSensors(); i++)
