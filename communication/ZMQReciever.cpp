@@ -120,7 +120,7 @@ SF::MsgType SF::ZMQReciever::_ProcessMsg_old(zmq::message_t & msg, const std::st
 		}
 		return MsgType::DATAMSG;
 	}
-	printf("FLATC VERIFICATION ERROR (in ZMQReciever::_ProcessMsg_old, address: %s)\n", address);
+	printf("FLATC VERIFICATION ERROR (in ZMQReciever::_ProcessMsg_old, address: %s)\n", address.c_str());
 	return SF::MsgType::NOTHING;
 }
 
@@ -140,7 +140,7 @@ SF::MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t 
 			return MsgType::DATAMSG;
 		}
 		else
-			printf("FLATC VERIFICATION ERROR (in ZMQReciever::_ProcessMsg, address: %s)\n", address);
+			printf("FLATC VERIFICATION ERROR (in ZMQReciever::_ProcessMsg, address: %s)\n", address.c_str());
 		return SF::MsgType::NOTHING;
 	}
 	case 'i':

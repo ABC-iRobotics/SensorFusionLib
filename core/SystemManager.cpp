@@ -212,7 +212,7 @@ Eigen::VectorXi SystemManager::dep(TimeUpdateType outType, VariableType inType, 
 */
 
 Eigen::VectorXi SF::SystemManager::isOutputRad(bool forcedOutput) const {
-	Eigen::VectorXi out = Eigen::VectorXi(num(DataType::OUTPUT, forcedOutput));
+	Eigen::VectorXi out = Eigen::VectorXi((int)num(DataType::OUTPUT, forcedOutput));
 	auto basesystemout = baseSystem.getPtr()->getIfOutputIsRad();
 	Eigen::Index j = 0;
 	if (baseSystem.available() || forcedOutput) {
@@ -326,8 +326,8 @@ Eigen::VectorXd SystemManager::EvalNonLinPart(double Ts,
 	for (size_t i = 0; i < nSensors(); i++)
 		if (outType == STATE_UPDATE || sensorList[i].available() || forcedOutput) {
 			size_t d = sensorList[i].num(outtype, forcedOutput);
-			auto xi = partitioner.PartValue(STATE, state, i);
-			auto ini = partitioner.PartValue(intype, in, i);
+			auto xi = partitioner.PartValue(STATE, state, (int)i);
+			auto ini = partitioner.PartValue(intype, in, (int)i);
 			out.segment(n, d) = sensorList[i].getSensorPtr()->EvalNonlinearPart(outType, Ts, xbase, inbase, xi, ini);
 			n += d;
 		}
