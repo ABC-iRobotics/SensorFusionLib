@@ -130,13 +130,16 @@ bool SystemManager::isAvailable(int index) const {
 	return Sensor(index).available();
 }
 
+/*! \brief Exception thrown if system ID was not found
+*
+*/
 class SystemIDNotFoundWarning : public std::exception
 {
 public:
-	SystemIDNotFoundWarning(int ID) : msg("System with ID: " + std::to_string(ID) + " not found!") {}
-	const char* what() { return msg.c_str(); } //message of warning
+	SystemIDNotFoundWarning(int ID) : msg("System with ID: " + std::to_string(ID) + " not found!") {} //!< Constructor
+	const char* what() { return msg.c_str(); } //!< Returns the msg of the warning
 private:
-	std::string msg;
+	std::string msg; //!< The msg of warning
 };
 
 bool SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {

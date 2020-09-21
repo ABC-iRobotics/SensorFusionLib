@@ -909,9 +909,12 @@ EXCLUDE                = "@CMAKE_SOURCE_DIR@/plotter/color.cc" \
                          "@CMAKE_SOURCE_DIR@/plotter/window.cc" \
                          "@CMAKE_SOURCE_DIR@/plotter/window.h" \
                          "@CMAKE_SOURCE_DIR@/communication/msgcontent_generated.h" \
+						 "@CMAKE_SOURCE_DIR@/communication/msg_old_generated.h" \
 						 "@CMAKE_SOURCE_DIR@/types/json.hpp" \
 						 "@CMAKE_SOURCE_DIR@/tests/" \
-						 "@CMAKE_SOURCE_DIR@/cmake/"
+						 "@CMAKE_SOURCE_DIR@/cmake/" \
+						 "@CMAKE_SOURCE_DIR@/doxygen_main.h" \
+						 "@CMAKE_SOURCE_DIR@/readme.md"
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

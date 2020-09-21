@@ -42,9 +42,9 @@ namespace SF {
 
 		virtual std::string getName() const; /*!< Get name of the system */
 
-		virtual const Eigen::VectorXi& getIfStateIsRad() const;
+		virtual const Eigen::VectorXi& getIfStateIsRad() const; /*!< Get if the state variables are periodic radians */
 
-		virtual const Eigen::VectorXi& getIfOutputIsRad() const;
+		virtual const Eigen::VectorXi& getIfOutputIsRad() const; /*!< Get if the output variables are periodic radians */
 
 	protected:
 		System(unsigned int ID); /*!< Constructor */

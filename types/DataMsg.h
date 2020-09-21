@@ -57,7 +57,7 @@ namespace SF {
 
 		void SetValueVector(const Eigen::VectorXd& v); /*!< To set the value vector */
 
-		void SetValue(const StatisticValue& v);
+		void SetValue(const StatisticValue& v); /*!< To set the value vector and the covariance matrix */
 
 		typedef std::shared_ptr<DataMsg> DataMsgPtr; /*!< std::shared_ptr for class DataMsg */
 
