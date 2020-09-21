@@ -130,6 +130,15 @@ bool SystemManager::isAvailable(int index) const {
 	return Sensor(index).available();
 }
 
+class SystemIDNotFoundWarning : public std::exception
+{
+public:
+	SystemIDNotFoundWarning(int ID) : msg("System with ID: " + std::to_string(ID) + " not found!") {}
+	const char* what() { return msg.c_str(); } //message of warning
+private:
+	std::string msg;
+};
+
 bool SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
 	try {
 		SystemData* ptr = this->SystemByID(data.GetSourceID());
@@ -138,7 +147,7 @@ bool SystemManager::SaveDataMsg(const DataMsg & data, const Time& t) {
 		if (data.HasVariance())
 			ptr->setVariance(data.GetVariance(), data.GetDataType());
 	}
-	catch (const std::runtime_error&) {
+	catch (const SystemIDNotFoundWarning&) {
 		printf("Warning: unknown sensor ID (%d).\n", data.GetSourceID());
 		return false;
 	}
@@ -151,7 +160,7 @@ int SystemManager::_GetIndex(unsigned int ID) const {
 	for (unsigned int i = 0; i < nSensors(); i++)
 		if (sensorList[i].getPtr()->getID() == ID)
 			return i;
-	throw std::runtime_error(std::string("SystemManager::_GetIndex(): unknown ID"));
+	throw SystemIDNotFoundWarning(ID);
 }
 
 // returns -1 for the basesystem!
