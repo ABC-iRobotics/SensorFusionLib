@@ -12,8 +12,9 @@ SF::Filter::Filter(FilterCore::FilterCorePtr filterCore_)
 
 void SF::Filter::SamplingTimeOver(const Time & currentTime) {
 	filterCore->SamplingTimeOver(currentTime);
-	ForwardDataMsg(filterCore->GetDataByIndex(-1, STATE, FILTER_TIME_UPDATE), currentTime); // Predicted basesystem state
-	ForwardDataMsg(filterCore->GetDataByIndex(-1, STATE, FILTER_MEAS_UPDATE), currentTime); // Filtered basesystem state
+	// forward filtered state
+	for (int i = 0; i < filterCore->nSensors() + 1; i++)
+		ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), currentTime);
 }
 
 void SF::Filter::SaveDataMsg(const DataMsg & msg, const Time & currentTime) {
