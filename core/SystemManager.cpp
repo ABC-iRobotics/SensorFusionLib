@@ -229,6 +229,26 @@ Eigen::VectorXi SF::SystemManager::isOutputRad(bool forcedOutput) const {
 	return out;
 }
 
+/*! \brief Get the the elements of the state vector are radian or not
+*
+*/
+
+Eigen::VectorXi SF::SystemManager::isStateRad() const {
+	Eigen::VectorXi out = Eigen::VectorXi(state.Length());
+
+	auto basesystemout = baseSystem.getPtr()->getIfStateIsRad();
+	Eigen::Index j = basesystemout.size();
+	out.segment(0, j) = basesystemout;
+
+	for (size_t i = 0; i < nSensors(); i++) {
+		Eigen::VectorXi temp = sensorList[i].getPtr()->getIfStateIsRad();
+		Eigen::Index d = temp.size();
+		out.segment(j, d) = temp;
+		j += d;
+	}
+	return out;
+}
+
 const SystemManager::SensorData& SystemManager::Sensor(size_t index) const { return sensorList[index]; }
 
 SystemManager::SensorData & SystemManager::Sensor(size_t index) { return sensorList[index]; }

@@ -220,6 +220,11 @@ namespace SF {
 		*/
 		Eigen::VectorXi isOutputRad(bool forcedOutput = false) const;
 
+		/*! \brief Get the the elements of the state vector are radian or not
+		*
+		*/
+		Eigen::VectorXi isStateRad() const;
+
 		/*! \brief Get the A,B, C,D matrices of the system according to the measurement statuses of the systems
 		*
 		* By using forcedOutput=true input, it assumes UPTODATE measurements

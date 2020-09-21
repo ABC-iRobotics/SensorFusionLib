@@ -96,6 +96,7 @@ namespace SF {
 	* Steps the last filtered state with \f$dT \f$ by applying the time update model, and performs Kalman-filtering, see description of class KalmanFilter for more details.
 	*/
 	// TODO: perform further tests on the adaptive methods
+		// Does not contain offset of rad state variables
 		void Step(const DTime& dT);
 
 		void SamplingTimeOver(const Time& currentTime) override; /*!< Is called in each sampling time - input: time */
