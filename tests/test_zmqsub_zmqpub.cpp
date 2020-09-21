@@ -37,8 +37,8 @@ class ZMQRecievingTest : public ZMQReciever {
 
 	}
 
-	void SaveDataMsg(const DataMsg& msg, const Time& currentTime) override {
-
+	bool SaveDataMsg(const DataMsg& msg, const Time& currentTime) override {
+		return true;
 	}
 
 	void MsgQueueEmpty(const Time& currentTime) override {}

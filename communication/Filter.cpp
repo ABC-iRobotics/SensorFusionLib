@@ -17,9 +17,10 @@ void SF::Filter::SamplingTimeOver(const Time & currentTime) {
 		ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), currentTime);
 }
 
-void SF::Filter::SaveDataMsg(const DataMsg & msg, const Time & currentTime) {
-	filterCore->SaveDataMsg(msg, currentTime);
+bool SF::Filter::SaveDataMsg(const DataMsg & msg, const Time & currentTime) {
+	bool out = filterCore->SaveDataMsg(msg, currentTime);
 	ForwardDataMsg(msg, currentTime);
+	return out;
 }
 
 /*!< Must called if the DataMsgs in the queue were read */

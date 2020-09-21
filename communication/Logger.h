@@ -27,7 +27,7 @@ namespace SF {
 		void SamplingTimeOver(const Time& currentTime) override {}
 
 		/*!< Must called if new DataMsg recieved */
-		void SaveDataMsg(const DataMsg& msg, const Time& currentTime) override;
+		bool SaveDataMsg(const DataMsg& msg, const Time& currentTime) override;
 
 		/*!< Must called if the DataMsgs in the queue were read */
 		void MsgQueueEmpty(const Time& currentTime) override {}

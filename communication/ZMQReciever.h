@@ -67,7 +67,7 @@ namespace SF {
 	protected:
 		virtual void SamplingTimeOver(const Time& currentTime) = 0; /*!< Must called in each sampling time - input: time */
 
-		virtual void SaveDataMsg(const DataMsg& msg, const Time& currentTime) = 0; /*!< Must called if new DataMsg recieved */
+		virtual bool SaveDataMsg(const DataMsg& msg, const Time& currentTime) = 0; /*!< Must called if new DataMsg recieved */
 
 		virtual void MsgQueueEmpty(const Time& currentTime) = 0; /*!< Must called if the DataMsgs in the queue were read */
 

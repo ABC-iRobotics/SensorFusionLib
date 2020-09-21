@@ -111,7 +111,9 @@ SF::MsgType SF::ZMQReciever::_ProcessMsg_old(zmq::message_t & msg, const std::st
 	bool isDataMsg = ExtractBufIf(msg.data(), msg.size(), dataMsg);
 	if (isDataMsg) {
 		//if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
-		SaveDataMsg(dataMsg, Now());
+		if (!SaveDataMsg(dataMsg, Now())) {
+			return SF::MsgType::NOTHING;
+		}
 		// Warning msg
 		static bool warning_thrown = false;
 		if (!warning_thrown) {
@@ -136,7 +138,9 @@ SF::MsgType SF::ZMQReciever::_ProcessMsg(zmq::message_t & topic, zmq::message_t 
 		DataType type = static_cast<DataType>(t[3]);
 		if (VerifyDataMsgContent(msg.data(), (int)msg.size())) {
 			if (!GetPeripheryClockSynchronizerPtr()->IsClockSynchronisationInProgress(address))
-				SaveDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)),Now());
+				if (!SaveDataMsg(InitDataMsg(msg.data(), source, ID, type, GetPeripheryClockSynchronizerPtr()->GetOffset(address)), Now())) {
+					return SF::MsgType::NOTHING;
+				}
 			return MsgType::DATAMSG;
 		}
 		else
