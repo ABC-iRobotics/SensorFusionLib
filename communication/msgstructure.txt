@@ -1,0 +1,34 @@
+The structure of the used ZMQ msg-s is the following:
+
+1. If the msg is a string (error, warning, state, etc.), the topic is a simple 'i' as info, the message is the text.
+
+2. If the msg is a measurement/filtered value/ etc. then:
+
+- the length of the topic is 4.
+	1. First char: 'd' as data
+
+	2. Second char defines its source:
+		\x01: FILTER_TIME_UPDATE, (<- the filtered value)
+		\x02: FILTER_MEAS_UPDATE,
+		\x03: SENSOR, (<- the measured value)
+		\x04: FILTER_PARAM_ESTIMATION,
+		\x05: GROUND_TRUTH,
+		\x06: INVALID_OPERATIONTYPE
+		
+	3. The third char describes its ID:
+		\x00: ID=0,
+		\x01: ID=1, etc.
+
+	4. The fourth char describes wich variable it:
+		\x01: NOISE,
+		\x02: DISTURBANCE,
+		\x03: STATE, (<- the filtered states are interesting)
+		\x04: OUTPUT, (<- the sensors send their noisy output signals)
+		\x05: INVALID_DATATYPE
+		
+- The content of the message is serialized by flatbuffer. Its structure is described by msgcontent.fbs file.
+Serializer/deserializer modules can be obtained for it via flatc app.
+
+
+By subscribing to topic "" it will carry all msgs, or "d\x03" will give you all of the datamsgs come from sensors.
+		

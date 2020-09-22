@@ -335,6 +335,7 @@ endif()
 install(CODE "
 		foreach(MSG_FILE msgcontent_generated.h
 			msgcontent_generated.js
+			msgstructure.txt
 			DataMsgContentNameSpace/__init__.py
 			DataMsgContentNameSpace/Msg.py
 			msgcontent.fbs)
