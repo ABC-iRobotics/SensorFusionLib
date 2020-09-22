@@ -331,6 +331,20 @@ if(WITH_DOCS)
 endif()
 
 ## ---------------------------------------------------------------------------------
+## Copy the msg format related things to the install folder
+install(CODE "
+		foreach(MSG_FILE msgcontent_generated.h
+			msgcontent_generated.js
+			DataMsgContentNameSpace/__init__.py
+			DataMsgContentNameSpace/Msg.py
+			msgcontent.fbs)
+			message(\"\$\{MSG_FILE\}\")
+			file(COPY \"${CMAKE_SOURCE_DIR}/communication/\$\{MSG_FILE\}\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/msgformat\" )
+		endforeach()
+		file(COPY \"${CMAKE_SOURCE_DIR}/communication/msgcontent_generated.js\" DESTINATION \"${CMAKE_INSTALL_PREFIX}/MsgFormat\" )
+	" )
+
+## ---------------------------------------------------------------------------------
 ## Tests
 option(BUILD_TESTING "To build the unit tests" TRUE)
 if (BUILD_TESTING)
