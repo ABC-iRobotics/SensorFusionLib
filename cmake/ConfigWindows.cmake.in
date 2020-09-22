@@ -74,6 +74,10 @@ endif()
 find_dependency_in_install(CPPZMQ "")
 #Find spdlog
 find_dependency_in_install(spdlog "")
+if (spdlog_FOUND)
+	set_target_properties(spdlog::spdlog PROPERTIES MAP_IMPORTED_CONFIG_RELWITHDEBINFO RELEASE) #By default the debug libs are tried to use...
+	set_target_properties(spdlog::spdlog PROPERTIES MAP_IMPORTED_CONFIG_MINSIZEREL RELEASE) #By default the debug libs are tried to use...
+endif()
 
 #Create targets
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/@export_targets@-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}.cmake)
