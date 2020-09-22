@@ -1,5 +1,5 @@
 #include "RealTimeSimulator.h"
-
+#include "PrintNestedException.h"
 using namespace SF;
 
 void SF::RealTimeSimulator::_run(DTime Ts) {
@@ -72,7 +72,13 @@ void SF::RealTimeSimulator::Start(DTime Ts) {
 		isRunning = true;
 		toStop = false;
 		t = std::thread([this, Ts]() {
-			_run(Ts);
+			try {
+				_run(Ts);
+			}
+			catch (std::exception& e) {
+				std::cout << "LogReading&Filtering thread has stopped because of an unhandled exception:" << std::endl;
+				print_exception(e);
+			}
 			isRunning = false;
 		});
 	}

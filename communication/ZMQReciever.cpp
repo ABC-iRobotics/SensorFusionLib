@@ -1,25 +1,29 @@
 #include "ZMQReciever.h"
-
+#include "PrintNestedException.h"
 #include"msgcontent2buf.h"
 #include"ClockSynchronizer.h"
 #include"zmq_addon.hpp"
 
 using namespace SF;
 
-void SF::ZMQReciever::Start(DTime Ts)
-{
+void SF::ZMQReciever::Start(DTime Ts) {
 	if (!isRunning) {
 		isRunning = true;
 		toStop = false;
 		t = std::thread([this, Ts]() {
-			_Run(Ts);
+			try {
+				_Run(Ts);
+			}
+			catch (std::exception& e) {
+				std::cout << "ZMQRecieving&Filtering&Sending thread has stopped because of an unhandled exception:" << std::endl;
+				print_exception(e);
+			}
 			isRunning = false;
 		});
 	}
 }
 
-void SF::ZMQReciever::Stop(bool waitin)
-{
+void SF::ZMQReciever::Stop(bool waitin) {
 	toStop = true;
 	if (waitin) {
 		while (isRunning)

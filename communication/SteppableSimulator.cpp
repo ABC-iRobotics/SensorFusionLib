@@ -1,5 +1,5 @@
 #include "SteppableSimulator.h"
-
+#include "PrintNestedException.h"
 using namespace SF;
 
 void SF::SteppableSimulator::_run(DTime Ts) {
@@ -67,7 +67,13 @@ void SF::SteppableSimulator::Start(DTime Ts) {
 		isRunning = true;
 		toStop = false;
 		t = std::thread([this, Ts]() {
-			_run(Ts);
+			try {
+				_run(Ts);
+			}
+			catch (std::exception& e) {
+				std::cout << "LogReading&Filtering thread has stopped because of an unhandled exception:" << std::endl;
+				print_exception(e);
+			}
 			isRunning = false;
 		});
 	}
