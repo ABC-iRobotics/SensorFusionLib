@@ -254,6 +254,7 @@ if (ADD_PLOTTER)
 endif()
 add_subdirectory (core)
 add_subdirectory (communication)
+add_subdirectory (2Dlocalisation )
 
 ## ---------------------------------------------------------------------------------
 ## Target to clean install folder
