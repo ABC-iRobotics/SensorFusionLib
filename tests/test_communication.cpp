@@ -134,11 +134,11 @@ public:
 		TEST_ASSERT(samplingTime.GetAverage() > Ts * 0.9);
 	}
 
-	DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) override {
+	DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType, Time t) override {
 		return DataMsg();
 	}
 
-	DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) override {
+	DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType, Time t) override {
 		return DataMsg();
 	}
 };

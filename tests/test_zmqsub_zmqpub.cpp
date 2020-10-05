@@ -127,11 +127,11 @@ public:
 
 	void MsgQueueEmpty(const Time& currentTime) {}
 
-	DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) override {
+	DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType, Time t) override {
 		return DataMsg();
 	}
 
-	DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) override {
+	DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType, Time t) override {
 		return DataMsg();
 	}
 };

@@ -26,7 +26,7 @@ void SF::SteppableSimulator::_run(DTime Ts) {
 				filterCore->SamplingTimeOver(tNext);
 				// forward filtered state
 				for (int i = 0; i < filterCore->nSensors() + 1; i++)
-					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), tNext);
+					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE, tNext), tNext);
 				// set variables
 				tNext += Ts;
 				got = false;
@@ -37,7 +37,7 @@ void SF::SteppableSimulator::_run(DTime Ts) {
 				filterCore->MsgQueueEmpty(tLast + tWaitNextMsg);
 				// forward filtered state
 				for (int i = 0; i < filterCore->nSensors()+1; i++)
-					ForwardDataMsg(filterCore->GetDataByIndex(i-1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), tNext);
+					ForwardDataMsg(filterCore->GetDataByIndex(i-1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE, tNext), tNext);
 				// set variables
 				tNext += Ts;
 				got = false;

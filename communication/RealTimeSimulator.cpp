@@ -27,7 +27,7 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 				filterCore->SamplingTimeOver(t);
 				// forward filtered state
 				for (int i = 0; i < filterCore->nSensors() + 1; i++)
-					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), t);
+					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE, t), t);
 				// set variables
 				tNext += Ts;
 				got = false;
@@ -41,7 +41,7 @@ void SF::RealTimeSimulator::_run(DTime Ts) {
 				filterCore->MsgQueueEmpty(t);
 				// forward filtered state
 				for (int i = 0; i < filterCore->nSensors() + 1; i++)
-					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE), t);
+					ForwardDataMsg(filterCore->GetDataByIndex(i - 1, DataType::STATE, OperationType::FILTER_MEAS_UPDATE, t), t);
 				// set variables
 				tNext = t + Ts;
 				got = false;

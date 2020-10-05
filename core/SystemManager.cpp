@@ -466,33 +466,33 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 	return StatisticValue(y, Sy);
 }
 
-DataMsg SF::SystemManager::GetDataByID(int systemID, DataType dataType, OperationType opType) {
+DataMsg SF::SystemManager::GetDataByID(int systemID, DataType dataType, OperationType opType, Time currentTime) {
 	if (((dataType == NOISE || dataType == DISTURBANCE) && opType == FILTER_TIME_UPDATE)
 		|| (dataType == OUTPUT && opType == SENSOR)) {
 		auto systemDataPtr = SystemByID(systemID);
 		if (dataType == OUTPUT && !systemDataPtr->available())
 			throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
 		return DataMsg(systemID, dataType, opType,
-			StatisticValue(systemDataPtr->getValue(dataType), systemDataPtr->getVariance(dataType)));
+			StatisticValue(systemDataPtr->getValue(dataType), systemDataPtr->getVariance(dataType)), currentTime);
 	}
 
 	if (opType == FILTER_TIME_UPDATE) {
 		if (dataType == STATE)
 			return DataMsg(systemID, dataType, opType,
-				getPartitioner().PartStatisticValue(dataType, state_predicted, _GetIndex(systemID)));
+				getPartitioner().PartStatisticValue(dataType, state_predicted, _GetIndex(systemID)), currentTime);
 		if (dataType == OUTPUT) {
 			int index = _GetIndex(systemID);
 			if (!isAvailable(index))
 				throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
 			return DataMsg(systemID, dataType, opType,
-				getPartitioner().PartStatisticValue(dataType, output_predicted, index));
+				getPartitioner().PartStatisticValue(dataType, output_predicted, index), currentTime);
 		}
 	}
 
 	if (opType == FILTER_MEAS_UPDATE) {
 		if (dataType == STATE)
 			return DataMsg(systemID, dataType, opType,
-				getPartitioner().PartStatisticValue(dataType, state_filtered, _GetIndex(systemID)));
+				getPartitioner().PartStatisticValue(dataType, state_filtered, _GetIndex(systemID)), currentTime);
 		//if (dataType == OUTPUT)
 		//	return getPartitioner().PartStatisticValue(dataType, output_filtered, _GetIndex(systemID));
 	}
@@ -500,7 +500,7 @@ DataMsg SF::SystemManager::GetDataByID(int systemID, DataType dataType, Operatio
 	throw std::runtime_error(std::string("SystemManager::GetDataByID Not implemented case."));
 }
 
-DataMsg SF::SystemManager::GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) {
+DataMsg SF::SystemManager::GetDataByIndex(int systemIndex, DataType dataType, OperationType opType, Time currentTime) {
 	SystemData * systemDataPtr;
 	if (systemIndex == -1)
 		systemDataPtr = &baseSystem;
@@ -511,24 +511,24 @@ DataMsg SF::SystemManager::GetDataByIndex(int systemIndex, DataType dataType, Op
 		if (dataType == OUTPUT && !isAvailable(systemIndex))
 			throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
 		return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
-			StatisticValue(systemDataPtr->getValue(dataType), systemDataPtr->getVariance(dataType)));
+			StatisticValue(systemDataPtr->getValue(dataType), systemDataPtr->getVariance(dataType)), currentTime);
 	}
 	if (opType == FILTER_TIME_UPDATE) {
 		if (dataType == STATE)
 			return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
-				getPartitioner().PartStatisticValue(dataType, state_predicted, systemIndex));
+				getPartitioner().PartStatisticValue(dataType, state_predicted, systemIndex), currentTime);
 		if (dataType == OUTPUT) {
 			if (!isAvailable(systemIndex))
 				throw std::runtime_error(std::string("SystemManager::GetDataByID OUTPUT not available."));
 			return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
-				getPartitioner().PartStatisticValue(dataType, output_predicted, systemIndex));
+				getPartitioner().PartStatisticValue(dataType, output_predicted, systemIndex), currentTime);
 		}
 	}
 
 	if (opType == FILTER_MEAS_UPDATE) {
 		if (dataType == STATE)
 			return DataMsg(systemDataPtr->getPtr()->getID(), dataType, opType,
-				getPartitioner().PartStatisticValue(dataType, state_filtered, systemIndex));
+				getPartitioner().PartStatisticValue(dataType, state_filtered, systemIndex), currentTime);
 		//if (dataType == OUTPUT)
 		//	return getPartitioner().PartStatisticValue(dataType, output_filtered, _GetIndex(systemID));
 	}

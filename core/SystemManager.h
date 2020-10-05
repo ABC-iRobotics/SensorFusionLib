@@ -256,9 +256,9 @@ namespace SF {
 		StatisticValue Eval(TimeUpdateType outType, double Ts, const StatisticValue& state_, const StatisticValue& in,
 			Eigen::MatrixXd& S_out_x, Eigen::MatrixXd& S_out_in, bool forcedOutput = false) const;
 
-		DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) override;
+		DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType, Time currentTime) override;
 
-		DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) override;
+		DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType, Time currentTime = Now()) override;
 
 	private:
 		StatisticValue state_predicted, output_predicted, state_filtered;// , output_filtered;

@@ -20,9 +20,9 @@ namespace SF {
 
 		virtual void MsgQueueEmpty(const Time& currentTime) = 0; /*!< Is called if the DataMsgs in the queue were read */
 
-		virtual DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType) = 0; //!< To get predicted/filtered state/output/.. values
+		virtual DataMsg GetDataByID(int systemID, DataType dataType, OperationType opType, Time currentTime) = 0; //!< To get predicted/filtered state/output/.. values
 
-		virtual DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType) = 0; //!< To get predicted/filtered state/output/.. values
+		virtual DataMsg GetDataByIndex(int systemIndex, DataType dataType, OperationType opType, Time currentTime) = 0; //!< To get predicted/filtered state/output/.. values
 
 		virtual size_t nSensors() const = 0; //!< To get the number of sensors
 	};
