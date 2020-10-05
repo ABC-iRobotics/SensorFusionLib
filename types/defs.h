@@ -58,4 +58,53 @@ namespace SF {
 	inline double duration_cast_to_sec(const std::chrono::duration<_Rep, _Period>& in) {
 		return duration_cast(in).count() / 1e6;
 	}
+
+	inline std::string to_string(OperationType d) {
+		switch (d)
+		{
+		case SF::FILTER_TIME_UPDATE:
+			return "FILTER_TIME_UPDATE";
+			break;
+		case SF::FILTER_MEAS_UPDATE:
+			return "FILTER_MEAS_UPDATE";
+			break;
+		case SF::SENSOR:
+			return "SENSOR";
+			break;
+		case SF::FILTER_PARAM_ESTIMATION:
+			return "FILTER_PARAM_ESTIMATION";
+			break;
+		case SF::GROUND_TRUTH:
+			return "GROUND_TRUTH";
+			break;
+		case SF::INVALID_OPERATIONTYPE:
+			return "INVALID_OPERATIONTYPE";
+			break;
+		default:
+			break;
+		}
+	}
+
+	inline std::string to_string(DataType d) {
+		switch (d)
+		{
+		case SF::NOISE:
+			return "NOISE";
+			break;
+		case SF::DISTURBANCE:
+			return "DISTURBANCE";
+			break;
+		case SF::STATE:
+			return "STATE";
+			break;
+		case SF::OUTPUT:
+			return "OUTPUT";
+			break;
+		case SF::INVALID_DATATYPE:
+			return "INVALID_DATATYPE";
+			break;
+		default:
+			break;
+		}
+	}
 }
