@@ -32,7 +32,7 @@ namespace SF {
 	*/
 	class Sensor2DPosewDrift : public Sensor {
 	public:
-		Sensor2DPosewDrift(int ID) : Sensor(std::make_shared<Vechicle2D>(0), ID) {}
+		Sensor2DPosewDrift(int ID) : Sensor(std::make_shared<Vechicle2D>(0), ID) {}  /*!< Constructor, argument: unique, user defined ID */
 
 		unsigned int getNumOfStates() const;
 

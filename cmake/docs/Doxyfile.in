@@ -914,7 +914,8 @@ EXCLUDE                = "@CMAKE_SOURCE_DIR@/plotter/color.cc" \
 						 "@CMAKE_SOURCE_DIR@/tests/" \
 						 "@CMAKE_SOURCE_DIR@/cmake/" \
 						 "@CMAKE_SOURCE_DIR@/doxygen_main.h" \
-						 "@CMAKE_SOURCE_DIR@/readme.md"
+						 "@CMAKE_SOURCE_DIR@/readme.md" \
+						 "@CMAKE_SOURCE_DIR@/howto_linux.md"
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -1731,7 +1732,7 @@ EXTRA_SEARCH_MAPPINGS  =
 # If the GENERATE_LATEX tag is set to YES, doxygen will generate LaTeX output.
 # The default value is: YES.
 
-GENERATE_LATEX         = NO
+GENERATE_LATEX         = YES
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of

@@ -13,7 +13,7 @@ namespace SF {
 	*
 	* Then the dynamics can be written as
 	* \f[
-		\mathbf x_{s,k+1} &= \mathbf x_{s,k} + T_s \mathbf w_{s} + f(T_s,\mathbf x_{s},\mathbf x_{bs})
+		\mathbf x_{s,k+1} = \mathbf x_{s,k} + T_s \mathbf w_{s} + f(T_s,\mathbf x_{s},\mathbf x_{bs})
 	\f]
 	* where
 	* \f[
@@ -26,14 +26,14 @@ namespace SF {
 	*
 	* and the output characteristics
 	* \f[
-		\mathbf y_{s,k+1} &= \mathbf I^{3\times 5} \mathbf x_{bs,k} + \mathbf x_{s,k} + \mathbf v_{s,k}.
+		\mathbf y_{s,k+1} = \mathbf I^{3\times 5} \mathbf x_{bs,k} + \mathbf x_{s,k} + \mathbf v_{s,k}.
 	\f]
 	*
 	* The class does not perform any computation, does not store state estimation or measurements. Only describes the dynamics and stores the user defined ID.
 	*/
 	class Sensor2DPosewCalibration : public Sensor {
 	public:
-		Sensor2DPosewCalibration(int ID) : Sensor(std::make_shared<Vechicle2D>(0), ID) {}
+		Sensor2DPosewCalibration(int ID) : Sensor(std::make_shared<Vechicle2D>(0), ID) {}  /*!< Constructor, argument: unique, user defined ID */
 
 		unsigned int getNumOfStates() const;
 

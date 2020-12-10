@@ -63,7 +63,7 @@ namespace SF {
 	*/
 	class Vechicle2D : public BaseSystem {
 	public:
-		Vechicle2D(unsigned int ID) : BaseSystem(ID) {}
+		Vechicle2D(unsigned int ID) : BaseSystem(ID) {}  /*!< Constructor, argument: unique, user defined ID */
 
 		Eigen::MatrixXd getA(double Ts) const;
 
