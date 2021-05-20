@@ -21,4 +21,4 @@ add_library (sf_types STATIC ${SOURCES} ${HEADERS})
 
 requires_eigen(sf_types)
 
-install_lib(sf_types "${HEADERS}")
+install_lib(sf_types "${HEADERS}" ${CMAKE_CURRENT_SOURCE_DIR})

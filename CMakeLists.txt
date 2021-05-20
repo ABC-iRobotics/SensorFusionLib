@@ -224,7 +224,7 @@ endif()
 
 ## ---------------------------------------------------------------------------------
 ## Macro to setup archive targets
-macro(install_lib NAME HEADERS)
+macro(install_lib NAME HEADERS SOURCEDIR)
 	set(LIBS_TO_INSTALL ${LIBS_TO_INSTALL} "${NAME}" PARENT_SCOPE) #for configuring Config.cmake in installing.cmake
 	set_target_properties(${NAME} PROPERTIES FOLDER "Lib" IMPORTED_LOCATION lib)
 	if(WIN32)
@@ -235,7 +235,7 @@ macro(install_lib NAME HEADERS)
 			DEBUG_POSTFIX "-${CMAKE_VS_PLATFORM_TOOLSET}-${CMAKE_GENERATOR_PLATFORM}-${RUNTIME_INFO}-debug")
 	endif()
 	target_include_directories(${NAME} INTERFACE
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>
+		$<BUILD_INTERFACE:${SOURCEDIR}/>
 		$<INSTALL_INTERFACE:include>)
 	install(TARGETS ${NAME} EXPORT ${export_targets}
 		LIBRARY DESTINATION lib
@@ -246,6 +246,25 @@ macro(install_lib NAME HEADERS)
 endmacro(install_lib)
 
 ## ---------------------------------------------------------------------------------
+# Create static library for the relaxed UT
+set (HEADERS
+	RelaxedUT/cppsource/index_selector.h
+	RelaxedUT/cppsource/UT.h
+	RelaxedUT/cppsource/SelUT.h
+	RelaxedUT/cppsource/RelaxedUT.h
+	RelaxedUT/cppsource/PartialCholevski.h
+	)
+	
+set (SOURCES
+	RelaxedUT/cppsource/index_selector.cpp
+	RelaxedUT/cppsource/RelaxedUT.cpp
+	RelaxedUT/cppsource/PartialCholevski.cpp
+	)
+# Add the dinamic library target to the project
+add_library (relaxedUT STATIC ${SOURCES} ${HEADERS})
+requires_eigen(relaxedUT)
+install_lib(relaxedUT "${HEADERS}" ${CMAKE_CURRENT_SOURCE_DIR}/RelaxedUT/cppsource)
+
 ## Get the content of subfolders
 add_subdirectory (types)
 if (ADD_PLOTTER)

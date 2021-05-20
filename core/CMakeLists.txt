@@ -6,7 +6,7 @@ set (HEADERS
 	Sensor.h
 	System.h
 	SystemManager.h
-	PartialCholevski.h
+	#PartialCholevski.h
 	KalmanFilter.h
 	WAUKF.h
 	pinv.h )
@@ -16,7 +16,7 @@ set (SOURCES
 	Sensor.cpp
 	System.cpp
 	SystemManager.cpp
-	PartialCholevski.cpp
+	#PartialCholevski.cpp
 	KalmanFilter.cpp
 	WAUKF.cpp
 	pinv.cpp )
@@ -25,6 +25,6 @@ set (SOURCES
 add_library (sf_core STATIC ${SOURCES} ${HEADERS} )
 
 # Link with dependency libraries
-target_link_libraries (sf_core sf_types )
+target_link_libraries (sf_core sf_types relaxedUT)
 
-install_lib(sf_core "${HEADERS}")
+install_lib(sf_core "${HEADERS}" ${CMAKE_CURRENT_SOURCE_DIR})

@@ -57,4 +57,4 @@ requires_cppzmq(sf_communication)
 requires_flatbuffers()
 requires_spdlog(sf_communication)
 
-install_lib(sf_communication "${HEADERS}")
+install_lib(sf_communication "${HEADERS}" ${CMAKE_CURRENT_SOURCE_DIR})

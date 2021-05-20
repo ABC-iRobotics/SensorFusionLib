@@ -18,4 +18,4 @@ add_library (2Dlocalisation STATIC ${SOURCES} ${HEADERS} )
 # Link with dependency libraries
 target_link_libraries (2Dlocalisation sf_core )
 
-install_lib(2Dlocalisation "${HEADERS}")
+install_lib(2Dlocalisation "${HEADERS}" ${CMAKE_CURRENT_SOURCE_DIR})
