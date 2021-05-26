@@ -83,71 +83,9 @@ public:
 	unsigned int getNumOfOutputs() const { return 0;  }
 
 	unsigned int getNumOfNoises() const { return 0; }
-
 };
 
-
-/*
-
-#include "Filter.h"
-
-void orderDataMsg(std::string senderaddress, std::string recvaddress, int N) {
-	error = false;
-	msgs = std::vector<DataMsg>();
-	for (int i = 0; i < N; i++) {
-		DataMsg d(5, DataType(i % 4), OperationType(i % 3), Now());
-		if (i%3==0)
-			d.SetValueVector(Eigen::VectorXd::Ones(4)*i);
-		if (i % 2 == 0)
-			d.SetVarianceMatrix(Eigen::MatrixXd::Ones(i%6,i%6)*i);
-		msgs.push_back(d);
-	}
-	Forwarder a;
-	a.SetZMQOutput(senderaddress.c_str(), N);
-	auto checker = std::make_shared<Checker>();
-	Filter r(checker);
-	r.AddPeriphery(Filter::PeripheryProperties(recvaddress, true));
-	r.Start(DTime(1000));
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-	for (int i = 0; i < N; i++)
-		a.ForwardDataMsg(msgs[i],Now());
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-	while (r.GetNumOfRecievedMsgs(0) != N)
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	r.Stop();
-	if (error)
-		TEST_ASSERT(0);
-}
-
-void orderStrings(std::string senderaddress, std::string recvaddress, int N) {
-	error = false;
-	strings = std::vector<std::string>();
-	for (int i = 0; i < N; i++)
-		strings.push_back(std::string("asdassv0") + std::to_string(i) + "_" + std::to_string(duration_cast(Now().time_since_epoch()).count()));
-	Forwarder a;
-	a.SetZMQOutput(senderaddress.c_str(), N);
-	auto checker = std::make_shared<Checker>();
-	Filter r(checker);
-	r.AddPeriphery(Filter::PeripheryProperties(recvaddress, true));
-	r.Start(DTime(1000));
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-	for (int i = 0; i < N; i++)
-		a.ForwardString(strings[i],Now());
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-	while (r.GetNumOfRecievedMsgs(0) != N)
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	r.Stop();
-	if (error)
-		TEST_ASSERT(0);
-}*/
-
-int main (void) {
+void linearTest() {
 	Eigen::MatrixXd Sw = Eigen::MatrixXd::Zero(3, 3);
 	Sw(0, 0) = 5;
 	Sw(1, 1) = 10;
@@ -165,44 +103,26 @@ int main (void) {
 	SystemManagerTester tester(bsData, state);
 
 	StatisticValue y;
-	Eigen::MatrixXd Syin,Syx;
+	Eigen::MatrixXd Syin, Syx;
 
 	y = tester.Eval(TimeUpdateType::STATE_UPDATE, 0.001, state, in, Syx, Syin);
 
 	std::cout << y << std::endl << std::endl;
 	std::cout << Syx << std::endl << std::endl;
 	std::cout << Syin << std::endl << std::endl;
-	/*
+
+	if (y.vector.cwiseAbs().sum() > 1e-7)
+		TEST_ASSERT(0);
+	if ((y.variance-Eigen::MatrixXd::Identity(6,6)).cwiseAbs().sum() > 1e-7)
+		TEST_ASSERT(0);
+	if ((Syx - Eigen::MatrixXd::Identity(6, 6)).cwiseAbs().sum() > 1e-7)
+		TEST_ASSERT(0);
+	if (Syin.cwiseAbs().sum() > 1e-7)
+		TEST_ASSERT(0);
+}
+
+int main (void) {
 	UNITY_BEGIN();
-	RUN_TEST([]() { orderDataMsg("tcp://*:1234", "tcp://localhost:1234", 100); });
-	RUN_TEST([]() { orderStrings("tcp://*:1234", "tcp://localhost:1234", 100); });
-	RUN_TEST([]() {
-		printf("TCP: 1000x5 datamsg\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5);
-		printf("TCP: 1000x5 string\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5, true);
-		printf("TCP: 10000x5 datamsg\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5);
-		printf("TCP: 10000x5 string\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);
-	});
-	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 10); });
-	RUN_TEST([]() {	hwmtest("tcp://*:1234", "tcp://localhost:1234", 10, 100); });
-	RUN_TEST([]() {	DataMsgContentSerialization(100000); });
-	
-#ifdef UNIX
-	//ipc, inproc...
-	RUN_TEST([]() {
-		printf("1000,5, datamsg\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5);
-		printf("1000,5, string\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 1000, 5, true);
-		printf("10000,5\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5);
-		printf("10000,5, string\n");
-		SendAndRecieveDataMsgs("tcp://*:1234", "tcp://localhost:1234", 10000, 5, true);
-	});
-#endif
-*/
+	RUN_TEST([]() { linearTest(); });
 	return UNITY_END();
 }
