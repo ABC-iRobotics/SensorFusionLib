@@ -15,6 +15,7 @@ set(tests
 	test_zmqsub_zmqpub
 	test_communication
 	test_configfile_init
+	test_systemmanager
 	)
 foreach(test ${tests})
 	add_executable(${test} ${test}.cpp)
@@ -38,3 +39,4 @@ target_link_libraries(test_spd_log sf_communication)
 target_link_libraries(test_zmqsub_zmqpub sf_communication)
 target_link_libraries(test_communication sf_communication)
 target_link_libraries(test_configfile_init sf_communication)
+target_link_libraries(test_systemmanager sf_core)
