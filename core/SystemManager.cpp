@@ -1,7 +1,8 @@
 #include "SystemManager.h"
-#include "PartialCholevski.h"
+#include "RelaxedUTN.h"
 
 using namespace SF;
+using namespace RelaxedUnscentedTransformation;
 
 SystemManager::SystemData::SystemData(const StatisticValue& noise_,
 	const StatisticValue& disturbance_, unsigned int outputSize) :
@@ -375,95 +376,56 @@ StatisticValue SystemManager::Eval(TimeUpdateType outType, double Ts, const Stat
 	Eigen::VectorXi stateDep = dep(outType, VAR_STATE, forcedOutput);
 	Eigen::VectorXi inDep = dep(outType, VAR_EXTERNAL, forcedOutput);
 	size_t nOut = num(System::getOutputValueType(outType), forcedOutput);
-	// 
-	Eigen::VectorXd z;
-	Eigen::MatrixXd Sz;
-	Eigen::MatrixXd Szx;
-	Eigen::MatrixXd Szw;
-	if (stateDep.sum() + inDep.sum() == 0) {
-		z = Eigen::VectorXd::Zero(nOut);
-		Sz = Eigen::MatrixXd::Zero(nOut, nOut);
-		Szx = Eigen::MatrixXd::Zero(nOut, nX);
-		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
-	}
-	else {
-		// Sigma values by applying partial chol
-		Eigen::MatrixXd dX = PartialChol(state_.variance, stateDep);
-		Eigen::MatrixXd dIn;
-		if (in.isIndependent) {
-			dIn = Eigen::MatrixXd::Zero(nIn, inDep.sum());
-			unsigned int j = 0;
-			for (unsigned int i = 0; i < nIn; i++)
-				if (inDep[i] == 1) {
-					dIn(i, j) = sqrt(in.variance(i, i));
-					j++;
-				}
-		}
-		else
-			dIn = PartialChol(in.variance, inDep);
-		Eigen::Index nNL_X = dX.cols();
-		Eigen::Index nNL_In = dIn.cols();
-		Eigen::Index nNL = nNL_X + nNL_In;
-		// Constants for UT
-		double alpha = 0.7;
-		double beta = 2.;
-		double kappa = 1e-8;
-		double tau2 = alpha * alpha * (kappa + (double)nNL);
-		double tau = sqrt(tau2);
-		dX *= tau;
-		dIn *= tau;
-
-		// Mean value
-		Eigen::VectorXd z0 = EvalNonLinPart(Ts, outType, state_.vector, in.vector, forcedOutput);
-		std::vector<Eigen::VectorXd> z_x = std::vector<Eigen::VectorXd>();
-
-		for (Eigen::Index i = 0; i < nNL_X; i++) {
-			z_x.push_back(EvalNonLinPart(Ts, outType, state_.vector + dX.col(i), in.vector, forcedOutput));
-			//std::cout << "x: \n" << state_.vector + dX.col(i) << "\nz:\n" << z_x[i * 2] << std::endl;
-			z_x.push_back(EvalNonLinPart(Ts, outType, state_.vector - dX.col(i), in.vector, forcedOutput));
-			//std::cout << "x: \n" << state_.vector - dX.col(i) << "\nz:\n" << z_x[i * 2+1] << std::endl;
-		}
-		std::vector<Eigen::VectorXd> z_w = std::vector<Eigen::VectorXd>();
-		for (Eigen::Index i = 0; i < nNL_In; i++) {
-			z_w.push_back(EvalNonLinPart(Ts, outType, state_.vector, in.vector + dIn.col(i), forcedOutput));
-			z_w.push_back(EvalNonLinPart(Ts, outType, state_.vector, in.vector - dIn.col(i), forcedOutput));
-		}
-		z = (1. - (double)nNL / tau2 ) * z0;
-		for (int i = 0; i < 2 * nNL_X; i++)
-			z += z_x[i] / 2. / tau2;
-		for (int i = 0; i < 2 * nNL_In; i++)
-			z += z_w[i] / 2. / tau2;
-
-		Sz = ((tau2 - (double)nNL) / tau2 + 1. + beta - alpha * alpha) * (z0 - z) * (z0 - z).transpose();
-		Szx = Eigen::MatrixXd::Zero(nOut, nX);
-		Szw = Eigen::MatrixXd::Zero(nOut, nIn);
-		Eigen::VectorXd temp;
-		for (unsigned int i = 0; i < nNL_X; i++) {
-			temp = z_x[i] - z;
-			Sz += temp * temp.transpose() / 2. / tau2;
-			temp = z_x[i + nNL_X] - z;
-			Sz += temp * temp.transpose() / 2. / tau2;
-			Szx += (z_x[2 * i] - z_x[2 * i + 1])*dX.col(i).transpose() / 2. / tau2;
-		}
-		for (int i = 0; i < nNL_In; i++) {
-			temp = z_w[i] - z;
-			Sz += temp * temp.transpose() / 2. / tau2;
-			temp = z_w[i + nNL_In] - z;
-			Sz += temp * temp.transpose() / 2. / tau2;
-			Szw += (z_w[2 * i] - z_w[2 * i + 1])*dIn.col(i).transpose() / 2. / tau2;
-		}
-	}
 	// Get coefficient matrices
 	Eigen::MatrixXd A, B;
 	getMatrices(outType, Ts, A, B, forcedOutput);
+	// CASE 1: No nonlinearity (simple linear mapping...)
+	if (stateDep.sum() + inDep.sum() == 0) {
+		Eigen::VectorXd y = A * state_.vector + B * in.vector;
+		S_out_x = A * state_.variance;
+		S_out_in = B * in.variance;
+		Eigen::MatrixXd Sy = S_out_x * A.transpose() + S_out_in * B.transpose();
+		return { y,Sy };
+	}
+	else { // CASE 2: Totally nonlinear
+		Eigen::VectorXd y;
+		Eigen::MatrixXd Sy;
+		std::vector<Eigen::MatrixXd> Sxny;
 
-	Eigen::VectorXd y = A * state_.vector + B * in.vector + z;
-	S_out_x = A * state_.variance + Szx;
-	S_out_in = B * in.variance + Szw;
-	Eigen::MatrixXd Sy = S_out_x * A.transpose() + S_out_in * B.transpose() +
-		Sz + A * Szx.transpose() + B * Szw.transpose();
+		Eigen::VectorXi ilX(nX);
+		for (int n = 0; n < nX; n++)
+			ilX[n] = n;
+		Eigen::VectorXi ilIn(nIn);
+		for (int n = 0; n < nIn; n++)
+			ilIn[n] = n;
 
-	return StatisticValue(y, Sy);
+		auto fin = [this,Ts,outType,forcedOutput](const std::vector<Eigen::VectorXd>& values)->Eigen::VectorXd {
+			return EvalNonLinPart(Ts, outType, values[0], values[1], forcedOutput);
+		};
+
+		int K = 0;
+		Eigen::VectorXi inlX(stateDep.sum());
+		for (int n = 0; n < stateDep.size(); n++)
+			if (stateDep[n] == 1) {
+				inlX[K] = n;
+				K++;
+			}
+		K = 0;
+		Eigen::VectorXi inlIn(inDep.sum());
+		for (int n = 0; n < inDep.size(); n++)
+			if (inDep[n] == 1) {
+				inlIn[K] = n;
+				K++;
+			}
+
+		RelaxedUTN({ A,B }, { ilX,ilIn }, fin, Eigen::MatrixXd::Zero(0, nOut), { inlX, inlIn},
+			{ state_.vector, in.vector }, { state_.variance, in.variance }, y, Sy, Sxny);
+
+		S_out_x = Sxny[0].transpose();
+		S_out_in = Sxny[1].transpose();
+
+		return { y,Sy };
+	}
 }
 
 DataMsg SF::SystemManager::GetDataByID(int systemID, DataType dataType, OperationType opType, Time currentTime) {

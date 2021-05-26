@@ -2,6 +2,7 @@
 #include "PartialCholevski.h"
 
 using namespace SF;
+using namespace RelaxedUnscentedTransformation;
 
 const WAUKF::mapOfVectorWindows & WAUKF::_getValueWindows(DataType signal) const {
 	switch (signal) {

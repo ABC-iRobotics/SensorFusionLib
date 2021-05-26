@@ -6,20 +6,20 @@ set (HEADERS
 	Sensor.h
 	System.h
 	SystemManager.h
-	#PartialCholevski.h
 	KalmanFilter.h
 	WAUKF.h
-	pinv.h )
+	pinv.h
+	)
 	
 set (SOURCES
 	BaseSystem.cpp
 	Sensor.cpp
 	System.cpp
 	SystemManager.cpp
-	#PartialCholevski.cpp
 	KalmanFilter.cpp
 	WAUKF.cpp
-	pinv.cpp )
+	pinv.cpp
+	)
 
 # Add the dinamic library target to the project
 add_library (sf_core STATIC ${SOURCES} ${HEADERS} )

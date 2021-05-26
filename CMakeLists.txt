@@ -252,9 +252,10 @@ set (HEADERS
 	RelaxedUT/cppsource/UT.h
 	RelaxedUT/cppsource/SelUT.h
 	RelaxedUT/cppsource/RelaxedUT.h
+	RelaxedUT/cppsource/RelaxedUTN.h
 	RelaxedUT/cppsource/PartialCholevski.h
 	)
-	
+
 set (SOURCES
 	RelaxedUT/cppsource/index_selector.cpp
 	RelaxedUT/cppsource/RelaxedUT.cpp
